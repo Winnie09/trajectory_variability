@@ -1,5 +1,4 @@
 OneGroupDiffALongTime <- function(expr,sample,dr=NULL,pseudotime=NULL,permutation=FALSE, fstatonly=FALSE,permutime=10000, num.base = 3) {
-  if (is.null(var)) var <- colnames(design)
   n <- pseudotime
   pseudotime <- 1:length(pseudotime)
   names(pseudotime) <- n
@@ -95,4 +94,5 @@ OneGroupDiffALongTime <- function(expr,sample,dr=NULL,pseudotime=NULL,permutatio
     }
   }
 }
+
 
