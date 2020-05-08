@@ -1,4 +1,4 @@
-exprdiff <- function(expr,sample,design,var=NULL,dr=NULL,pseudotime=NULL,permutation=FALSE, fstatonly=FALSE,permutime=10000, num.base = 3) {
+exprdiff <- function(expr,sample,design,var=NULL,dr=NULL,pseudotime=NULL,permutation=FALSE, fstatonly=FALSE,permutime=10000, num.base = 3, IgnoreRepetitive = FALSE) {
   if (is.null(var)) var <- colnames(design)
   n <- pseudotime
   pseudotime <- 1:length(pseudotime)
@@ -40,6 +40,7 @@ exprdiff <- function(expr,sample,design,var=NULL,dr=NULL,pseudotime=NULL,permuta
         res               
     } else {
       permuf <- mclapply(1:permutime,function(permu) {
+          print(permu)
           # limma may set seed by itself. Need to resetseed here
           set.seed(permu)
           #presetting
@@ -48,7 +49,11 @@ exprdiff <- function(expr,sample,design,var=NULL,dr=NULL,pseudotime=NULL,permuta
           perexpr <- expr[,simuid]
           persample <- sample[simuid]
           names(persample) <- colnames(perexpr) <- row.names(perdr) <- paste0('cell',1:nrow(perdr))
-          permudesign <- design[sample(1:nrow(design)),,drop=F]
+          sampid <- sample(1:nrow(design))
+          if (IgnoreRepetitive){
+            while(identical(sampid,1:nrow(design))) sampid <- sample(1:nrow(design))  
+          }
+          permudesign <- design[sampid,,drop=F]
           row.names(permudesign) <- row.names(design)
           #redo pseudotime for bootstrapped samples
           ord <- lapply(2:10,function(i) {
@@ -98,4 +103,16 @@ exprdiff <- function(expr,sample,design,var=NULL,dr=NULL,pseudotime=NULL,permuta
       }
     }
 }
+# expr = expr
+# sample = sample
+# SelectGene = selgene
+# SelectSample = paste0('BM',c(1,2,5,6))
+# pseudotime = pseudotime
+# method = addSignalType
+# parameter=addSignalPara
+# var=NULL
+# permutation=FALSE
+# fstatonly=FALSE
+# permutime=10000
+# num.base = 3
 

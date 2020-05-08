@@ -4,9 +4,9 @@ addSignalType <- as.character(commandArgs(trailingOnly = TRUE)[[2]])
 addSignalPara <-  as.numeric(commandArgs(trailingOnly = TRUE)[[3]])
 method <- as.character(commandArgs(trailingOnly = T)[[4]])
 ## be reminded that the pca is done on cv > 0.5 (for all samples) genes. You should redo it !!!
-# geneProp <- 0.1
-# addSignalType <- 'exponential'
-# addSignalPara <-  2
+# geneProp <- 0.05
+# addSignalType <- 'linear'
+# addSignalPara <-  5
 # method <- 'tradeSeq'
 
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
@@ -91,45 +91,65 @@ if (method == 'permu'){
   saveRDS(res, paste0('./addsignal/result/permu/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))
 } 
 
-if (grepl('tradeSeq', method)){
-  dir.create(paste0('./addsignal/result/', method, '2/',addSignalType,'/'), showWarnings = FALSE, recursive = TRUE)
+if (method == 'permu_IR'){ ## ignore repetitive
+  dir.create(paste0('./addsignal/result/permu_IR/',addSignalType,'/'), showWarnings = FALSE, recursive = TRUE)
   expr2 <- AddSignal(expr = expr, sample = sample, SelectGene = selgene, SelectSample = paste0('BM',c(1,2,5,6)), pseudotime = pseudotime, method = addSignalType, parameter=addSignalPara)
-  counts <- round(exp(expr2 + 1))
+  res <- exprdiff(expr=expr2,design=design,sample=sample,dr=dr,pseudotime=pseudotime,permutation=TRUE, permutime=10000, IgnoreRepetitive = TRUE)
+  r <- res[['res']]
+  r <- r[order(r[,3]),]
+  sensfdr <- SensFdr(Order = rownames(r), TruePositive = selgene, statistics=r)
+  v <- c(addSignalPara,AreaUnderSensFdr(sensfdr))
+  names(v)[1] = 'Parameter'
+  res[['sensfdr']] <- v
+  saveRDS(res, paste0('./addsignal/result/permu_IR/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))
+} 
+
+if (grepl('tradeSeq', method)){
+  # dir.create(paste0('./addsignal/result/', method, '/',addSignalType,'/'), showWarnings = FALSE, recursive = TRUE)
+  if (!file.exists(paste0('./addsignal/result/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))){
+    expr2 <- AddSignal(expr = expr, sample = sample, SelectGene = selgene, SelectSample = paste0('BM',c(1,2,5,6)), pseudotime = pseudotime, method = addSignalType, parameter=addSignalPara)
+    counts <- round(exp(expr2 + 1))
   
-  psn <- seq(1, length(pseudotime))
-  names(psn) <- pseudotime
-  pdt <- data.frame(curve1 = psn, curve2 = psn)
-  rownames(pdt) <- names(psn)
-  pdt = pdt[colnames(counts), ]
+    psn <- seq(1, length(pseudotime))
+    names(psn) <- pseudotime
+    pdt <- data.frame(curve1 = psn, curve2 = psn)
+    rownames(pdt) <- names(psn)
+    pdt = pdt[colnames(counts), ]
   
-  v <- (sub(':.*','',allp) %in% paste0('BM',c(1,2,5,6)) + 0)
-  v <- ifelse(v==1, 0.99, 0.01)
-  cellWeights <- data.frame(curve1 = v, curve2 = 1-v)
-  rownames(cellWeights) <- colnames(counts)
+    v <- (sub(':.*','',allp) %in% paste0('BM',c(1,2,5,6)) + 0)
+    v <- ifelse(v==1, 0.99, 0.01)
+    cellWeights <- data.frame(curve1 = v, curve2 = 1-v)
+    rownames(cellWeights) <- colnames(counts)
   
-  set.seed(12345)
-  sce <- fitGAM(counts = counts, pseudotime = pdt, cellWeights = cellWeights,
-                   nknots = 6, verbose = FALSE,parallel=TRUE)
-  saveRDS(sce, paste0('./addsignal/result/', method,'2/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))
-  
-  Final <- list()
-  for (TestType in (c('diffEndTest', 'patternTest'))){
-    print(TestType)
-    if (grepl('diffEndTest', TestType)){
-      Res <- diffEndTest(sce)  
-    } else if (grepl('patternTest', TestType)){
-      Res <- patternTest(sce)  
-    }
-    res <- data.frame(waldStat = Res[,'waldStat'], P.Value = Res[,'pvalue'] ,adj.P.Val = p.adjust(Res$pvalue, method='fdr'))
-    row.names(res) <- row.names(Res)
-    res <- res[order(res[,3], -res[,1]), ]
-    sensfdr <- SensFdr(Order = rownames(res), TruePositive = selgene, statistics=res)
-    final <- list()
-    final[['res']] <- res
-    final[['sensfdr']] <- c(method, AreaUnderSensFdr(sensfdr))
-    Final[[TestType]] <- final
+    set.seed(12345)
+    sce <- fitGAM(counts = counts, pseudotime = pdt, cellWeights = cellWeights,
+                     nknots = 6, verbose = FALSE,parallel=TRUE)
+    saveRDS(sce, paste0('./addsignal/result/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))
+  } else {
+    sce <- readRDS(paste0('./addsignal/result/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))
   }
-  saveRDS(Final, paste0('./addsignal/result/', method,'2/',addSignalType,'/', geneProp,'_', addSignalPara,'.rds'))  
+    Final <- list()
+    for (TestType in (c('diffEndTest', 'patternTest', 'earlyDETest'))){
+      print(TestType)
+      if (grepl('diffEndTest', TestType)){
+        Res <- diffEndTest(sce)  
+      } else if (grepl('patternTest', TestType)){
+        Res <- patternTest(sce)  
+      } else if (grepl('earlyDETest', TestType)){
+        Res <- earlyDETest(sce, knots = c(1,2), global = TRUE, pairwise = TRUE)
+      }
+      res <- data.frame(waldStat = Res[,'waldStat'], P.Value = Res[,'pvalue'] ,adj.P.Val = p.adjust(Res$pvalue, method='fdr'))
+      row.names(res) <- row.names(Res)
+      res <- res[order(res[,3], -res[,1]), ]
+      sensfdr <- SensFdr(Order = rownames(res), TruePositive = selgene, statistics=res)
+      final <- list()
+      final[['res']] <- res
+      final[['sensfdr']] <- c(method, AreaUnderSensFdr(sensfdr))
+      Final[[TestType]] <- final
+    }
+    saveRDS(Final, paste0('./addsignal/result/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'.rds'))  
+  }
+    
 }
 
 rm(list=ls())
