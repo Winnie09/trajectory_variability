@@ -21,7 +21,6 @@ final <- do.call(rbind, final)
 final[!colnames(final)%in%c('Method','SignalType','GeneProp')] <- apply(final[!colnames(final)%in%c('Method','SignalType','GeneProp')], 2, as.numeric)
 final = final[!is.na(final[,1]), ]    
 
-
 allfd <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/limma/')
 Res <- lapply(allfd, function(fd){
   allf <- list.files(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/limma/', fd), pattern = 'Para_FdrDiff_Area')
@@ -36,9 +35,47 @@ res <- res[res[,1]!=0, ]
 res <- data.frame(res, Method = 'Ours')
 
 pd = rbind(final, res[, colnames(final)])
+
+allfd <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu/')
+final <- lapply(allfd, function(fd){
+  allf = list.files(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu/', fd))
+  if (length(allf)>=1){
+    Res <- t(sapply(allf, function(f){
+      r <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu/', fd, '/', f))
+      c(Method = 'permu', r[['sensfdr']], SignalType = fd, GeneProp = sub('_.*','', f))
+    }))
+  } else return(NA)
+})
+final <- do.call(rbind, final)
+final <- as.data.frame(final)
+final[!colnames(final)%in%c('Method','SignalType','GeneProp')] <- apply(final[!colnames(final)%in%c('Method','SignalType','GeneProp')], 2, as.numeric)
+final = final[!is.na(final[,1]), ]    
+permuRes <- final
+
+
+allfd <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IR/')
+final <- lapply(allfd, function(fd){
+  allf = list.files(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IR/', fd))
+  if (length(allf)>=1){
+    Res <- t(sapply(allf, function(f){
+      r <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu/', fd, '/', f))
+      c(Method = 'permu', r[['sensfdr']], SignalType = fd, GeneProp = sub('_.*','', f))
+    }))
+  } else return(NA)
+})
+final <- do.call(rbind, final)
+final <- as.data.frame(final)
+final[!colnames(final)%in%c('Method','SignalType','GeneProp')] <- apply(final[!colnames(final)%in%c('Method','SignalType','GeneProp')], 2, as.numeric)
+final = final[!is.na(final[,1]), ]    
+permu_IRRes <- final
+permu_IRRes[,1] <- 'permu_IR'
+
+pd2 = rbind(pd, permuRes, permu_IRRes)
 library(ggplot2)
 library(gridExtra)
-p1 <- ggplot(pd, aes(x = Parameter, y = Fdr.Diff, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType)
-p2 <- ggplot(pd, aes(x = Parameter, y = Area, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType)
+p1 <- ggplot(pd2, aes(x = Parameter, y = Fdr.Diff, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType) + xlim(c(0,10))
+p2 <- ggplot(pd2, aes(x = Parameter, y = Area, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType)+ xlim(c(0,10))
 grid.arrange(p1,p2, nrow=1)
+
+
 

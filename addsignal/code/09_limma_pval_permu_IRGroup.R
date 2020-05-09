@@ -7,10 +7,10 @@ method <- as.character(commandArgs(trailingOnly = T)[[4]])
 # geneProp <- 0.05
 # addSignalType <- 'linear'
 # addSignalPara <-  5
-# method <- 'tradeSeq'
+# method <- 'permu'
 
+setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 if (!file.exists(paste0('./addsignal/result/', method, '/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))){
-  setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
   # setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
   source('./function/01_function.R')
   source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/function.R')
@@ -29,6 +29,8 @@ if (!file.exists(paste0('./addsignal/result/', method, '/', addSignalType,'/', g
   expr <- expr[,id]
   expr <- expr[rowMeans(expr > 0.1) > 0.1,] ## [1:9070, 1:13269] 
   allp = sub(':.*','', colnames(expr))
+  #set.seed(12345)
+  #expr <- expr[,sample(1:ncol(expr),0.25*ncol(expr))]
   
   dr <- readRDS('./addsignal/result/dr.rds')
   
@@ -106,6 +108,21 @@ if (!file.exists(paste0('./addsignal/result/', method, '/', addSignalType,'/', g
       names(v)[1] = 'Parameter'
       res[['sensfdr']] <- v
       saveRDS(res, paste0('./addsignal/result/permu_IR/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))
+    }
+  } 
+  
+  if (method == 'permu_IRGroup'){ ## ignore repetitive
+    dir.create(paste0('./addsignal/result/permu_IRGroup/',addSignalType,'/'), showWarnings = FALSE, recursive = TRUE)
+    if (!file.exists(paste0('./addsignal/result/permu_IRGroup/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))){
+      expr2 <- AddSignal(expr = expr, sample = sample, SelectGene = selgene, SelectSample = paste0('BM',c(1,2,5,6)), pseudotime = pseudotime, method = addSignalType, parameter=addSignalPara)
+      res <- exprdiff(expr=expr2,design=design,sample=sample,dr=dr,pseudotime=pseudotime,permutation=TRUE, permutime=10000, IgnoreRepetitive = TRUE)
+      r <- res[['res']]
+      r <- r[order(r[,3]),]
+      sensfdr <- SensFdr(Order = rownames(r), TruePositive = selgene, statistics=r)
+      v <- c(addSignalPara,AreaUnderSensFdr(sensfdr))
+      names(v)[1] = 'Parameter'
+      res[['sensfdr']] <- v
+      saveRDS(res, paste0('./addsignal/result/permu_IRGroup/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))
     }
   } 
   
