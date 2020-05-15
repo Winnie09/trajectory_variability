@@ -58,7 +58,7 @@ final <- lapply(allfd, function(fd){
   allf = list.files(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IR/', fd))
   if (length(allf)>=1){
     Res <- t(sapply(allf, function(f){
-      r <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu/', fd, '/', f))
+      r <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IR/', fd, '/', f))
       c(Method = 'permu', r[['sensfdr']], SignalType = fd, GeneProp = sub('_.*','', f))
     }))
   } else return(NA)
@@ -71,11 +71,32 @@ permu_IRRes <- final
 permu_IRRes[,1] <- 'permu_IR'
 
 pd2 = rbind(pd, permuRes, permu_IRRes)
+
+##### permu_IRGroup
+allfd <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IRGroup/')
+final <- lapply(allfd, function(fd){
+  allf = list.files(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IRGroup/', fd))
+  if (length(allf)>=1){
+    Res <- t(sapply(allf, function(f){
+      r <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/permu_IRGroup/', fd, '/', f))
+      c(Method = 'permu', r[['sensfdr']], SignalType = fd, GeneProp = sub('_.*','', f))
+    }))
+  } else return(NA)
+})
+final <- do.call(rbind, final)
+final <- as.data.frame(final)
+final[!colnames(final)%in%c('Method','SignalType','GeneProp')] <- apply(final[!colnames(final)%in%c('Method','SignalType','GeneProp')], 2, as.numeric)
+final = final[!is.na(final[,1]), ]    
+permu_IRRes <- final
+permu_IRRes[,1] <- 'permu_IRGroup'
+pd3 = rbind(pd2, permuRes, permu_IRRes)
+
+
 library(ggplot2)
 library(gridExtra)
-p1 <- ggplot(pd2, aes(x = Parameter, y = Fdr.Diff, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType) + xlim(c(0,10))
-p2 <- ggplot(pd2, aes(x = Parameter, y = Area, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType)+ xlim(c(0,10))
-grid.arrange(p1,p2, nrow=1)
-
-
-
+pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/plot/compare_fdr_diff.pdf',width=12,height=7)
+ggplot(pd3, aes(x = Parameter, y = Fdr.Diff, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType) + xlim(c(0,10))
+dev.off()
+pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/plot/compare_auc.pdf',width=12,height=7)
+ggplot(pd3, aes(x = Parameter, y = Area, shape = GeneProp, color=Method)) + geom_point()  + geom_line() + theme_classic() + facet_wrap(~SignalType)+ xlim(c(0,10))
+dev.off()
