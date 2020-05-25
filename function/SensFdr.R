@@ -1,5 +1,5 @@
 SensFdr <- function(Order, TruePositive,statistics){
-  ## statistics columns are: c('FStat','P.Value','adj.P.Val')
+  ## statistics columns should contain 'adj.P.Val', for example c('FStat','P.Value','adj.P.Val')
   perf <- t(sapply(seq(1,length(Order)), function(i){
     num <- sum(Order[seq(1,i)] %in% selgene)
     c(num/length(TruePositive), (i - num)/i, statistics$adj.P.Val[i])
