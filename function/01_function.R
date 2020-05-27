@@ -1,8 +1,8 @@
-allf <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function')
-allf = allf[!grepl('01_function.R',allf)]
-res <- sapply(allf, function(f){
+allfiles <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function')
+allfiles = allfiles[!grepl('01_function.R',allfiles)]
+allfunctions <- sapply(allfiles, function(f){
   source(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/', f))
 })
-rm(allf)
-rm(res)
+rm(allfunctions)
+rm(allfiles)
 

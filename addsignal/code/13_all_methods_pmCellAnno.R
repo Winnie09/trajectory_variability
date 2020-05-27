@@ -94,45 +94,45 @@ if (!file.exists(paste0('./addsignal/result/pmCellAnno/', method, '/', addSignal
     # dir.create(paste0('./addsignal/result/', method, '/',addSignalType,'/'), showWarnings = FALSE, recursive = TRUE)
     if (!file.exists(paste0('./addsignal/result/pmCellAnno/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))){
       counts <- round(exp(expr + 1))
-    
+      
       psn <- seq(1, length(pseudotime))
       names(psn) <- pseudotime
       pdt <- data.frame(curve1 = psn, curve2 = psn)
       rownames(pdt) <- names(psn)
       pdt = pdt[colnames(counts), ]
-    
+      
       v <- (cellanno$sample %in% paste0('BM',c(1,2,5,6)) + 0)
       v <- ifelse(v==1, 0.99, 0.01)
       cellWeights <- data.frame(curve1 = v, curve2 = 1-v)
       rownames(cellWeights) <- colnames(counts)
-    
+      
       set.seed(12345)
       sce <- fitGAM(counts = counts, pseudotime = pdt, cellWeights = cellWeights,
-                       nknots = 6, verbose = FALSE,parallel=TRUE)
+                    nknots = 6, verbose = FALSE,parallel=TRUE)
       saveRDS(sce, paste0('./addsignal/result/pmCellAnno/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))
     } else {
       sce <- readRDS(paste0('./addsignal/result/pmCellAnno/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_sce.rds'))
     }
-      Final <- list()
-      for (TestType in (c('diffEndTest', 'patternTest', 'earlyDETest'))){
-        print(TestType)
-        if (grepl('diffEndTest', TestType)){
-          Res <- diffEndTest(sce)  
-        } else if (grepl('patternTest', TestType)){
-          Res <- patternTest(sce)  
-        } else if (grepl('earlyDETest', TestType)){
-          Res <- earlyDETest(sce, knots = c(1,2), global = TRUE, pairwise = TRUE)
-        }
-        res <- data.frame(waldStat = Res[,'waldStat'], P.Value = Res[,'pvalue'] ,adj.P.Val = p.adjust(Res$pvalue, method='fdr'))
-        row.names(res) <- row.names(Res)
-        res <- res[order(res[,3], -res[,1]), ]
-        sensfdr <- SensFdr(Order = rownames(res), TruePositive = selgene, statistics=res)
-        final <- list()
-        final[['res']] <- res
-        final[['sensfdr']] <- c(method, AreaUnderSensFdr(sensfdr))
-        Final[[TestType]] <- final
+    Final <- list()
+    for (TestType in (c('diffEndTest', 'patternTest', 'earlyDETest'))){
+      print(TestType)
+      if (grepl('diffEndTest', TestType)){
+        Res <- diffEndTest(sce)  
+      } else if (grepl('patternTest', TestType)){
+        Res <- patternTest(sce)  
+      } else if (grepl('earlyDETest', TestType)){
+        Res <- earlyDETest(sce, knots = c(1,2), global = TRUE, pairwise = TRUE)
       }
-      saveRDS(Final, paste0('./addsignal/result/pmCellAnno/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'.rds'))  
+      res <- data.frame(waldStat = Res[,'waldStat'], P.Value = Res[,'pvalue'] ,adj.P.Val = p.adjust(Res$pvalue, method='fdr'))
+      row.names(res) <- row.names(Res)
+      res <- res[order(res[,3], -res[,1]), ]
+      sensfdr <- SensFdr(Order = rownames(res), TruePositive = selgene, statistics=res)
+      final <- list()
+      final[['res']] <- res
+      final[['sensfdr']] <- c(method, AreaUnderSensFdr(sensfdr))
+      Final[[TestType]] <- final
+    }
+    saveRDS(Final, paste0('./addsignal/result/pmCellAnno/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'.rds'))  
   }
   
   if (method == 'EM'){
@@ -146,10 +146,11 @@ if (!file.exists(paste0('./addsignal/result/pmCellAnno/', method, '/', addSignal
     oriid <- which(apply(per,1,function(i) paste0(as.vector(design[i,]),collapse = '_'))==paste0(as.vector(design),collapse = '_'))
     library(parallel)
     # perll <- mclapply(1:2,function(i) {
-     perll <- mclapply(1:nrow(per),function(i) {
-      print(i)
-      diffpt(expr=expr,design=design[per[i,],,drop=F],pseudotime=pseudotime,num.knot = 3,cellanno = cellanno, verbose = T)$logL
-    }, mc.cores = (detectCores()-2))
+    perll <- mclapply(1:nrow(per),function(i) {
+      perdesign <- design[per[i,],,drop=F]
+      row.names(perdesign) <- row.names(design)
+      diffpt(expr=expr,design=perdesign,pseudotime=pseudotime,num.knot = 3,cellanno = cellanno, verbose = T)$logL
+    }, mc.cores = 4)
     perll <- do.call(cbind,perll)
     pval <- sapply(1:nrow(perll), function(i) pnorm(perll[i,oriid],mean(perll[i,-oriid]),sd(perll[i,-oriid]),lower.tail = F))
     fdr <- p.adjust(pval,method='fdr')
@@ -162,6 +163,7 @@ if (!file.exists(paste0('./addsignal/result/pmCellAnno/', method, '/', addSignal
     final <- list()
     final[['res']] <- res
     final[['sensfdr']] <- c(method, AreaUnderSensFdr(sensfdr))
+    final[['perll']] <- perll
     saveRDS(final, paste0('./addsignal/result/pmCellAnno/', method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'.rds'))  
   }
   rm(list=ls())

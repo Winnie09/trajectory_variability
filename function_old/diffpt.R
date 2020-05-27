@@ -1,11 +1,10 @@
-##### implement model
 diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, verbose=F) {
   library(Matrix)
   library(mvtnorm)
   library(parallel)
   library(splines)
-  ## expr: gene by cell matrix, entires and log-transformed expression
-  ## Pseudotime: a  vecotor of ordered cell names
+  ## expr: gene by cell matrix, entires are log-transformed expression
+  ## pseudotime: a  vecotor of ordered cell names
   ## design: sample by feature design matrix. rownames are sample names. first column is the group partition, currently only one column.
   ## cellanno: dataframe, first column is cell names, second column is sample names.
   psn <- 1:length(pseudotime)
@@ -27,12 +26,11 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
   ## initialize tau
   phi_xs <- sapply(names(xs),function(i) phi[sname[[i]],] %*% t(xs[[i]]))
   phi_xs_rbind <- do.call(rbind,phi_xs)
-  phi_xs_rbind <- phi_xs_rbind[colnames(expr),]
-  beta <- expr %*% (phi_xs_rbind %*% chol2inv(chol(crossprod(phi_xs_rbind))))
+  beta <- expr[,row.names(phi_xs_rbind)] %*% (phi_xs_rbind %*% chol2inv(chol(t(phi_xs_rbind) %*% phi_xs_rbind)))
   
   ## initialize tau
   indfit <- sapply(names(xs), function(ss){
-    expr[,sname[[ss]]] %*% (phi[sname[[ss]],] %*% chol2inv(chol(crossprod(phi[sname[[ss]],]))))
+    expr[,sname[[ss]]] %*% (phi[sname[[ss]],] %*% chol2inv(chol(t(phi[sname[[ss]],]) %*% phi[sname[[ss]],])))
   },simplify = F)
   indfitdiff <- sapply(names(xs), function(ss){
     indfit[[ss]] - beta %*% xs[[ss]]
@@ -40,7 +38,7 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
   tau <- sapply(row.names(indfitdiff[[1]]),function(rid) {
     m <- sapply(names(xs),function(n) indfitdiff[[n]][rid,])
     m <- m-rowMeans(m)
-    tcrossprod(m) / ncol(m) + diag(nrow(m)) * 0.01
+    m %*% t(m) / ncol(m) + diag(nrow(m)) * 0.01
   })
   
   ## initialize gamma
@@ -51,24 +49,20 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
   gamma[gamma < 0.01] <- 0.01
   
   for (dump in seq(1,maxiter)){
-    E_phi_u_e <- phi_xs_beta <- phi_tau_phi <- list()
-    M <- matrix(0,nrow=nrow(expr),ncol=nrow(design),dimnames=list(row.names(expr),names(sname)))
+    E_phi_u_e <- M <- phi_xs_beta <- phi_tau_phi <- list()
     for (ss in names(sname)) {
       phi_tau_phi[[ss]] <- t(tau) %*% phicrossprod[,sname[[ss]]]
       phi_xs_beta[[ss]] <- beta %*% t(phi_xs[[ss]])
       sigma1s <- 1/(1/phi_tau_phi[[ss]] + 1/gamma[,ss])
       E_phi_u_e[[ss]] <- sigma1s * (phi_xs_beta[[ss]]/phi_tau_phi[[ss]] + expr[,sname[[ss]]]/gamma[,ss]) - phi_xs_beta[[ss]]
-      M[,ss] <- (rowSums((expr[,sname[[ss]]] - phi_xs_beta[[ss]] - E_phi_u_e[[ss]])^2) + rowSums(sigma1s))/ncol(sigma1s)
+      M[[ss]] <- (expr[,sname[[ss]]] - phi_xs_beta[[ss]] - E_phi_u_e[[ss]])^2 + sigma1s
     }
-
-    tauinv <- lapply(colnames(tau),function(i) {
-      chol2inv(chol(matrix(tau[,i],nrow=ncol(phi))))
-    })
-    names(tauinv) <- colnames(tau)
+    
     E_u_con_theta <- lapply(names(sname),function(ss) {
       m <- matrix(rowSums(phicrossprod[,sname[[ss]]]),nrow=ncol(phi))
+      n <- ncol(phi)
       tmp <- lapply(colnames(tau),function(i) {
-        chol2inv(chol(m/gamma[i,ss] + tauinv[[i]]))
+        chol2inv(chol(m/gamma[i,ss] + chol2inv(chol(matrix(tau[,i],nrow=n)))))
       })
       names(tmp) <- colnames(tau)
       tmp
@@ -92,20 +86,21 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
     newbeta <- t(sapply(row.names(tmp2),function(i) chol2inv(chol(matrix(tmp2[i,],nrow=ncol(beta)))) %*% tmp3[i,]))
     
     ### gamma
-    newgamma <- M
+    newgamma <- sapply(M, rowMeans)
     
     ### tau
     tmp <- lapply(names(xs), function(ss) {
-      sapply(E_u_con_theta[[ss]],as.vector) + apply(k_s[[ss]],1,tcrossprod)
+      sapply(names(E_u_con_theta[[ss]]),function(i) {
+        E_u_con_theta[[ss]][[i]] + k_s[[ss]][i,] %*% t(k_s[[ss]][i,])  
+      })
     })
     newtau <- Reduce('+', tmp)/length(xs)
     
     ### log L
     ll <- sapply(names(xs), function(ss) {
-      tmp <- 2 * (phi_tau_phi[[ss]] + gamma[,ss])
-      rowSums(-log(pi * tmp)/2) - rowSums((expr[,sname[[ss]]] - phi_xs_beta[[ss]])^2 / tmp)
+      tmp <- log(1/sqrt(2 * pi * (phi_tau_phi[[ss]] + gamma[,ss]))) - ((expr[,sname[[ss]]] - phi_xs_beta[[ss]])^2 / (2 * (phi_tau_phi[[ss]] + gamma[,ss])))
     })
-    ll <- rowSums(ll)
+    ll <- rowSums(sapply(ll,rowSums))
     if (verbose) print(mean(ll))
     beta <- newbeta
     gamma <- newgamma
@@ -113,4 +108,3 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
   }
   return(list(beta = beta, gamma = gamma, tau = tau, logL = ll))
 }
-
