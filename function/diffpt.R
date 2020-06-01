@@ -8,6 +8,7 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
   ## Pseudotime: a  vecotor of ordered cell names
   ## design: sample by feature design matrix. rownames are sample names. first column is the group partition, currently only one column.
   ## cellanno: dataframe, first column is cell names, second column is sample names.
+  design <- as.matrix(design)
   psn <- 1:length(pseudotime)
   names(psn) <- pseudotime
   psn <- psn[colnames(expr)]
@@ -25,14 +26,19 @@ diffpt <- function(expr, cellanno, pseudotime, design, num.knot=3, maxiter=10, v
   },simplify = F)
   
   ## initialize tau
-  phi_xs <- sapply(names(xs),function(i) phi[sname[[i]],] %*% t(xs[[i]]))
+  phi_xs <- sapply(names(xs),function(i) phi[sname[[i]],,drop=F] %*% t(xs[[i]]))
   phi_xs_rbind <- do.call(rbind,phi_xs)
   phi_xs_rbind <- phi_xs_rbind[colnames(expr),]
   beta <- expr %*% (phi_xs_rbind %*% chol2inv(chol(crossprod(phi_xs_rbind))))
   
   ## initialize tau
   indfit <- sapply(names(xs), function(ss){
-    expr[,sname[[ss]]] %*% (phi[sname[[ss]],] %*% chol2inv(chol(crossprod(phi[sname[[ss]],]))))
+    print(ss)
+    if (length(sname[[ss]]) > 1){
+      expr[,sname[[ss]],drop=F] %*% (phi[sname[[ss]],] %*% chol2inv(chol(crossprod(phi[sname[[ss]],]))))
+    } else {
+      expr[,sname[[ss]],drop=F] %*% t(phi[sname[[ss]],] %*% chol2inv(chol(crossprod(phi[sname[[ss]],]))))
+    }
   },simplify = F)
   indfitdiff <- sapply(names(xs), function(ss){
     indfit[[ss]] - beta %*% xs[[ss]]
