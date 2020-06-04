@@ -5,7 +5,8 @@ expr = res$expr
 selgene <- res$selgene
 pseudotime  <- res$pseudotime
 design = res$design
-
+design[c(3,4), ] <- 1
+design[c(5,6), ] <- 0
 ##### implement model
 fullmodel <- function(GeneByCellExpression, Cellanno=Cellanno, Pseudotime, Design, GeneName, num.knot=3){
   ## GeneByCellExpression: gene by cell matrix, entires and log-transformed expression
@@ -128,7 +129,6 @@ fullmodel <- function(GeneByCellExpression, Cellanno=Cellanno, Pseudotime, Desig
     ##### M step
     ### beta
     tmp2 <- lapply(names(X_s), function(ss){
-      print(ss)
       tmp <- lapply(Cellanno[Cellanno$sample==ss,'cell'], function(c){
         phi_cs_tmp <- t(Phi_s[[ss]][c,,drop=F])
         x_s_tmp <- t(X_s[[ss]])
@@ -139,7 +139,6 @@ fullmodel <- function(GeneByCellExpression, Cellanno=Cellanno, Pseudotime, Desig
     tmp2 <- Reduce('+', tmp2)     
     
     tmp3 <- lapply(names(X_s), function(ss){
-      print(ss)
       tmp <- lapply(Cellanno[Cellanno$sample==ss,'cell'], function(c){
         phi_cs_x_s_tmp <- Phi_s[[ss]][c,,drop=F] %*% X_s[[ss]]
         e_cs_tmp <- Y[c,]
@@ -176,7 +175,7 @@ fullmodel <- function(GeneByCellExpression, Cellanno=Cellanno, Pseudotime, Desig
       sum(tmp)
     })
     print(newlogL <- sum(logL))
-    
+    print(tau)
     beta <- newbeta
     gamma <- newgamma
     tau <- newtau
@@ -205,6 +204,7 @@ res$beta[[20]]
   solve(t(Phi_s[[ss]])%*% Phi_s[[ss]]) %*% t(Phi_s[[ss]]) %*% e_s_tmp - X_s[[ss]] %*% beta
 
   ##### plot
+  ## scatter
   GeneName <- 'NCBP3'
   Cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
   psn <- 1:length(pseudotime)
@@ -215,9 +215,8 @@ res$beta[[20]]
   pd = data.frame(sample=Cellanno[,'sample'], e = expr[grepl(GeneName, rownames(expr)),], time = psn[Cellanno$cell], group=sapply(Cellanno[,'sample'], function(i) ifelse(i %in% c('BM1','BM2','BM5','BM6'), 'group1','group2')))
   ggplot() + geom_point(data=pd, aes(x=time, y = e, color=sample), size=.3) + facet_grid(~sample)
 
-
+  ## scatter and fitting
   pd <- data.frame(expr=GeneByCellExpression[grep(GeneName,row.names(GeneByCellExpression)),],sample=Cellanno[match(colnames(GeneByCellExpression),Cellanno[,1]),'sample'],pd=psn[colnames(GeneByCellExpression)])
-
     psn <- 1:length(pseudotime)
     names(psn) <- pseudotime
     knots = seq(min(psn),max(psn),length.out=num.knot+2)[2:(num.knot+1)]
@@ -228,17 +227,9 @@ res$beta[[20]]
     base <- do.call(rbind, base)
     base <- base[colnames(GeneByCellExpression), ]
 
-    ## initialize data
-    num.sample <- length(unique(Cellanno[,'sample']))
-    num.coef <- num.knot + 4
-    set.seed(12345)
-    library(Matrix)
-    library(mvtnorm)
-    truetau <- tau <- diag(num.coef)/10
-    truegamma <- gamma <- abs(rnorm(nrow(design)))/10
-    names(gamma) <- row.names(Design)
-    truebeta <- beta <- rnorm(14)
-
+    tau = res$tau
+    gamma = res$gamma
+    beta = res$beta
     id = grep(GeneName, rownames(GeneByCellExpression))
     X_s <- Y_s <- Phi_s <- list()
     for (i in seq(1, nrow(Design))){
@@ -258,13 +249,9 @@ res$beta[[20]]
 
     phi <- as.matrix(.bdiag(Phi_s))
     X_til <- phi %*% X
-
-  beta <- res$beta[[length(res$beta)]]
-  # beta <- solve(t(X_til) %*% X_til) %*% t(X_til) %*% Y
-
   pd2 <- do.call(rbind,lapply(names(Phi_s),function(n) {
     fit <- Phi_s[[n]] %*% X_s[[n]] %*% beta
-    data.frame(fit=fit[,1],pd=psn[row.names(fit)],sample=n)
+    data.frame(expr=fit[,1],pd=psn[row.names(fit)],sample=n)
   }))
-  ggplot() + geom_point(data=pd,aes(x=pd,y=expr,col=sample)) + geom_line(data=pd2,aes(x=pd,y=fit)) + theme_classic() + facet_wrap(~sample)
+  ggplot() + geom_point(data=pd,aes(x=pd,y=expr)) + geom_line(data=pd2,aes(x=pd,y=expr,color='red')) + theme_classic() + facet_wrap(~sample)
 }
