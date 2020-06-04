@@ -1,4 +1,4 @@
-plotGene <- function(Gene, Mat, Order, Cellanno, Design, Stat, Alpha=1, Size=0.5, PlotPoints = FALSE, FreeScale = FALSE){
+plotGene <- function(Gene, Mat, Order, Cellanno, Design, Stat, Alpha=1, Size=0.5, PlotPoints = FALSE, FreeScale = FALSE, BySample = FALSE){
   ## Mat: gene by cell Matrix
   ## Order: dataframe, columns are: Cell, Pseudotime
   library(ggplot2)
@@ -18,28 +18,40 @@ plotGene <- function(Gene, Mat, Order, Cellanno, Design, Stat, Alpha=1, Size=0.5
     pd = cbind(pd, Pseudotime = Order[match(pd$Cell, Order$Cell),'Pseudotime'])
     pd[, 'Variable'] <- as.factor(pd[ ,'Variable'])
     linedlist <- lapply(unique(pd$Sample), function(p){
-      tMat = Mat[g,grepl(p,colnames(Mat)),drop=F]
+      tMat = Mat[Gene, which(Cellanno[,2]==p), drop=F]
       trainX = Order[match(colnames(tMat), Order$Cell),'Pseudotime']      ### use time 
-      pred <- get_spline_fit(tMat, trainX=trainX, fit.min=min(Order$Pseudotime), fit.max=max(Order$Pseudotime), num.base = 5)
+      pred <- get_spline_fit(tMat, trainX=trainX, fit.min=min(Order$Pseudotime), fit.max=max(Order$Pseudotime), num.base = 2)
       tmpdf <- data.frame(Expr=pred[1,], Pseudotime=seq(min(Order$Pseudotime),max(Order$Pseudotime),length.out = 1000), Sample=p, Variable = Design[rownames(Design) == p, 1])
     })
     ld = do.call(rbind, linedlist)
     ld[, 'Variable'] <- as.factor(ld[ ,'Variable'])
     if (PlotPoints){
-      ggplot() + 
-      geom_point(data=pd, aes(x=Pseudotime, y=Expr, color=Variable), alpha=Alpha, size=Size)  +
-      geom_line(data=ld, aes(x=Pseudotime, y=Expr, color=Variable),alpha=1, size=.5) +
-      theme_classic() +
-      scale_color_viridis(discrete = TRUE, direction = -1)+
-      ggtitle(paste0(sub(':.*','',Gene),',adjP=', formatC(Stat[g,'adj.P.Val'], format = "e", digits = 2))) +
-      xlab('Pseudotime') + ylab('Expression') + 
-      labs(col = colnames(Design)[1])
+      if (BySample){
+        ggplot() + 
+        geom_point(data=pd, aes(x=Pseudotime, y=Expr, color=Variable), alpha=Alpha, size=Size)  +
+        geom_line(data=ld, aes(x=Pseudotime, y=Expr, color=Variable),alpha=1, size=.5) +
+        theme_classic() +
+        scale_color_viridis(discrete = TRUE, direction = -1) +
+        ggtitle(paste0(sub(':.*','',Gene),',adjP=', formatC(Stat[Gene,'adj.P.Val'], format = "e", digits = 2))) +
+        xlab('Pseudotime') + ylab('Expression') + 
+        labs(col = colnames(Design)[1]) +
+        facet_wrap(~Sample, scales=a)
+      } else {
+        ggplot() + 
+        geom_point(data=pd, aes(x=Pseudotime, y=Expr, color=Variable), alpha=Alpha, size=Size)  +
+        geom_line(data=ld, aes(x=Pseudotime, y=Expr, color=Variable),alpha=1, size=.5) +
+        theme_classic() +
+        scale_color_viridis(discrete = TRUE, direction = -1)+
+        ggtitle(paste0(sub(':.*','',Gene),',adjP=', formatC(Stat[Gene,'adj.P.Val'], format = "e", digits = 2))) +
+        xlab('Pseudotime') + ylab('Expression') + 
+        labs(col = colnames(Design)[1])  
+      }
     } else {
       ggplot() + 
         geom_point(data=pd, aes(x=Pseudotime, y=Expr, color=Variable), alpha=Alpha, size=Size)  +
         theme_classic() +
         scale_color_viridis(discrete = TRUE, direction = -1)+
-        ggtitle(paste0(sub(':.*','',Gene),',adjP=', formatC(Stat[g,'adj.P.Val'], format = "e", digits = 2))) +
+        ggtitle(paste0(sub(':.*','',Gene),',adjP=', formatC(Stat[Gene,'adj.P.Val'], format = "e", digits = 2))) +
         xlab('Pseudotime') + ylab('Expression') + 
         labs(col = colnames(Design)[1])
     }
@@ -51,9 +63,9 @@ plotGene <- function(Gene, Mat, Order, Cellanno, Design, Stat, Alpha=1, Size=0.5
       pd = cbind(pd, Pseudotime = Order[match(pd$Cell, Order$Cell),'Pseudotime'], g = g)
       pdlist[[g]] <- pd
       linedlist <- lapply(unique(pd$Sample), function(p){
-        tMat = Mat[g,grepl(p,colnames(Mat)),drop=F]
+        tMat = Mat[g, which(Cellanno[,2]==p),drop=F]
         trainX = Order[match(colnames(tMat), Order$Cell),'Pseudotime']      ### use time 
-        pred <- get_spline_fit(tMat, trainX=trainX, fit.min=min(Order$Pseudotime), fit.max=max(Order$Pseudotime), num.base = 3)
+        pred <- get_spline_fit(tMat, trainX=trainX, fit.min=min(Order$Pseudotime), fit.max=max(Order$Pseudotime), num.base = 2)
         tmpdf <- data.frame(Expr=pred[1,], Pseudotime=seq(min(Order$Pseudotime),max(Order$Pseudotime),length.out = 1000), Sample=p, Variable = Design[rownames(Design) == p, 1], g = g)
       })
       ld = do.call(rbind, linedlist)
@@ -68,7 +80,7 @@ plotGene <- function(Gene, Mat, Order, Cellanno, Design, Stat, Alpha=1, Size=0.5
         geom_point(data=pd, aes(x=Pseudotime, y=Expr, color=Variable), alpha=Alpha, size=Size)  +
         geom_line(data=ld, aes(x=Pseudotime, y=Expr, color=Variable), alpha=1, size=.5) +
         theme_classic() +
-        scale_color_viridis(discrete = TRUE, direction = -1)+
+        scale_color_viridis(discrete = TRUE, direction = -1) +
         xlab('Pseudotime') + ylab('Expression') + 
         labs(col = colnames(Design)[1]) + 
         facet_wrap(~g, scales = a)
@@ -76,12 +88,11 @@ plotGene <- function(Gene, Mat, Order, Cellanno, Design, Stat, Alpha=1, Size=0.5
       ggplot() + 
         geom_line(data=ld, aes(x=Pseudotime, y=Expr, color=Variable), alpha=1, size=.5) +
         theme_classic() +
-        scale_color_viridis(discrete = TRUE, direction = -1)+
+        scale_color_viridis(discrete = TRUE, direction = -1) +
         xlab('Pseudotime') + ylab('Expression') + 
         labs(col = colnames(Design)[1]) + 
         facet_wrap(~g, scales = a)
     }
-      
   }
 }
 

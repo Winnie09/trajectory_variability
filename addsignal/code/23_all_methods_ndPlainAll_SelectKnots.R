@@ -174,11 +174,12 @@ if (!file.exists(paste0(rdir, method, '/', addSignalType,'/', geneProp,'_',addSi
     psn <- 1:length(pseudotime)
     names(psn) <- pseudotime
     pseudotime <- psn
-    testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=(detectCores()-2), permuiter=2)
+    testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=(detectCores()-2), permuiter=100)
     saveRDS(testres$fdr, paste0(rdir, method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_fdr.rds'))  
+    saveRDS(testres, paste0(rdir, method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_testres.rds'))  
     res <- data.frame(adj.P.Val = testres$fdr, stringsAsFactors = F)
     rownames(res) <- names(testres$fdr)
-    res <- res[order(res[,1]),]
+    res <- res[order(res[,1]),,drop=F]
     sensfdr <- SensFdr(Order = rownames(res), TruePositive = selgene, statistics=res)
     final <- list()
     final[['res']] <- res
