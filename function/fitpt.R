@@ -1,8 +1,8 @@
-fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
-  library(Matrix)
-  library(parallel)
-  library(splines)
-  library(matrixcalc)
+fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), parallel=TRUE) {
+  suppressMessages(library(Matrix))
+  suppressMessages(library(parallel))
+  suppressMessages(library(splines))
+  suppressMessages(library(matrixcalc))
   ## expr: gene by cell matrix, entires and log-transformed expression
   ## Pseudotime: a  vecotor of ordered cell names
   ## design: design: sample by feature design matrix. rownames are sample names. first column is 1, second column is the group partition, currently only one variable.
@@ -166,9 +166,12 @@ fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL, EMmaxiter=10
     }
     return(list(beta = beta, gamma = gamma, tau = tau, logL = ll))
   }
-  
-  allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
- 
+  if (parallel) {
+    allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
+  } else {
+    allres <- lapply(unique(knotnum),sfit)
+  } 
+
   para <- list()
   for (i in 1:length(allres)) {
     for (j in row.names(allres[[i]][[1]])) {

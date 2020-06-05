@@ -15,12 +15,12 @@ source('./function/01_function.R')
 datadir <- './addsignal/data/ndPlainAll/1256/'
 rdir <- './addsignal/result/ndPlainAll/'
 if (!file.exists(paste0(rdir, method, '/', addSignalType,'/', geneProp,'_',addSignalPara,'.rds'))){
-  library(parallel)
-  library(splines)
-  library(limma)
-  library(RColorBrewer)
-  library(SingleCellExperiment)
-  library(slingshot)
+  suppressMessages(library(parallel))
+  suppressMessages(library(splines))
+  suppressMessages(library(limma))
+  suppressMessages(library(RColorBrewer))
+  suppressMessages(library(SingleCellExperiment))
+  suppressMessages(library(slingshot))
   dir.create(paste0(rdir, method, '/', addSignalType,'/'), showWarnings = FALSE, recursive = TRUE)
   res <- readRDS(paste0(datadir,addSignalType,'/', geneProp,'_', addSignalPara,'.rds')) #####
   expr <- res$expr
@@ -174,7 +174,7 @@ if (!file.exists(paste0(rdir, method, '/', addSignalType,'/', geneProp,'_',addSi
     psn <- 1:length(pseudotime)
     names(psn) <- pseudotime
     pseudotime <- psn
-    testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=(detectCores()-2), permuiter=100)
+    testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=4, permuiter=100)
     saveRDS(testres$fdr, paste0(rdir, method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_fdr.rds'))  
     saveRDS(testres, paste0(rdir, method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_testres.rds'))  
     res <- data.frame(adj.P.Val = testres$fdr, stringsAsFactors = F)
