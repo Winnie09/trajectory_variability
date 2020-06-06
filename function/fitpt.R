@@ -26,6 +26,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL, EMmaxiter=10
         })
       }))
     }
+    maxknot <- maxknot - 1
     print('selecting the optimal knots ...')  
     diff <- mclapply(0:maxknot,function(num.knot) {
       if (num.knot==0) {

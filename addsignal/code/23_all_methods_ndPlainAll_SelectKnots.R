@@ -5,9 +5,9 @@ addSignalPara <-  as.numeric(commandArgs(trailingOnly = TRUE)[[3]])
 method <- as.character(commandArgs(trailingOnly = T)[[4]])
 ## be reminded that the pca is done on cv > 0.5 (for all samples) genes. You should redo it !!!
 # geneProp <- 0.05
-# addSignalType <- 'linear'
-# addSignalPara <-  3
-# method <- 'EM'
+# addSignalType <- 'constant'
+# addSignalPara <-  2.1
+# method <- 'EM_SelectKnots'
 
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 # setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
@@ -174,7 +174,7 @@ if (!file.exists(paste0(rdir, method, '/', addSignalType,'/', geneProp,'_',addSi
     psn <- 1:length(pseudotime)
     names(psn) <- pseudotime
     pseudotime <- psn
-    testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=4, permuiter=100)
+    testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=8, permuiter=100)
     saveRDS(testres$fdr, paste0(rdir, method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_fdr.rds'))  
     saveRDS(testres, paste0(rdir, method,'/',addSignalType,'/', geneProp,'_', addSignalPara,'_testres.rds'))  
     res <- data.frame(adj.P.Val = testres$fdr, stringsAsFactors = F)
@@ -190,4 +190,5 @@ if (!file.exists(paste0(rdir, method, '/', addSignalType,'/', geneProp,'_',addSi
   }
   rm(list=ls())
 }
+
 

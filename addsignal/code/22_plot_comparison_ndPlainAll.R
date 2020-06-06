@@ -42,7 +42,31 @@ final <- as.data.frame(final)
 final[!colnames(final)%in%c('Method','SignalType','GeneProp')] <- apply(final[!colnames(final)%in%c('Method','SignalType','GeneProp')], 2, as.numeric)
 Res2 = final[!is.na(final[,1]), ]
 
-pd <- rbind(Res1, Res2)
+###
+allfd <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/ndPlainAll/EM_SelectKnots/')
+final <- lapply(allfd, function(fd){
+  allf = list.files(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/ndPlainAll/EM_SelectKnots/', fd))
+  allf <- allf[!grepl('fdr', allf) & !grepl('res', allf)]
+  if (length(allf)>=1){
+    Res <- t(sapply(allf, function(f){
+      r <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/addsignal/result/ndPlainAll/EM_SelectKnots/', fd, '/', f))
+      if (ncol(r$perll) == 100) {
+        c(Method = 'EM_SelectKnots', r[['sensfdr']][-1], SignalType = fd, GeneProp = sub('_.*','', f), Parameter = sub('.rds','',sub('.*_','',f)))  
+      } else {
+        c(Method = '', 'Fdr.Diff', 'Area', SignalType = '', GeneProp = '', Parameter = '')
+      }
+      
+    }))
+  } else return(NA)
+})
+final <- do.call(rbind, final)
+final <- as.data.frame(final)
+final[!colnames(final)%in%c('Method','SignalType','GeneProp')] <- apply(final[!colnames(final)%in%c('Method','SignalType','GeneProp')], 2, as.numeric)
+Res3 = final[!is.na(final[,1]), ]
+
+### plot
+pd <- rbind(rbind(Res1, Res2), Res3)
+
 pd <- pd[complete.cases(pd), ]
 library(ggplot2)
 library(gridExtra)
