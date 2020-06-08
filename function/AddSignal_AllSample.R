@@ -1,10 +1,10 @@
 AddSignal_AllSample <- function(expr, SelectGene, pseudotime, method, parameter=1){
   if (length(parameter) == 1) parameter[2] <- 0
-  psn <- 1:length(pseudotime)
-  names(psn) <- pseudotime
+  psn <- pseudotime[,2]
+  names(psn) <- pseudotime[,1]
   expr <- expr[, names(psn)]
   if (method == 'constant'){
-    expr[SelectGene,] <- t(t(expr[SelectGene,]) + parameter[1]  )
+    expr[SelectGene,] <- t(t(expr[SelectGene,]) + parameter[1])
   } else if (method == 'linear'){
     expr[SelectGene,] <- t(t(expr[SelectGene,]) + psn/max(psn) * parameter[1] + parameter[2]) ###
   } else if (method == 'power'){

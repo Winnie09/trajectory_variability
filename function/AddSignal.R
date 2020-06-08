@@ -3,15 +3,13 @@ AddSignal <- function(expr, sample = NULL, SelectGene, SelectSample = NULL, pseu
     pseudotime <- pseudotime[order(pseudotime[,2]), ]
     psn <- pseudotime[,2]
     names(psn) <- pseudotime[,1]
-  } else if (as.vector(pseudotime)){
-     psn <- 1:length(pseudotime)
-     names(psn) <- pseudotime
   } else {
     'pseudotime should be a dataframe containing two columns: cell, pseudotime.'
   }
   if (type == 'all'){
-    AddSignal_AllSample(expr=expr, SelectGene = SelectGene, pseudotime =  names(psn), method = method, parameter = parameter)
+    AddSignal_AllSample(expr=expr, SelectGene = SelectGene, pseudotime =  pseudotime, method = method, parameter = parameter)
   } else {
-    AddSignal_SelectSample(expr = expr, sample = sample, SelectGene = SelectGene, SelectSample, pseudotime = names(psn), method = method, parameter = parameter)
+    AddSignal_SelectSample(expr = expr, sample = sample, SelectGene = SelectGene, SelectSample, pseudotime = pseudotime, method = method, parameter = parameter)
   }
 }
+
