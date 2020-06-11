@@ -1,9 +1,9 @@
 geneProp <- as.numeric(commandArgs(trailingOnly = TRUE)[[1]])
 addSignalType <- as.character(commandArgs(trailingOnly = TRUE)[[2]])
 addSignalPara <-  as.numeric(commandArgs(trailingOnly = TRUE)[[3]])
-geneProp <- 0.05
-addSignalType <- 'linear'
-addSignalPara <-  1
+# geneProp <- 0.05
+# addSignalType <- 'linear'
+# addSignalPara <-  1
 method = as.character(commandArgs(trailingOnly = T)[[4]])
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 rdir <- './testvar/result/plain/'
@@ -22,7 +22,7 @@ d <- readRDS(paste0(datadir, addSignalType, '/', geneProp, '_', addSignalPara, '
 expr <- d$expr
 selgene <- d$selgene
 design <- d$design
-dir.create(paste0(rdir, method), recursive = T, showWarnings = F)
+dir.create(paste0(rdir, method, '/', addSignalType), recursive = T, showWarnings = F)
 pseudotime <- readRDS('./testtime/data/data/null/pseudotime.rds')
 
 cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
@@ -60,7 +60,7 @@ if (grepl('tradeSeq', method)){
   set.seed(12345)
   sce <- fitGAM(counts = counts, pseudotime = pdt, cellWeights = cellWeights,
                 nknots = 6, verbose = FALSE,parallel=TRUE)
-  saveRDS(sce, paste0(rdir, method,'/sce.rds'))
+  saveRDS(sce, paste0(sub('.rds', '', fn), '_sce.rds'))
   
   Final <- list()
   for (TestType in (c('diffEndTest', 'patternTest', 'earlyDETest'))){
