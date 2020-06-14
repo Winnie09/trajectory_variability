@@ -1,4 +1,5 @@
 geneProp <- 0.2
+
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 rdir <- './testtime/data/data/'
 ### load saver, and count matrix
@@ -71,6 +72,7 @@ colnames(pd) <- c('pt','cluster','expr')
 # ggplot(pd,aes(x=pt,y=expr)) + geom_point(col='grey', size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('scaled expression')
 saveRDS(clu, paste0(rdir, 'null/geneCluster.rds'))
 
+
 ### add signal to permuted expression (both cnt and expr) 
 dir.create(paste0(rdir, 'count/'), showWarnings = F, recursive = T)
 dir.create(paste0(rdir, 'saver/'), showWarnings = F, recursive = T)
@@ -79,14 +81,9 @@ for( i in seq(1,10)){
   print(i)
   for (j in seq(1,4)) {
     # i = 9
+    
     clumat = expr[names(clu[clu==i]), ]
-    # s <- names(sort(apply(clumat,1,sd)/rowMeans(clumat))) ####
-    sds <- sapply(unique(allp), function(p){
-      tmp <- clumat[, allp == p]
-      sd <- apply(tmp, 1, sd)   
-      rank(sd)
-    })
-    s <- names(sort(rowMeans(sds), decreasing = TRUE))
+    s <- names(sort(apply(clumat,1,sd)/rowMeans(clumat)))
     
     # j = 1:4
     set.seed(12345)
@@ -95,7 +92,6 @@ for( i in seq(1,10)){
     resexpr <-  pmmat[selgene, pt[,1]] + addexpr
     mat <- rbind(resexpr[selgene, pt[,1]], pmmat[othgene, pt[,1]])
     saveRDS(mat, paste0(rdir, 'saver/clusterType', i, '_', j,'.rds'))
-    saveRDS(list(selgene = rownames(pmmat), addgene = rownames(addexpr)), paste0(rdir, 'saver/clusterType', i, '_', j,'_selgene_addgene.rds'))
     
     addexpr <- cnt[addgene, pt[,1]]
     resexpr <-  pmcnt[selgene, pt[,1]] + addexpr
