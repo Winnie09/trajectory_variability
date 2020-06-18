@@ -67,7 +67,7 @@ rownames(clumean) <- 1:nrow(clumean)
 library(reshape2)
 pd <- melt(clumean)
 colnames(pd) <- c('pt','cluster','expr')
-ggplot(pd,aes(x=pt,y=expr)) + geom_point(col='grey', size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('scaled expression')
+#ggplot(pd,aes(x=pt,y=expr)) + geom_point(col='grey', size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('scaled expression')
 # clumean <- sapply(1:10,function(i) colMeans(expr1[names(clu[clu==i]),, drop=F]))
 # clumean <- clumean[pt[,1][pt[,1] %in% colnames(tmp1)], ]
 # # rownames(clumean) <- 1:nrow(clumean)

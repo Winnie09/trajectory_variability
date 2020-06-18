@@ -95,7 +95,7 @@ for( i in seq(1,10)){
     resexpr <-  pmmat[selgene, pt[,1]] + addexpr
     mat <- rbind(resexpr[selgene, pt[,1]], pmmat[othgene, pt[,1]])
     saveRDS(mat, paste0(rdir, 'saver/clusterType', i, '_', j,'.rds'))
-    saveRDS(list(selgene = rownames(pmmat), addgene = rownames(addexpr)), paste0(rdir, 'saver/clusterType', i, '_', j,'_selgene_addgene.rds'))
+    saveRDS(list(selgene = selgene, addgene = rownames(addexpr)), paste0(rdir, 'saver/clusterType', i, '_', j,'_selgene_addgene.rds'))
     
     addexpr <- cnt[addgene, pt[,1]]
     resexpr <-  pmcnt[selgene, pt[,1]] + addexpr
