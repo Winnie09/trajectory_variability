@@ -1,7 +1,7 @@
 testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
-  psn <- pseudotime[,2]
-  names(psn) <- pseudotime[,1]
-  pseudotime <- psn
+  #psn <- pseudotime[,2]
+  #names(psn) <- pseudotime[,1]
+  #pseudotime <- psn
   orifit <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores,parallel=FALSE)
   knotnum <- orifit$knotnum
   orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)
@@ -54,6 +54,6 @@ testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EM
   fdr <- p.adjust(pval,method='fdr')
   names(fdr) <- row.names(perll)
   foldchange <- orill - rowMeans(perll)
-  return(list(fdr = fdr, perll = perll, knotnum = knotnum, foldchange = foldchange, parameter=orifit$parameter))
+  return(list(fdr = fdr, perll = perll, knotnum = knotnum, foldchange = foldchange, parameter=orifit$parameter, pseudotime = pseudotime))
 }
 
