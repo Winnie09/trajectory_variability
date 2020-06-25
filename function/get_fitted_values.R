@@ -1,5 +1,6 @@
 get_fitted_values <- function(testObj, Gene, Pseudotime=NULL){
   ### testObj: test result from testpt_Time
+  library(splines)
   mat = matrix(0, nrow = length(Gene),ncol=length(Pseudotime),dimnames = list(Gene,NULL))
   num.knot = testObj$knotnum[Gene]
   if (is.null(Pseudotime)){
