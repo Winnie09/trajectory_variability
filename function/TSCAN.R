@@ -2,6 +2,11 @@ library(mgcv)
 library(parallel)
 
 TSCAN_group <- function(expr,pseudotime,branch, parallel = FALSE, n.cores = 8) {
+ # expr: saver imputed matrix
+ # count: count matrix
+ # pseudotime: numeric vector (1,2,3,4....) with names same as colnames(expr)
+ # branch: 0,1 vector indicating whether each cell is from group 1 or 2, can get from as.numeric(sub(':.*','',colnames(expr)) %in% paste0('BM',c(1,2,5,6)))
+ # cell_coords: the pca you sent me, only use the first 4 (if correct) dimensions
   if (parallel){
     pval <- mclapply(row.names(expr),function(g) {
       x <- expr[g,]
