@@ -1,9 +1,10 @@
-testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=8) {
   design = as.matrix(design[,1,drop=F])
   design[,1] <- 1
   #psn <- pseudotime[,2]
   #names(psn) <- pseudotime[,1]
   #pseudotime <- psn
+  set.seed(12345)
   orifit <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores,parallel=T)
   knotnum <- orifit$knotnum
   orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)

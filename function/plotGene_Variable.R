@@ -6,7 +6,7 @@ plotGene_Variable <- function(testptObj, Gene, Mat, Pseudotime, Cellanno, Design
   library(viridis)   
   Order <- data.frame(Cell = names(Pseudotime), Pseudotime = Pseudotime, stringsAsFactors = FALSE)
   colnames(Cellanno) <- c('Cell', 'Sample')
-  Mat <- Mat[, Cellanno[,1]]
+  Mat <- Mat[, Cellanno[,1], drop=F]
   knotnum <- testptObj$knotnum
   knotnum[knotnum==0] <- 1  ## in case the fitting of line would cause bugs
   

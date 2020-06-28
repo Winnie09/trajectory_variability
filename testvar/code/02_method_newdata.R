@@ -3,7 +3,7 @@ pctGene <- as.numeric(commandArgs(trailingOnly = T)[[2]])
 method <- as.character(commandArgs(trailingOnly = T)[[3]])
 
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
-rdir <- './testvar/result/'
+rdir <- './testvar/result/newdata/'
 ddir <- './testvar/data/data/'
 fn <- paste0(rdir, method,'/clusterType', clusterType, '_', pctGene,'.rds')
 print(fn)

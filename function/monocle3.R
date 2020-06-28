@@ -1,9 +1,10 @@
 monocle3_group <- function(expr,branch) {
   res <- mclapply(row.names(expr),function(i) {
-    summary(speedglm::speedglm(expr[i,]~branch,family = stats::gaussian(),acc=1e-3, model=FALSE,y=FALSE))$coefficients[2,3:4]
+    tmp <- summary(speedglm::speedglm(expr[i,]~branch,family = stats::gaussian(),acc=1e-3, model=FALSE,y=FALSE))$coefficients[2,3:4]
+    c(tmp[1,1],as.numeric(as.character(tmp[1,2])))
   },mc.cores=detectCores())
   names(res) <- row.names(expr)
-  res <- do.call(rbind,res)
+  res <- data.frame(do.call(rbind,res))
   colnames(res)[2] <- 'pval'
   res$fdr <- p.adjust(res$pval,method='fdr')
   res
