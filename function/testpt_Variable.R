@@ -1,9 +1,7 @@
-testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=8) {
-  #psn <- pseudotime[,2]
-  #names(psn) <- pseudotime[,1]
-  #pseudotime <- psn
+testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=10) {
+  # pseudotime: a numeric vector of pseudotime, and the names are cell names
   set.seed(12345)
-  orifit <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores,parallel=FALSE)
+  orifit <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores,parallel=TRUE)
   knotnum <- orifit$knotnum
   orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)
   orill <- orill[row.names(expr)]
@@ -24,7 +22,7 @@ testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EM
       psn <- pseudotime[colnames(expr)]
       psn <- psn[sampcell]
       colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
+      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1,parallel=F)
       perfit <- sapply(perfit$parameter,function(i) unname(i$ll))
       perfit <- perfit[row.names(expr)]
     })
@@ -44,7 +42,7 @@ testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EM
       psn <- pseudotime[colnames(expr)]
       psn <- psn[sampcell]
       colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
+      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1,parallel=F)
       perfit <- sapply(perfit$parameter,function(i) unname(i$ll))
       perfit <- perfit[row.names(expr)]
     }, mc.cores = ncores)

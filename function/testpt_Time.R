@@ -1,4 +1,4 @@
-testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=8) {
+testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=10) {
   design = as.matrix(design[,1,drop=F])
   design[,1] <- 1
   #psn <- pseudotime[,2]
@@ -20,7 +20,7 @@ testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxi
       prepsn <- psn
       set.seed(did)
       names(prepsn) <- sample(names(prepsn))
-      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=prepsn, design=design, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
+      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=prepsn, design=design, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, parallel=F)
       perfit <- sapply(perfit$parameter,function(i) unname(i$ll))
       perfit <- perfit[row.names(expr)]
     })
@@ -35,7 +35,7 @@ testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxi
       prepsn <- psn
       set.seed(did)
       names(prepsn) <- sample(names(prepsn))
-      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=prepsn, design=design, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
+      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=prepsn, design=design, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, parallel = F)
       perfit <- sapply(perfit$parameter,function(i) unname(i$ll))
       perfit <- perfit[row.names(expr)]
     }, mc.cores = ncores)
