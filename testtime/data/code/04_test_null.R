@@ -30,6 +30,12 @@ pseudotime <- do.call(rbind, ptlist)
 design = cbind(1,design)
 cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
 
+# > str(pseudotime)
+# 'data.frame': 13269 obs. of  3 variables:
+#  $ cell      : chr  "BM4:29:male_164021" "BM4:29:male_280662" "BM4:29:male_76213" "BM4:29:male_56540" ...
+#  $ pseudotime: int  250 4362 4437 7898 4975 3665 11342 464 6586 10414 ...
+#  $ sample    : chr  "BM4" "BM4" "BM4" "BM4" ...
+
 if (method == 'EM_SelectKnots'){
   testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=8, permuiter=100, type = 'Time')
   saveRDS(testres, paste0(rdir, method, '/testres.rds'))
@@ -74,3 +80,30 @@ if (grepl('tradeSeq', method)){
   }
   saveRDS(Final, paste0(rdir, method,'/testres.rds'))  
 }
+
+if (method == 'tscan'){
+  psn <- as.numeric(pseudotime[,2])
+  names(psn) <- pseudotime[,1]
+  expr <- expr[, pseudotime[,2]]
+  res <- TSCAN_time(expr=expr,pseudotime=psn)
+  saveRDS(res, paste0(rdir, method,'/testres.rds'))  
+}
+
+if (method == 'monocle2'){
+  psn <- as.numeric(pseudotime[,2])
+  names(psn) <- pseudotime[,1]
+  expr <- expr[, pseudotime[,2]]
+  res <- monocle2_time(expr=expr,pseudotime=psn)
+  saveRDS(res, paste0(rdir, method,'/testres.rds'))
+}
+
+if (method == 'monocle3'){
+  psn <- as.numeric(pseudotime[,2])
+  names(psn) <- pseudotime[,1]
+  expr <- expr[, pseudotime[,2]]
+  pca = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/testtime/data/data/null/hsc_mep_ery_integrated_pca.rds')
+  res <- monocle3_time(expr=expr, cell_coords = pca[,1:4])
+  saveRDS(res, paste0(rdir, method,'/testres.rds'))
+}
+
+

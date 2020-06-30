@@ -18,7 +18,6 @@ row.names(design) <- paste0('BM',1:8)
 colnames(design) <- 'group'
 
 pseudotime <- readRDS('./testtime/data/data/null/pseudotime.rds')
-
 cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
 
 if (method == 'EM_SelectKnots'){
@@ -68,4 +67,33 @@ if (grepl('tradeSeq', method)){
   saveRDS(Final, paste0(rdir, method,'/testres.rds'))  
 } 
 
+if (method == 'tscan'){
+  psn = pseudotime[,2]
+  names(psn) = pseudotime[,1]
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  res = TSCAN_group(expr, psn, branch)
+  saveRDS(res, fn)  
+}
+
+if (method == 'monocle2'){
+  psn = pseudotime[,2]
+  names(psn) = pseudotime[,1]
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  res = monocle2_group(expr, psn, branch)
+  saveRDS(res, fn)  
+}
+
+if (method == 'monocle3'){
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  res = monocle3_group(expr, branch)
+  saveRDS(res, fn)  
+}
+
+warnings()
+
+# expr: saver imputed matrix
+# count: count matrix
+# pseudotime: numeric vector (1,2,3,4....) with names same as colnames(expr)
+# branch: 0,1 vector indicating whether each cell is from group 1 or 2, can get from as.numeric(sub(':.*','',colnames(expr)) %in% paste0('BM',c(1,2,5,6)))
+# cell_coords: the pca you sent me, only use the first 4 (if correct) dimensions
 
