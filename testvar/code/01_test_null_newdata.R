@@ -70,23 +70,23 @@ if (grepl('tradeSeq', method)){
 if (method == 'tscan'){
   psn = pseudotime[,2]
   names(psn) = pseudotime[,1]
-  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 1] == 1) + 0))
   res = TSCAN_group(expr, psn, branch)
-  saveRDS(res, fn)  
+  saveRDS(res, paste0(rdir, method, '/testres.rds'))
 }
 
 if (method == 'monocle2'){
   psn = pseudotime[,2]
   names(psn) = pseudotime[,1]
-  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 1] == 1) + 0))
   res = monocle2_group(expr, psn, branch)
-  saveRDS(res, fn)  
+  saveRDS(res, paste0(rdir, method, '/testres.rds'))
 }
 
 if (method == 'monocle3'){
-  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 1] == 1) + 0))
   res = monocle3_group(expr, branch)
-  saveRDS(res, fn)  
+  saveRDS(res, paste0(rdir, method, '/testres.rds'))
 }
 
 warnings()

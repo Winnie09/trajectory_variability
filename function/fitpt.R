@@ -1,5 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL,maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), parallel=TRUE,seed=12345) {
-  set.seed(seed)
+fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL,maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), parallel=TRUE) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
@@ -39,9 +38,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL,maxknotallowe
         phi <- cbind(1,bs(pseudotime,knots = knots))  
       }
       rowSums(sapply(1:5,function(cvid) {
-        print(cvid)
         rowSums(sapply(names(sname), function(ss){
-          print(ss)
           traincell <- intersect(sname[[ss]],unlist(id[-cvid]))
           testcell <- intersect(sname[[ss]],id[[cvid]])
           fit <- sexpr[[ss]][,traincell,drop = F] %*% (phi[traincell,,drop=F] %*% chol2inv(chol(crossprod(phi[traincell,,drop=F])))) %*% t(phi[testcell,,drop=F])  ##
@@ -59,7 +56,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL,maxknotallowe
     knotnum <- c(0:maxknot)[apply(diff,1,which.min)]
     names(knotnum) <- row.names(expr)  
   }
- 
+  print('Solving EM ...') 
   sfit <- function(num.knot) {
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F]
@@ -112,7 +109,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, knotnum=NULL,maxknotallowe
     names(ll) <- gid
     gidr <- gid
     while (iter < EMmaxiter && length(gidr) > 0) {
-      print(iter)
       llold <- ll
       sexpr <- sapply(sexpr,function(i) i[gidr,,drop=F],simplify = F)
       E_phi_u_e <- phi_xs_beta <- phi_tau_phi <- list()

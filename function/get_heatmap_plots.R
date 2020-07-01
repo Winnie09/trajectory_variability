@@ -77,6 +77,6 @@ get_heatmap_plots <- function(testptObj, Mat, Pseudotime, Cellanno, Design, Max.
     xlab('Pseudotime') +
     ylab('Gene') +
     labs(fill = 'Association Level')
-  return(list(heatmap.plot = heatmap.plot, dendro.plot = dendro.plot))
+  return(list(heatmap.plot = heatmap.plot, dendro.plot = dendro.plot, heatmap.data = otter.scaled, dendro.data = otter.dendro))
 }
 
