@@ -1,4 +1,4 @@
-testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=10) {
+testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=10) {
   expr <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   design = as.matrix(design[,1,drop=F])
@@ -57,7 +57,7 @@ testpt_Time <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxi
       perpsn <- perpsn[sampcell]
       colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
       ### run algo
-      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=prepsn, design=design, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, parallel = F)
+      perfit <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, knotnum=NULL, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, parallel = F)
       perfit <- sapply(perfit$parameter,function(i) unname(i$ll))
       perfit <- perfit[row.names(expr)]
     }, mc.cores = ncores)

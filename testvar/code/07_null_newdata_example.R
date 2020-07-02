@@ -1,4 +1,4 @@
-method = as.character(commandArgs(trailingOnly = T)[[1]])
+# method = as.character(commandArgs(trailingOnly = T)[[1]])
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 rdir <- './testvar/result/newdata/null/' ##########
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/function.R')
@@ -7,7 +7,7 @@ suppressMessages(library(parallel))
 suppressMessages(library(splines))
 suppressMessages(library(limma))
 
-dir.create(paste0(rdir, method), recursive = T, showWarnings = F)
+# dir.create(paste0(rdir, method), recursive = T, showWarnings = F)
 expr <- readRDS('./hca/data/HCA/proc/matrix/saver.rds')
 ct <- readRDS('./hca/data/HCA/proc/ct/sc.rds')
 id <- which(ct %in% c('HSC','MEP','Ery'))
@@ -77,7 +77,7 @@ deg.monocle2 = rownames(r.monocle2[r.monocle2[,3] < 0.05,])
 deg.monocle3 = rownames(r.monocle3[r.monocle3[,3] < 0.05,])
 
 v = names(which(table(c(deg.tradeseq1, deg.tradeseq2, deg.tradeseq3, deg.tscan, deg.monocle2, deg.monocle3)) == 6))
-g = "AATF:ENSG00000275700"
+g = v[2]
 r.tradeseq[[1]][[1]][g, 3]
 r.tradeseq[[2]][[1]][g, 3]
 r.tradeseq[[3]][[1]][g, 3]
@@ -85,5 +85,21 @@ r.tscan[g, 3]
 r.monocle2[g, 3]
 r.monocle3[g, 3]
 r.em$fdr[g]
-plotGene(testptObj = r.em, Gene = g, Mat = expr, Pseudotime = pseudotime, Cellanno = cellanno, Design = design,  Alpha=0.1, Size=0.2, PlotPoints = TRUE, FreeScale = FALSE, BySample = FALSE, type = 'Variable')
+plotGene(testptObj = r.em, Gene = g, Mat = expr, Pseudotime = pseudotime, Cellanno = cellanno, Design = design,  Alpha=0.1, Size=0.2, PlotPoints = F, FreeScale = FALSE, BySample = FALSE, type = 'Variable')
+plotGene(testptObj = r.em, Gene = g, Mat = expr, Pseudotime = pseudotime, Cellanno = cellanno, Design = design,  Alpha=0.5, Size=0.2, PlotPoints = T, FreeScale = FALSE, BySample = FALSE, type = 'Variable')
+
+
+
+num.FP <- c(sum(r.tradeseq[[1]][[1]][,3] < 0.05),
+sum(r.tradeseq[[2]][[1]][,3] < 0.05),
+sum(r.tradeseq[[3]][[1]][,3] < 0.05, na.rm = TRUE),
+sum(r.tscan[,3] < 0.05),
+sum(r.monocle2[,3] < 0.05),
+sum(r.monocle3[,3] < 0.05))
+df = data.frame(method = c('tradeSeq_diffEndTest', 'tradeSeq_patternTest', 'tradeSeq_earlyDETest', 'TSCAN', 'Monocle2', 'Monocle3', 'Our method'), num.FP = c(num.FP, 0))
+library(ggplot2)
+ggplot() + geom_bar(data = df, aes(x = method, y = num.FP, fill = method),stat='identity') + 
+  theme_classic()+
+  theme(legend.position = 'none') +
+  theme(axis.text.x = element_text(angle=45, hjust = 1))
 

@@ -1,4 +1,4 @@
-testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=10) {
+testpt_Variable <- function(expr, cellanno, pseudotime, design, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=10) {
   # pseudotime: a numeric vector of pseudotime, and the names are cell names
   set.seed(12345)
   orifit <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores,parallel=TRUE)
