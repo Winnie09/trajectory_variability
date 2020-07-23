@@ -1,8 +1,6 @@
 clusterType <- as.numeric(commandArgs(trailingOnly = T)[[1]])
 pctGene <- as.numeric(commandArgs(trailingOnly = T)[[2]])
 method <- as.character(commandArgs(trailingOnly = T)[[3]])
-geneProp <- 0.05
-
 
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 source('./function/01_function.R')
@@ -95,6 +93,7 @@ if (method == 'monocle2'){
 
 
 if (method == 'monocle3'){
+  library(spdep)
   expr <- readRDS(paste0(ddir, 'saver/clusterType', clusterType, '_', pctGene, '.rds'))
   psn <- as.numeric(pseudotime[,2])
   names(psn) <- pseudotime[,1]
