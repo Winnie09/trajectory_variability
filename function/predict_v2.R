@@ -1,4 +1,4 @@
-predict_v2 <- function(Knotnum, Design, Cellanno, Pseudotime, Resolution = 1000){
+predict_fitting_v2 <- function(Knotnum, Design, Cellanno, Pseudotime, Resolution = 1000){
   philist <- lapply(seq(0, max(Knotnum)), function(num.knot) {
     if (num.knot==0) {
       phi <- cbind(1,bs(Pseudotime))

@@ -20,11 +20,9 @@ plotGene_Variable_coloredBySample <- function(testptObj, Gene, Mat, Pseudotime, 
     pd <- data.frame(Expr = Mat[Gene, ], Cell = Cellanno[,1], Sample = Cellanno[,2], Variable = Design[match(Cellanno[,2], rownames(Design)), 1])
     pd = cbind(pd, Pseudotime = Order[match(pd$Cell, Order$Cell),'Pseudotime'])
     pd[, 'Variable'] <- as.factor(pd[ ,'Variable'])
-    linedlist <- lapply(unique(pd$Sample), function(p){
-      tMat = Mat[Gene, which(Cellanno[,2]==p), drop=F]
-      trainX = Order[match(colnames(tMat), Order$Cell),'Pseudotime']      ### use time 
-      pred <- get_spline_fit(tMat, trainX=trainX, fit.min=min(Order$Pseudotime), fit.max=max(Order$Pseudotime), num.base = knotnum[Gene])
-      tmpdf <- data.frame(Expr=pred[1,], Pseudotime=seq(min(Order$Pseudotime),max(Order$Pseudotime),length.out = 1000), Sample=p, Variable = Design[rownames(Design) == p, 1])
+    linedlist <- lapply(unique(testptObj$cellanno[,2]), function(p){
+      tmpcell <- testptObj$cellanno[testptObj$cellanno[,2]==p,1]
+      tmpdf <- data.frame(Expr=testptObj$predict.values[Gene,tmpcell], Pseudotime=testptObj$pseudotime[tmpcell], Sample=p, Variable = Design[rownames(Design) == p, 1])
     })
     ld = do.call(rbind, linedlist)
     ld[, 'Variable'] <- as.factor(ld[ ,'Variable'])
@@ -65,11 +63,9 @@ plotGene_Variable_coloredBySample <- function(testptObj, Gene, Mat, Pseudotime, 
       pd <- data.frame(Expr = Mat[g, ], Cell = Cellanno[,1], Sample = Cellanno[,2], Variable = Design[match(Cellanno[,2], rownames(Design)), 1])
       pd = cbind(pd, Pseudotime = Order[match(pd$Cell, Order$Cell),'Pseudotime'], g = g)
       pdlist[[g]] <- pd
-      linedlist <- lapply(unique(pd$Sample), function(p){
-        tMat = Mat[g, which(Cellanno[,2]==p),drop=F]
-        trainX = Order[match(colnames(tMat), Order$Cell),'Pseudotime']      ### use time 
-        pred <- get_spline_fit(tMat, trainX=trainX, fit.min=min(Order$Pseudotime), fit.max=max(Order$Pseudotime), num.base = knotnum[g])
-        tmpdf <- data.frame(Expr=pred[1,], Pseudotime=seq(min(Order$Pseudotime),max(Order$Pseudotime),length.out = 1000), Sample=p, Variable = Design[rownames(Design) == p, 1], g = g)
+      linedlist <- lapply(unique(testptObj$cellanno[,2]), function(p){
+        tmpcell <- testptObj$cellanno[testptObj$cellanno[,2]==p,1]
+        tmpdf <- data.frame(Expr=testptObj$predict.values[g,tmpcell], Pseudotime=testptObj$pseudotime[tmpcell], Sample=p, Variable = Design[rownames(Design) == p, 1],g=g)
       })
       ld = do.call(rbind, linedlist)
       ldlist[[g]] <- ld

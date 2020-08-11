@@ -1,4 +1,4 @@
-predict_v3 <- function(knotnum, design, cellanno, pseudotime){
+predict_fitting <- function(knotnum, design, cellanno, pseudotime){
   ## make the cells order according to pseudotime order
   pseudotime = pseudotime[order(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
