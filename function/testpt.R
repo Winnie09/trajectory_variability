@@ -1,12 +1,6 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(),type='Time') {
-  if (is.data.frame(pseudotime)) {
-    pseudotime <- data.frame(Cell = pseudotime[,1], Pseudotime = as.numeric(pseudotime[,2]), stringsAsFactors = FALSE)
-    pseudotime <- pseudotime[order(pseudotime[,2]), ]
-    psn <- pseudotime[,2]
-    names(psn) <- pseudotime[,1]
-    pseudotime <- psn
-  }
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(),type='Time', test.type = 'slope', test.position = 'all', fit.resolution = 1000) {
   set.seed(12345)
+  cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   expr <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   if (type=='Time') {
@@ -15,6 +9,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   }
   
   fitfunc <- function(iter) {
+    print(paste0('iteration ', iter, ' ...'))
     if (iter==1) {
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
     } else {
@@ -46,13 +41,13 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           perdn <- paste0(as.vector(perdesign),collapse = '_')  
         }
         row.names(perdesign) <- row.names(design)
-        sampcell <- sample(1:ncol(expr),replace=T)
+        sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
         perexpr <- expr[,sampcell,drop=F]
         percellanno <- cellanno[sampcell,,drop=F]
         psn <- pseudotime[colnames(expr)]
         psn <- psn[sampcell]
         colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.type = test.type, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
       }
     }
   }
@@ -66,8 +61,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   orifit <- fit[[1]]
   knotnum <- orifit$knotnum
   orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
-  perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)])
-
+  print('performing permutation test ...')
+  perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+  print('calculationg p-values ...')
   pval <- sapply(1:nrow(perll), function(i) {
     z <- perll[i,]
     den <- density(z,bw='SJ')$bw
@@ -76,7 +72,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   fdr <- p.adjust(pval,method='fdr')
   names(fdr) <- row.names(perll)
   foldchange <- orill - rowMeans(perll)
-  return(list(fdr = fdr, orill=orill, perll = perll, knotnum = knotnum, foldchange = foldchange, parameter=orifit$parameter, pseudotime = pseudotime))
+  print('predicting fitted curves ...')
+  pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
+  return(list(fdr = fdr, orill=orill, perll = perll, knotnum = knotnum, foldchange = foldchange, parameter=orifit$parameter, pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
 }
-
 

@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design,maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.type = 'all', test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
@@ -24,19 +24,7 @@ fitpt <- function(expr, cellanno, pseudotime, design,maxknotallowed=30, EMmaxite
   
   maxknot <- 0
   testpos <- 1
-  
-  # id <- split(sample(colnames(expr)),ceiling(seq_along(colnames(expr))/(ncol(expr)/5)))
-  # while (testpos == 1 & maxknot < maxknotallowed) {
-  #   maxknot <- maxknot + 1
-  #   phi <- philist[[as.character(maxknot)]]
-  #   testpos <- mean(sapply(1:5,function(cvid) {
-  #     sapply(names(sname), function(ss){
-  #       traincell <- intersect(sname[[ss]],unlist(id[-cvid]))
-  #       is.positive.definite(crossprod(phi[traincell,,drop=F]))
-  #     })
-  #   }))
-  # }
-  
+
   while (testpos & maxknot < maxknotallowed) {
     maxknot <- maxknot + 1
     phi <- philist[[as.character(maxknot)]]
@@ -46,25 +34,8 @@ fitpt <- function(expr, cellanno, pseudotime, design,maxknotallowed=30, EMmaxite
   }
   
   maxknot <- maxknot - 1
-  print('selecting the optimal knots ...')  
   sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
-  
-  # diff <- Reduce('+', lapply(1:5,function(cvid) {
-  #   Reduce('+', lapply(names(sname), function(ss){
-  #     traincell <- intersect(sname[[ss]],unlist(id[-cvid]))
-  #     testcell <- intersect(sname[[ss]],id[[cvid]])
-  #     traindata <- sexpr[[ss]][,traincell,drop = F]
-  #     testdata <- sexpr[[ss]][,testcell,drop=F]
-  #     tmp <- sapply(0:maxknot,function(num.knot) {
-  #       phi <- philist[[as.character(num.knot)]]
-  #       fit <- traindata %*% (phi[traincell,,drop=F] %*% chol2inv(chol(crossprod(phi[traincell,,drop=F])))) %*% t(phi[testcell,,drop=F])  ##
-  #       rowSums((fit-testdata)^2) ##   
-  #     })
-  #   }))
-  # }))
-  
-  
-  
+
   bicfunc <- function(num.knot) {
     phi <- philist[[as.character(num.knot)]]
     ll <- sapply(names(sname), function(ss) {
@@ -96,9 +67,55 @@ fitpt <- function(expr, cellanno, pseudotime, design,maxknotallowed=30, EMmaxite
     phicrossprod <- sapply(names(sname),function(ss) phicrossprod[,sname[[ss]]],simplify = F)
     phi <- sapply(names(sname),function(ss) phi[sname[[ss]],],simplify = F)
     
-    xs <- sapply(row.names(design),function(i) {
+    # --------------
+    # change here >>
+    # --------------
+    design = design[rownames(ori.design), ]
+    xs <- sapply(row.names(ori.design),function(i) {  
+      kronecker(diag(num.knot + 4), ori.design[i,])
+    },simplify = F)
+    xs_test <- sapply(row.names(design),function(i) {  
       kronecker(diag(num.knot + 4),design[i,])
     },simplify = F)
+    
+    if (test.type == 'slope'){
+      if (is.na(test.position)){
+        for (id in seq(1, length(xs))){
+          xs[[id]][, seq(2, ncol(xs[[1]]))] <- xs_test[[id]][,seq(2, ncol(xs[[1]]))]
+        }
+      } else if (test.position == 'start'){  ## check
+        for (id in seq(1, length(xs))){
+          xs[[id]][,seq(2, ceiling(ncol(xs[[1]])/3))] <- xs_test[[id]][,seq(2, ceiling(ncol(xs[[1]])/3))]
+        }
+      } else if (test.position == 'middle'){## check
+        for (id in seq(1, length(xs))){
+          xs[[id]][,seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3))] <- xs_test[[id]][,seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3))]
+        }
+      } else if (test.position == 'end'){ ## check
+        for (id in seq(1, length(xs))){
+          xs[[id]][, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]])))] <- xs_test[[id]][,seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]])))]
+        }
+    } else if (test.type == 'all'){
+      if (is.na(test.position)){
+        xs <- xs_test
+      } else if (test.position == 'start'){
+        for (id in seq(1, length(xs))){
+          xs[[id]][, c(1, seq(2, ceiling(ncol(xs[[1]])/3)))] <- xs_test[[id]][ , c(1, seq(2, ceiling(ncol(xs[[1]])/3)))]
+        }
+      } else if (test.position == 'middle'){
+        for (id in seq(1, length(xs))){
+          xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))]
+        }
+      } else if (test.position == 'end'){
+        for (id in seq(1, length(xs))){
+          xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))]
+        }
+      }
+    }
+    }
+    # --------------
+    # change here <<
+    # --------------
     
     ## initialize tau
     phi_xs <- sapply(names(xs),function(ss) phi[[ss]] %*% t(xs[[ss]]))
@@ -219,3 +236,4 @@ fitpt <- function(expr, cellanno, pseudotime, design,maxknotallowed=30, EMmaxite
   }
   list(parameter=para,knotnum=knotnum)
 }
+

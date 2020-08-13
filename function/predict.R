@@ -1,7 +1,5 @@
-predict_fitting <- function(knotnum, design, cellanno, pseudotime){
+predict_fitting <- function(expr, knotnum, design, cellanno, pseudotime){
   ## make the cells order according to pseudotime order
-  pseudotime = pseudotime[order(pseudotime)]
-  cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   ## fitting
   philist <- lapply(seq(0, max(knotnum)), function(num.knot) {
     if (num.knot==0) {
@@ -18,7 +16,7 @@ predict_fitting <- function(knotnum, design, cellanno, pseudotime){
     phi <- philist[[as.character(knot.num)]]
     do.call(cbind,lapply(names(sname),function(ss) {
       phiss <- phi[sname[[ss]],,drop=F]
-      sexpr[[ss]] %*% (phiss %*% chol2inv(chol(crossprod(phiss)))) %*% t(phiss)
+      sexpr[[ss]][knotnum==knot.num,,drop=F] %*% (phiss %*% chol2inv(chol(crossprod(phiss)))) %*% t(phiss)
     }))
   }))
   pred <- pred[rownames(expr), colnames(expr)]
