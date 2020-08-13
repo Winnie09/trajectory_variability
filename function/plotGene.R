@@ -121,6 +121,3 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
 }
 
 
-
-
-
