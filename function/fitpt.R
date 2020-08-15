@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.type = 'all', test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.slope.only = FALSE, test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
@@ -58,7 +58,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
   names(knotnum) <- row.names(expr)
   
-  print('Solving EM ...') 
   sfit <- function(num.knot) {
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F]
@@ -77,8 +76,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     xs_test <- sapply(row.names(design),function(i) {  
       kronecker(diag(num.knot + 4),design[i,])
     },simplify = F)
-    
-    if (test.type == 'slope'){
+    if (test.slope.only){
       if (is.na(test.position)){
         for (id in seq(1, length(xs))){
           xs[[id]][, seq(2, ncol(xs[[1]]))] <- xs_test[[id]][,seq(2, ncol(xs[[1]]))]
@@ -95,7 +93,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
         for (id in seq(1, length(xs))){
           xs[[id]][, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]])))] <- xs_test[[id]][,seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]])))]
         }
-    } else if (test.type == 'all'){
+    } else {
       if (is.na(test.position)){
         xs <- xs_test
       } else if (test.position == 'start'){
@@ -116,7 +114,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     # --------------
     # change here <<
     # --------------
-    
     ## initialize tau
     phi_xs <- sapply(names(xs),function(ss) phi[[ss]] %*% t(xs[[ss]]))
     phi_xs_rbind <- do.call(rbind,phi_xs)
@@ -222,6 +219,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     }
     return(list(beta = beta, gamma = gamma, tau = tau, logL = ll))
   }
+  print('running fitpt: EM ...')
   if (ncores==1) {
     allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
   } else {

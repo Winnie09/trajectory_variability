@@ -1,4 +1,4 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(),type='Time', test.type = 'slope', test.position = 'all', fit.resolution = 1000) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.slope.only = FALSE, test.position = 'all', fit.resolution = 1000) {
   set.seed(12345)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   expr <- expr[, names(pseudotime)]
@@ -47,7 +47,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         psn <- pseudotime[colnames(expr)]
         psn <- psn[sampcell]
         colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.type = test.type, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+        print('running fitpt ...')
+        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.slope.only = test.slope.only, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
       }
     }
   }
@@ -72,8 +73,41 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   fdr <- p.adjust(pval,method='fdr')
   names(fdr) <- row.names(perll)
   foldchange <- orill - rowMeans(perll)
+  #---------------------------------
+  # use beta2 to get mean difference
+  # --------------------------------
+  meandiff <- sapply(names(orifit$parameter), function(g){
+      beta <- orifit$parameter[[g]]$beta
+      tmp <- unlist(sapply(1:length(beta), function(i){
+        if (i%%2 == 0) beta[i]
+      }))
+      a <- ceiling(length(tmp)/3)
+      b <- ceiling(length(tmp)*2/3)
+      if (!test.slope.only){
+        if (test.position == 'all'){
+          return(mean(tmp, na.rm = TRUE))
+        } else if (test.position == 'start'){
+          return(mean(tmp[c(1, seq(2, a))], na.rm = TRUE))
+        } else if (test.position == 'middle'){
+          return(mean(tmp[c(1, seq(a+1, b))], na.rm = TRUE))
+        } else if (test.position == 'end'){
+          return(mean(tmp[c(1, seq(b+1, length(tmp)))], na.rm = TRUE))
+        }
+      } else {
+        if (test.position == 'all'){
+          return(mean(tmp[seq(2, length(tmp))], na.rm = TRUE))
+        } else if (test.position == 'start'){
+          return(mean(tmp[seq(2, a)], na.rm = TRUE))
+        } else if (test.position == 'middle'){
+          return(mean(tmp[seq(a+1, b)], na.rm = TRUE))
+        } else if (test.position == 'end'){
+          return(mean(tmp[seq(b+1, length(tmp))], na.rm = TRUE))
+        }
+      }
+  })
+  # -------------------------------
   print('predicting fitted curves ...')
   pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-  return(list(fdr = fdr, orill=orill, perll = perll, knotnum = knotnum, foldchange = foldchange, parameter=orifit$parameter, pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
+  return(list(fdr = fdr, foldchange = foldchange, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
 }
 
