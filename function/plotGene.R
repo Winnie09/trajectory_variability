@@ -57,7 +57,8 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     p <- p + 
       theme_classic() +
       scale_color_viridis(discrete = TRUE, direction = -1) +
-      ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
+      # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
+      ggtitle(sub(':.*','',gene)) +
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable)
       if (facet.sample){
@@ -119,5 +120,6 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
       facet_wrap(~g, scales = a) 
   }
 }
+
 
 

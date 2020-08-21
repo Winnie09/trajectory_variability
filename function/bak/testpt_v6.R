@@ -1,4 +1,4 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = c('intercept', 'slope', 'overall'), test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.slope.only = FALSE, test.position = 'all', fit.resolution = 1000) {
   set.seed(12345)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   expr <- expr[, names(pseudotime)]
@@ -9,6 +9,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   }
   
   fitfunc <- function(iter) {
+    print(paste0('iteration ', iter, ' ...'))
     if (iter==1) {
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
     } else {
@@ -46,7 +47,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         psn <- pseudotime[colnames(expr)]
         psn <- psn[sampcell]
         colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+        print('running fitpt ...')
+        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.slope.only = test.slope.only, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
       }
     }
   }
@@ -81,7 +83,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       }))
       a <- ceiling(length(tmp)/3)
       b <- ceiling(length(tmp)*2/3)
-      if (test.pattern == 'overall'){
+      if (!test.slope.only){
         if (test.position == 'all'){
           return(mean(tmp, na.rm = TRUE))
         } else if (test.position == 'start'){
@@ -91,7 +93,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         } else if (test.position == 'end'){
           return(mean(tmp[c(1, seq(b+1, length(tmp)))], na.rm = TRUE))
         }
-      } else if (test.pattern == 'slope'){
+      } else {
         if (test.position == 'all'){
           return(mean(tmp[seq(2, length(tmp))], na.rm = TRUE))
         } else if (test.position == 'start'){
@@ -101,16 +103,11 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         } else if (test.position == 'end'){
           return(mean(tmp[seq(b+1, length(tmp))], na.rm = TRUE))
         }
-      } else if (test.pattern == 'intercept'){
-        return(tmp[1])
       }
   })
   # -------------------------------
-  if (return.all.data){
-    pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
-  } else {
-    return(list(fdr = fdr, foldchange = foldchange, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
-  } 
+  print('predicting fitted curves ...')
+  pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
+  return(list(fdr = fdr, foldchange = foldchange, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
 }
 

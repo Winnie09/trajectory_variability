@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = c('mean', 'slope', 'overall'), test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.slope.only = FALSE, test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
@@ -76,8 +76,8 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     xs_test <- sapply(row.names(design),function(i) {  
       kronecker(diag(num.knot + 4),design[i,])
     },simplify = F)
-    if (test.pattern == 'slope'){
-      if (is.na(test.position) | test.position == 'all'){
+    if (test.slope.only){
+      if (is.na(test.position)){
         for (id in seq(1, length(xs))){
           xs[[id]][, seq(2, ncol(xs[[1]]))] <- xs_test[[id]][,seq(2, ncol(xs[[1]]))]
         }
@@ -93,29 +93,24 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
         for (id in seq(1, length(xs))){
           xs[[id]][, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]])))] <- xs_test[[id]][,seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]])))]
         }
-      }
-    } else if (test.pattern == 'intercept'){
+    } else {
+      if (is.na(test.position)){
+        xs <- xs_test
+      } else if (test.position == 'start'){
         for (id in seq(1, length(xs))){
-          xs[[id]][,1] <- xs_test[[id]][,1]
+          xs[[id]][, c(1, seq(2, ceiling(ncol(xs[[1]])/3)))] <- xs_test[[id]][ , c(1, seq(2, ceiling(ncol(xs[[1]])/3)))]
         }
-    } else if (test.pattern == 'overall'){
-        if (is.na(test.position) | test.position == 'all'){
-          xs <- xs_test
-        } else if (test.position == 'start'){
-            for (id in seq(1, length(xs))){
-              xs[[id]][, c(1, seq(2, ceiling(ncol(xs[[1]])/3)))] <- xs_test[[id]][ , c(1, seq(2, ceiling(ncol(xs[[1]])/3)))]
-            }
-        } else if (test.position == 'middle'){
-            for (id in seq(1, length(xs))){
-              xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))]
-            }
-        } else if (test.position == 'end'){
-          for (id in seq(1, length(xs))){
-            xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))]
-          }
+      } else if (test.position == 'middle'){
+        for (id in seq(1, length(xs))){
+          xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))]
         }
+      } else if (test.position == 'end'){
+        for (id in seq(1, length(xs))){
+          xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))]
+        }
+      }
     }
-    
+    }
     # --------------
     # change here <<
     # --------------
@@ -224,6 +219,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     }
     return(list(beta = beta, gamma = gamma, tau = tau, logL = ll))
   }
+  print('running fitpt: EM ...')
   if (ncores==1) {
     allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
   } else {
@@ -233,10 +229,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   para <- list()
   for (i in 1:length(allres)) {
     for (j in row.names(allres[[i]][[1]])) {
-      para[[j]] <- list(beta=allres[[i]][[1]][j,],
-                        gamma=allres[[i]][[2]][j,],
-                        tau=matrix(allres[[i]][[3]][,j],nrow=sqrt(length(allres[[i]][[3]][,j]))),
-                        ll=allres[[i]][[4]][j])
+      para[[j]] <- list(beta=allres[[i]][[1]][j,],gamma=allres[[i]][[2]][j,],tau=matrix(allres[[i]][[3]][,j],nrow=sqrt(length(allres[[i]][[3]][,j]))),ll=allres[[i]][[4]][j])
     }
   }
   list(parameter=para,knotnum=knotnum)
