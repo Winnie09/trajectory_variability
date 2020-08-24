@@ -4,18 +4,20 @@ ptest <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxi
   print('testing trend difference ...')
   res2 <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design=design, permuiter=permuiter, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, type=type, test.pattern = 'slope', test.position = test.position, fit.resolution = fit.resolution, return.all.data = FALSE)
   g <- rownames(expr)
-  res <- data.frame(meandiff.fdr = res1$fdr[g], 
-                   meandiff.lfc = res1$foldchange[g], 
-                   meandiff.diff = res1$meandiff[g],
+  res <- data.frame(interceptdiff.fdr = res1$fdr[g], 
+                   interceptdiff.lfc = res1$foldchange[g], 
+                   interceptdiff.diff = res1$interceptdiff[g],
+                   interceptdiff.pvalue = res1$pvalue[g],
                    trenddiff.fdr = res2$fdr[g],
                    trenddiff.lfc = res2$foldchange[g],
-                   trenddiff.diff = res2$meandiff[g],
+                   trenddiff.diff = res2$interceptdiff[g],
+                   trenddiff.pvalue = res2$pvalue[g],
                    stringsAsFactors = FALSE)
   rownames(res) <- g
   return(list(res = res, 
-              meandiff.parameter=res1$parameter, 
-              meandiff.orill=res1$orill, 
-              meandiff.perll = res1$perll, 
+              interceptdiff.parameter=res1$parameter, 
+              interceptdiff.orill=res1$orill, 
+              interceptdiff.perll = res1$perll, 
               trenddiff.parameter=res2$parameter, 
               trenddiff.orill=res2$orill, 
               trenddiff.perll = res2$perll, 

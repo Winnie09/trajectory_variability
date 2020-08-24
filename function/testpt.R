@@ -54,7 +54,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   if (ncores == 1){
     fit <- lapply(1:(permuiter+1),fitfunc)
   } else {
-    fit <- mclapply(1:(permuiter+1),fitfunc, mc.cores = ncores)
+    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(i)}, mc.cores = ncores)
+
   }
   
   orifit <- fit[[1]]
@@ -108,9 +109,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # -------------------------------
   if (return.all.data){
     pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
   } else {
-    return(list(fdr = fdr, foldchange = foldchange, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
 

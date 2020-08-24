@@ -2,7 +2,8 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
   ## testptObj: the output of function testpt() which is a list containing fdr, etc..
   library(ggplot2)
   library(gridExtra)
-  library(viridis)   
+  # library(viridis)   
+  library(RColorBrewer) ##
   pseudotime <- testptObj[['pseudotime']]
   cellanno <- testptObj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
@@ -56,7 +57,8 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     }
     p <- p + 
       theme_classic() +
-      scale_color_viridis(discrete = TRUE, direction = -1) +
+      # scale_color_viridis(discrete = TRUE, direction = -1) +
+      scale_color_brewer(palette = 'Dark2') + 
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
       ggtitle(sub(':.*','',gene)) +
       xlab('Pseudotime') + ylab('Expression') + 
@@ -114,12 +116,12 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     }
     p + 
       theme_classic() +
-      scale_color_viridis(discrete = TRUE, direction = -1) +
+      # scale_color_viridis(discrete = TRUE, direction = -1) +
+      scale_color_brewer(palette = 'Dark2') + 
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable) +
       facet_wrap(~g, scales = a) 
   }
 }
-
 
 
