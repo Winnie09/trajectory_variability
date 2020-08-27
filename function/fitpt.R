@@ -48,7 +48,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     rowSums(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*rowSums(!is.na(ll)))
   }
   
-  if (ncores==1) {
+  if (ncores!=1) {
     bic <- mclapply(0:maxknot,bicfunc,mc.cores=ncores)
     bic <- do.call(cbind,bic)
   } else {
@@ -58,6 +58,9 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
   names(knotnum) <- row.names(expr)
   
+  print(str(knotnum))
+  print(table(knotnum))
+ 
   sfit <- function(num.knot) {
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F]
@@ -160,7 +163,9 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       llold <- ll
       sexpr <- sapply(sexpr,function(i) i[gidr,,drop=F],simplify = F)
       E_phi_u_e <- phi_xs_beta <- phi_tau_phi <- list()
+      print('start dimnames ...')
       M <- matrix(0,nrow=length(gidr),ncol=nrow(design),dimnames=list(gidr,names(sname)))
+      print('end dimnames ...')
       for (ss in names(sname)) {
         phi_tau_phi[[ss]] <- crossprod(tau[,gidr,drop=F], phicrossprod[[ss]])
         phi_xs_beta[[ss]] <- tcrossprod(beta[gidr,,drop=F],phi_xs[[ss]])
@@ -224,7 +229,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     }
     return(list(beta = beta, gamma = gamma, tau = tau, logL = ll))
   }
-  if (ncores==1) {
+  if (ncores!=1) {
     allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
   } else {
     allres <- lapply(unique(knotnum),sfit)

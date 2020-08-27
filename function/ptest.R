@@ -1,4 +1,4 @@
-ptest <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = c('intercept', 'slope', 'overall'), test.position = 'all', fit.resolution = 1000){
+ptest <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.position = 'all', fit.resolution = 1000){
   print('testing mean difference ...')
   res1 <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design=design, permuiter=permuiter, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, type=type, test.pattern = 'intercept', test.position = test.position, fit.resolution = fit.resolution, return.all.data = TRUE)
   print('testing trend difference ...')

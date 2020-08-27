@@ -1,17 +1,20 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = c('intercept', 'slope', 'overall'), test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'slope', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
   set.seed(12345)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   expr <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   if (type=='Time') {
     unis <- unique(cellanno[,2])
-    design = matrix(1,nrow=length(unis),ncol=1,dimnames = list(unis,NULL))
+    design = matrix(1,nrow=length(unis),ncol=1,dimnames = list(unis,'intercept'))
+  } else {
+    design = as.matrix(design)  
   }
-  
   fitfunc <- function(iter) {
     if (iter==1) {
+      print('iter 1...')
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
     } else {
+      print('iter 2 ...')
       if (type=='Time') {
         perpsn <- sapply(rownames(design), function(s){
           tmpid <- cellanno[cellanno[,2] == s, 1]  # subset cells
@@ -70,12 +73,12 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     mean(pnorm(orill[i], z, sd=den,lower.tail = F))
   })
   fdr <- p.adjust(pval,method='fdr')
-  names(fdr) <- row.names(perll)
+  names(pval) <- names(fdr) <- row.names(perll)
   foldchange <- orill - rowMeans(perll)
   #---------------------------------
   # use beta2 to get mean difference
   # --------------------------------
-  meandiff <- sapply(names(orifit$parameter), function(g){
+  interceptdiff <- sapply(names(orifit$parameter), function(g){
       beta <- orifit$parameter[[g]]$beta
       tmp <- unlist(sapply(1:length(beta), function(i){
         if (i%%2 == 0) beta[i]
@@ -109,9 +112,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # -------------------------------
   if (return.all.data){
     pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, interceptdiff = interceptdiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
   } else {
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, meandiff = meandiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, interceptdiff = interceptdiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
 
