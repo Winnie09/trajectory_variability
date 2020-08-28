@@ -58,8 +58,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
   names(knotnum) <- row.names(expr)
   
-  print(str(knotnum))
-  print(table(knotnum))
  
   sfit <- function(num.knot) {
     gid <- names(which(knotnum==num.knot))
@@ -163,9 +161,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       llold <- ll
       sexpr <- sapply(sexpr,function(i) i[gidr,,drop=F],simplify = F)
       E_phi_u_e <- phi_xs_beta <- phi_tau_phi <- list()
-      print('start dimnames ...')
       M <- matrix(0,nrow=length(gidr),ncol=nrow(design),dimnames=list(gidr,names(sname)))
-      print('end dimnames ...')
       for (ss in names(sname)) {
         phi_tau_phi[[ss]] <- crossprod(tau[,gidr,drop=F], phicrossprod[[ss]])
         phi_xs_beta[[ss]] <- tcrossprod(beta[gidr,,drop=F],phi_xs[[ss]])

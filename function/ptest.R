@@ -1,4 +1,8 @@
 ptest <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.position = 'all', fit.resolution = 1000){
+  ## expr: gene by cell matrix. values are log-transformed library-size-adjusted expression values. zero-expression genes should have been filtered out.
+  ## cellanno: a dataframe whose first column is cells' names. second column is cells' samples (for example patients).
+  ## pseudotime: a numeric vector of pseudotime for the cells, and the names of this vector entires are cells' names.
+  ## design: a numeric dataframe or matrix whose first column is all 1, second column is covariate values. column names are intercept, covariate1, etc.. 
   print('testing mean difference ...')
   res1 <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design=design, permuiter=permuiter, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, type=type, test.pattern = 'intercept', test.position = test.position, fit.resolution = fit.resolution, return.all.data = TRUE)
   print('testing trend difference ...')

@@ -11,10 +11,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   }
   fitfunc <- function(iter) {
     if (iter==1) {
-      print('iter 1...')
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
     } else {
-      print('iter 2 ...')
       if (type=='Time') {
         perpsn <- sapply(rownames(design), function(s){
           tmpid <- cellanno[cellanno[,2] == s, 1]  # subset cells
