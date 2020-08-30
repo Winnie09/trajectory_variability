@@ -1,8 +1,10 @@
-plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5){
+plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE){
   ## testptObj: the output of function testpt() which is a list containing fdr, etc..
+  ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
+  ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
   library(ggplot2)
   library(gridExtra)
-  # library(viridis)   
+  library(viridis)   
   library(RColorBrewer) ##
   pseudotime <- testptObj[['pseudotime']]
   cellanno <- testptObj[['cellanno']]
@@ -57,12 +59,15 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     }
     p <- p + 
       theme_classic() +
-      # scale_color_viridis(discrete = TRUE, direction = -1) +
-      scale_color_brewer(palette = 'Dark2') + 
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
       ggtitle(sub(':.*','',gene)) +
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable)
+    if (continuous){
+      p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
+    } else {
+      p <- p + scale_color_brewer(palette = 'Dark2') 
+    }
       if (facet.sample){
           print(p + facet_wrap(~Sample, scales=a))
       } else {
@@ -114,13 +119,17 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample), alpha=line.alpha, size=line.size) 
       }
     }
-    p + 
-      theme_classic() +
-      # scale_color_viridis(discrete = TRUE, direction = -1) +
-      scale_color_brewer(palette = 'Dark2') + 
+    p <- p + 
+      theme_classic() + 
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable) +
       facet_wrap(~g, scales = a) 
+    if (continuous){
+      p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
+    } else {
+      p <- p + scale_color_brewer(palette = 'Dark2') 
+    }
+    print(p)
   }
 }
 

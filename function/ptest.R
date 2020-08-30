@@ -10,11 +10,11 @@ ptest <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxi
   g <- rownames(expr)
   res <- data.frame(interceptdiff.fdr = res1$fdr[g], 
                    interceptdiff.lfc = res1$foldchange[g], 
-                   interceptdiff.diff = res1$interceptdiff[g],
+                   interceptdiff.diff = res1$beta2diff[g],
                    interceptdiff.pvalue = res1$pvalue[g],
                    trenddiff.fdr = res2$fdr[g],
                    trenddiff.lfc = res2$foldchange[g],
-                   trenddiff.diff = res2$interceptdiff[g],
+                   trenddiff.diff = res2$beta2diff[g],
                    trenddiff.pvalue = res2$pvalue[g],
                    stringsAsFactors = FALSE)
   rownames(res) <- g
@@ -34,4 +34,4 @@ ptest <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxi
 }
 
 
- 
+

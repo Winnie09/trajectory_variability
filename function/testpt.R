@@ -76,7 +76,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   #---------------------------------
   # use beta2 to get mean difference
   # --------------------------------
-  interceptdiff <- sapply(names(orifit$parameter), function(g){
+  beta2diff <- sapply(names(orifit$parameter), function(g){
       beta <- orifit$parameter[[g]]$beta
       tmp <- unlist(sapply(1:length(beta), function(i){
         if (i%%2 == 0) beta[i]
@@ -110,9 +110,10 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # -------------------------------
   if (return.all.data){
     pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, interceptdiff = interceptdiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, beta2diff = beta2diff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
   } else {
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, interceptdiff = interceptdiff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, beta2diff = beta2diff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
+
 

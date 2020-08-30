@@ -70,7 +70,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     # --------------
     # change here >>
     # --------------
-    design = design[rownames(ori.design), ]
+    design = design[rownames(ori.design), ,drop=F]
     xs <- sapply(row.names(ori.design),function(i) {  
       kronecker(diag(num.knot + 4), ori.design[i,])
     },simplify = F)
@@ -242,4 +242,5 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   }
   list(parameter=para,knotnum=knotnum)
 }
+
 
