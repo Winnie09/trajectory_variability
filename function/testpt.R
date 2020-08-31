@@ -14,6 +14,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
     } else {
       if (type=='Time') {
+        print('testing Time ...')
+        print(paste0('iteration ', iter))
         perpsn <- sapply(rownames(design), function(s){
           tmpid <- cellanno[cellanno[,2] == s, 1]  # subset cells
           tmppsn <- pseudotime[names(pseudotime) %in% tmpid] # subset time
@@ -33,30 +35,33 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
         fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
       } else if (type=='Variable'){
-        dn <- paste0(as.vector(design),collapse = '_')
-        perdn <- dn
-        while(perdn==dn) {
-          perid <- sample(1:nrow(design))
-          perdesign <- design[perid,,drop=F]
-          perdn <- paste0(as.vector(perdesign),collapse = '_')  
-        }
-        row.names(perdesign) <- row.names(design)
-        sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
-        perexpr <- expr[,sampcell,drop=F]
-        percellanno <- cellanno[sampcell,,drop=F]
-        psn <- pseudotime[colnames(expr)]
-        psn <- psn[sampcell]
-        colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+        print('testing Variable ...')
+        print(paste0('iteration ', iter))
+        perpsn <- sapply(rownames(design), function(s){
+          dn <- paste0(as.vector(design),collapse = '_')
+          perdn <- dn
+          while(perdn==dn) {
+            perid <- sample(1:nrow(design))
+            perdesign <- design[perid,,drop=F]
+            perdn <- paste0(as.vector(perdesign),collapse = '_')  
+          }
+          row.names(perdesign) <- row.names(design)
+          sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
+          perexpr <- expr[,sampcell,drop=F]
+          percellanno <- cellanno[sampcell,,drop=F]
+          psn <- pseudotime[colnames(expr)]
+          psn <- psn[sampcell]
+          colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
+          fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+        })
       }
     }
   }
-  
+  print('fitting model ...')
   if (ncores == 1){
     fit <- lapply(1:(permuiter+1),fitfunc)
   } else {
     fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(i)}, mc.cores = ncores)
-
   }
   
   orifit <- fit[[1]]
@@ -115,5 +120,4 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, beta2diff = beta2diff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
-
 

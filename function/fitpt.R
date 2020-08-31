@@ -1,4 +1,5 @@
 fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = c('mean', 'slope', 'overall'), test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+  print('Running fitpt ...')
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
