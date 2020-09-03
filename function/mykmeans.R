@@ -1,4 +1,4 @@
-mykmeans <- function(matrix, number.cluster = NA, maxclunum = 20, seed = 12345){
+mykmeans <- function(matrix, number.cluster = NA, maxclunum = 50, seed = 12345){
   ## cluster the rows
   set.seed(seed)
   library(parallel)

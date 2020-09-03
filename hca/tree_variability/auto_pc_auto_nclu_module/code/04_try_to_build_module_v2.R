@@ -9,7 +9,7 @@ suppressMessages(library(igraph))
 n.permute <- 3
 max.clunum <- 50
 setwd("/Users/wenpinhou/Dropbox/trajectory_variability/hca/data/HCA/proc/integrate")
-
+plotdir <- '/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/plot/'
 # --------------------------------------------------------------
 # input: seurat integrated object including:
 #  umap, pca
@@ -24,13 +24,13 @@ str(pca)
 a = readRDS('/Users/wenpinhou/Dropbox/trajectory_variability/hca/data/HCA/proc/ct/sc.rds')
 ct = data.frame(cell = names(a), celltype = a, stringsAsFactors = FALSE)
   
-mykmeans <- function(matrix, number.cluster = NA){
+mykmeans <- function(matrix, number.cluster = NA, maxclunum = 20, seed = 12345){
   ## cluster the rows
-  set.seed(12345)
+  set.seed(seed)
   library(parallel)
   if (is.na(number.cluster)){
-    maxclunum <- 20
     rss <- mclapply(1:maxclunum,function(clunum) {
+      set.seed(12345)
       tmp <- kmeans(matrix,clunum,iter.max = 1000)
       tmp$betweenss/tmp$totss
     },mc.cores=20)
@@ -40,6 +40,7 @@ mykmeans <- function(matrix, number.cluster = NA){
         x2 <- pmax(0, x - i)
         sum(lm(rss ~ x + x2)$residuals^2)  ## check this
     }))
+    print(optclunum)
     clu <- kmeans(matrix,optclunum)
   } else {
     clu <- kmeans(matrix, number.cluster)    
@@ -109,9 +110,7 @@ get_binary <- function(matrix, matrix.cut){
   }
   return(matrix.binary)
 }
-
-### determine numPC
-infer_tree_structure <- function(pca, ct, origin.celltype){
+infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd()){
   alls <- sub(':.*', '', ct$cell)
   names(alls) <- ct$cell
   set.seed(12345)
@@ -125,33 +124,39 @@ infer_tree_structure <- function(pca, ct, origin.celltype){
   pr <- pca[,1:pcadim]  # 7
   
   ## clustering
-  clu <- mykmeans(pr, number.cluster = 14)$cluster
-  # pd = data.frame(x = pr[,1], y = pr[,2], clu = as.factor(clu[rownames(pr)]))
-  # mypalette = colorRampPalette(brewer.pal(9,'Set1'))
-  # ggplot(data = pd, aes(x = x, y = y, color = clu)) + 
-  #   geom_scattermore()+
-  #   scale_color_manual(values = mypalette(14))+
-  #   theme_classic() + xlab('UMAP1') + ylab('UMAP2')
-  
-  # ## cell type composition in clusters
-  # pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
-  # tab <- table(pd[,3:4])
-  # tab <- tab/rowSums(tab)
-  # pd <- melt(tab)
-  # pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
-  # 
-  # ggplot(data = pd) +
-  #   geom_bar(aes(x = clu, y = value, fill = celltype), stat = 'identity', position = 'dodge') +
-  #   theme_classic() +
-  #   ylab('Celltype Proportion') +
-  #   scale_fill_manual(values = mypalette(length(unique(pd$celltype))))
-  
+  # clu <- mykmeans(pr, number.cluster = number.cluster, maxclunum = 50, seed = i)$cluster
+  clu <- mykmeans(pr, maxclunum = 50, number.cluster = number.cluster)$cluster
+  table(clu)
+  pd = data.frame(x = pr[,1], y = pr[,2], clu = as.factor(clu[rownames(pr)]))
+  mypalette = colorRampPalette(brewer.pal(9,'Set1'))
+  pdf(paste0(plotdir, 'cluster.pdf'), width = 5, height = 4)
+  print(ggplot(data = pd, aes(x = x, y = y, color = clu)) +
+    geom_scattermore()+
+    scale_color_manual(values = mypalette(14))+
+    theme_classic() + xlab('PC1') + ylab('PC2'))
+  dev.off()
+  ## cell type composition in clusters
+  pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
+  tab <- table(pd[,3:4])
+  tab <- tab/rowSums(tab)
+  pd <- melt(tab)
+  pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
+  pdf(paste0(plotdir, 'celltype_composition_for_cluster.pdf'), width = 9, height = 5)
+  print(ggplot(data = pd) +
+    geom_bar(aes(x = clu, y = value, fill = celltype), stat = 'identity', position = 'dodge') +
+    theme_classic() +
+    ylab('Celltype Proportion') +
+    scale_fill_manual(values = mypalette(length(unique(pd$celltype)))))
+  dev.off()
   ### mclust
   mcl <- exprmclust(t(pr),cluster=clu,reduce=F)
   # mcl <- exprmclust(t(pr), reduce = F)
-  # plotmclust(mcl, cell_point_size = 0.1)
+  pdf(paste0(plotdir, 'mcl.pdf'), width=8,height=8)
+  print(plotmclust(mcl, cell_point_size = 0.1))
+  dev.off()
+
   # str(mcl)
-  
+  # 
   # --------------------
   # construct pseudotime 
   # --------------------
@@ -173,13 +178,14 @@ infer_tree_structure <- function(pca, ct, origin.celltype){
   names(pt) <- unname(unlist(ord))
   
   # ## plot pseudotime
-  # pd = data.frame(pc1 = pca[,1], pc2 = pca[,2], time = as.numeric(pt[rownames(pca)]))
-  # library(scattermore)
-  # library(RColorBrewer)
-  # ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
-  #   geom_scattermore() +
-  #   scale_color_gradient(low = 'yellow', high = 'blue')
-  
+  pd = data.frame(pc1 = pca[,1], pc2 = pca[,2], time = as.numeric(pt[rownames(pca)]))
+  library(scattermore)
+  library(RColorBrewer)
+  pdf(paste0(plotdir, 'pseudotime.pdf'), width = 7, height = 6)  
+  print(ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
+    geom_scattermore() +
+    scale_color_gradient(low = 'yellow', high = 'blue'))
+  dev.off()
   # ------------------------------------------------------------
   # get candidate branches to test reproducibility, 20200726 >>
   # ------------------------------------------------------------
@@ -227,10 +233,6 @@ infer_tree_structure <- function(pca, ct, origin.celltype){
   mcl$allsample <- alls
   return(mcl)
 }
-# permutation 
-
-a = infer_tree_structure(pca = pca, ct = ct, origin.celltype = 'HSC')
-
 evaluate_uncertainty <- function(inferobj, n.permute){
   pr <- inferobj$pca
   newbranch <- inferobj$branch
@@ -241,8 +243,8 @@ evaluate_uncertainty <- function(inferobj, n.permute){
   alls <- inferobj$allsample
   ctcomplist <- reproduce.js <- reproduce.oc <- corr.score <- list()
   for (pmid in seq(1, n.permute)){
-    ## boostrap cells
     print(pmid)
+    ## boostrap cells
     set.seed(pmid)
     pr.pm <- pr[sample(rownames(pr), nrow(pr), replace = TRUE),]
     pr.pm <- pr.pm[!duplicated(rownames(pr.pm)),]
@@ -307,7 +309,7 @@ evaluate_uncertainty <- function(inferobj, n.permute){
             cells <- ord[[id]]
             b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
             sapply(seq(1, length(newbranch.pm)), function(j){
-              print(j)
+              
               id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
               cells <- ord.pm[[id]]
               b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
@@ -400,5 +402,7 @@ evaluate_uncertainty <- function(inferobj, n.permute){
   return(result)
 }
 
-result <- evaluate_uncertainty(a, 3)
-
+# permutation 
+a = infer_tree_structure(pca = pca, ct = ct, origin.celltype = 'HSC', plotdir = plotdir)
+result <- evaluate_uncertainty(a, 100)
+saveRDS(result, '/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/result/result.rds')

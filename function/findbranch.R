@@ -1,5 +1,5 @@
 findbranch <- function(mst, order, origin){
-  deg <- degree(mst)
+  deg <- igraph::degree(mst)
   vertex <- names(deg[which(deg > 2 | deg == 1)])
   if (!origin %in% vertex) vertex <- c(origin, vertex)
   eg <- expand.grid(1:length(vertex), 1:length(vertex))

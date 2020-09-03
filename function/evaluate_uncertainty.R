@@ -1,5 +1,9 @@
-evaluate_uncertainty <- function(inferobj, n.permute){
-  pr <- inferobj$pca
+evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL){
+  if (is.null(subset.cell)) {
+    pr <- inferobj$pca
+  } else {
+    pr <- inferobj$pca[subset.cell, ]
+  }
   newbranch <- inferobj$branch
   js.cut <- inferobj$js.cut
   oc.cut <- inferobj$oc.cut 
@@ -11,11 +15,12 @@ evaluate_uncertainty <- function(inferobj, n.permute){
     print(pmid)
     ## boostrap cells
     set.seed(pmid)
-    pr.pm <- pr[sample(rownames(pr), nrow(pr), replace = TRUE),]
-    pr.pm <- pr.pm[!duplicated(rownames(pr.pm)),]
+    bstid <- sample(1:nrow(pr), nrow(pr), replace = TRUE)
+    bstid <- unique(bstid)
+    pr.pm <- pr[bstid,]
     
     ## cluster cells
-    clu <- mykmeans(pr.pm, number.cluster = 14)$cluster ###
+    clu <- mykmeans(pr.pm, number.cluster = max(inferobj$clusterid))$cluster ###
   
     # --- check if these codes are necessary <<<<<<<<<<<<<<<<
     # pd = data.frame(x = pr[names(clu),1], y = pr[names(clu),2], clu = as.factor(clu))
@@ -24,13 +29,12 @@ evaluate_uncertainty <- function(inferobj, n.permute){
     # pd.text = data.frame(x = pd.text.x, y = pd.text.y, clu = names(pd.text.x))
     # pd.text[14,1:2] =  c(pd.text[14,1] + 2, pd.text[14,2] + 1)
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # ggplot() + 
+    # ggplot() +
     #   geom_scattermore(data = pd, aes(x = x, y = y, color = clu))+
     #   scale_color_manual(values = mypalette(14))+
     #   theme_classic() + xlab('UMAP1') + ylab('UMAP2') +
     #   geom_text(data = pd.text, aes(x = x, y = y, label = clu))
-    
-  
+
     ## cell type composition in clusters
     # pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
     # tab <- table(pd[,3:4])
@@ -60,7 +64,7 @@ evaluate_uncertainty <- function(inferobj, n.permute){
     # --- check if these codes are necessary <<<<<<<<<<<<<<<<
     ## plot pseudotime
     
-    pd = data.frame(pc1 = pca[,1], pc2 = pca[,2], time = as.numeric(pt.pm[rownames(pca)]))
+    pd = data.frame(pc1 = pr[,1], pc2 = pr[,2], time = as.numeric(pt.pm[rownames(pr)]))
     # ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
     #   geom_scattermore() + theme_classic()
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -123,26 +127,34 @@ evaluate_uncertainty <- function(inferobj, n.permute){
     reproduce.oc[[pmid]] <- as.character(oc.melt[,2])
   
     ## samples cell compositions 
-    ctcomp <- sapply(js.melt[,2], function(tmp){
-      c <- names(clu)[clu %in% newbranch.pm[[tmp]]]
-      ctcomp <- rep(0, length(unique(alls)))
-      names(ctcomp) <- unique(alls)
-      ctcomp[names(table(alls[c]))] <- table(alls[c])
-    })
-    colnames(ctcomp) <- paste0('origin', js.melt[,2])
-    ctcomp <- ctcomp/rowSums(ctcomp)
-    
     ctcomp.new <- matrix(0, nrow = length(unique(alls)), ncol = length(newbranch))
     colnames(ctcomp.new) <- paste0('origin', seq(1, length(newbranch)))
     rownames(ctcomp.new) <- unique(alls)
-    ctcomp.new[rownames(ctcomp), colnames(ctcomp)] <- ctcomp
+    
+    if (nrow(js.melt) > 0){
+      ctcomp <- sapply(1:nrow(js.melt), function(i){   ## corrected  from 2 to 1. 2020/08/31
+        c <- names(clu)[clu %in% newbranch.pm[[js.melt[i,1]]]]
+        ctcomp <- rep(0, length(unique(alls)))
+        names(ctcomp) <- unique(alls)
+        ctcomp[names(table(alls[c]))] <- table(alls[c])
+        ctcomp
+      })
+      colnames(ctcomp) <- paste0('origin', js.melt[,2])
+      ctcomp <- ctcomp/rowSums(ctcomp)
+      
+      
+      ctcomp.new[rownames(ctcomp), colnames(ctcomp)] <- ctcomp
+      
+    } 
     ctcomplist[[pmid]] <- t(ctcomp.new)
+      
   }
   
   reproduce.js <- unlist(reproduce.js)  
   js.perc <- rep(0, length(newbranch))
   js.perc[as.numeric(names(table(reproduce.js)))] <-  table(reproduce.js)/n.permute
   names(js.perc) <- newbranch
+  
   
   reproduce.oc <- unlist(reproduce.oc)  
   oc.perc <- rep(0, length(newbranch))
@@ -161,8 +173,15 @@ evaluate_uncertainty <- function(inferobj, n.permute){
   rownames(sample.cellcomp.mean) <- newbranch[as.numeric(sub('origin', '', rownames(sample.cellcomp.mean)))]
   rownames(sample.cellcomp.sd) <- newbranch[as.numeric(sub('origin', '', rownames(sample.cellcomp.sd)))]
   
+  if (length(newbranch[[length(newbranch)]]) == 2){
+    name <- paste0('c(', newbranch[[length(newbranch)]][1], ',', newbranch[[length(newbranch)]][2], ')')
+    rownames(detection.rate)[nrow(detection.rate)] <- rownames(sample.cellcomp.mean)[nrow(sample.cellcomp.mean)] <- rownames(sample.cellcomp.sd)[nrow(sample.cellcomp.sd)] <- name
+ }
+    
   result <- list(detection.rate = detection.rate, 
                  sample.cellcomp.mean = sample.cellcomp.mean, 
                  sample.cellcomp.sd = sample.cellcomp.sd)
   return(result)
 }
+
+

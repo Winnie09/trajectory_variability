@@ -1,5 +1,7 @@
-infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd()){
-  alls <- sub(':.*', '', ct$cell)
+infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50){
+  ## ct: dataframe/matrix, first column is cell name, second column is cell type, third column is sample.
+  library(igraph)
+  alls <- ct[,3]
   names(alls) <- ct$cell
   set.seed(12345)
   sdev <- apply(pca, 2, sd)
@@ -17,11 +19,11 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   table(clu)
   pd = data.frame(x = pr[,1], y = pr[,2], clu = as.factor(clu[rownames(pr)]))
   mypalette = colorRampPalette(brewer.pal(9,'Set1'))
-  pdf(paste0(plotdir, 'cluster.pdf'), width = 5, height = 4)
+  pdf(paste0(plotdir, 'cluster.pdf'), width = (0.7*max(clu)), height = (0.5*max(clu)))
   print(ggplot(data = pd, aes(x = x, y = y, color = clu)) +
     geom_scattermore()+
-    scale_color_manual(values = mypalette(14))+
-    theme_classic() + xlab('PC1') + ylab('PC2'))
+    scale_color_manual(values = mypalette(max(clu)))+
+    theme_classic() + xlab(xlab) + ylab(ylab))
   dev.off()
   ## cell type composition in clusters
   pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
@@ -39,9 +41,9 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   ### mclust
   mcl <- exprmclust(t(pr),cluster=clu,reduce=F)
   # mcl <- exprmclust(t(pr), reduce = F)
-  pdf(paste0(plotdir, 'mcl.pdf'), width=8,height=8)
-  print(plotmclust(mcl, cell_point_size = 0.1))
-  dev.off()
+  # pdf(paste0(plotdir, 'mcl.pdf'), width=(0.8*max(clu)),height=(0.6*max(clu)))
+  # print(plotmclust(mcl, cell_point_size = 0.1, x.lab = xlab, y.lab = ylab))
+  # dev.off()
 
   # str(mcl)
   # 
@@ -69,10 +71,12 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   pd = data.frame(pc1 = pca[,1], pc2 = pca[,2], time = as.numeric(pt[rownames(pca)]))
   library(scattermore)
   library(RColorBrewer)
-  pdf(paste0(plotdir, 'pseudotime.pdf'), width = 7, height = 6)  
+  pdf(paste0(plotdir, 'pseudotime.pdf'), width = 5, height = 4.2)  
   print(ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
     geom_scattermore() +
-    scale_color_gradient(low = 'yellow', high = 'blue'))
+    scale_color_gradient(low = 'yellow', high = 'blue')+
+    xlab(xlab) + ylab(ylab) +
+    theme_classic())
   dev.off()
   # ------------------------------------------------------------
   # get candidate branches to test reproducibility, 20200726 >>
@@ -121,4 +125,6 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   mcl$allsample <- alls
   return(mcl)
 }
+
+
 

@@ -1,7 +1,7 @@
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-selgene <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/testtime/data/data/selgene/selgene.rds')
-ddir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/testtime/result/'
-rdir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/testtime/result/perf/'
+selgene <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/selgene/selgene.rds')
+ddir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/'
+rdir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/perf/'
 dir.create(rdir, showWarnings = F, recursive = T)
 
 ## EM_SelectKnots
@@ -39,7 +39,7 @@ af = af[!grepl('testres', af)]
 df3 <- sapply(af, function(f){
   print(f)
   r = readRDS(paste0(ddir, m, '/', f))
-  c(sub('.rds','',f),  'tscan', AreaUnderSensFdr(SensFdr(selgene, r[['res']])))
+  c(sub('.rds','',f),  'tscan', AreaUnderSensFdr(SensFdr(selgene, r)))
 })
 df3 = t(df3)
 
@@ -51,7 +51,7 @@ af = af[!grepl('testres', af)]
 df4 <- sapply(af, function(f){
   print(f)
   r = readRDS(paste0(ddir, m, '/', f))
-  c(sub('.rds','',f),  'monocle2', AreaUnderSensFdr(SensFdr(selgene, r[['res']])))
+  c(sub('.rds','',f),  'monocle2', AreaUnderSensFdr(SensFdr(selgene, r)))
 })
 df4 = t(df4)
 
@@ -72,6 +72,5 @@ res <- rbind(df1, df2, df3, df4, df5)
 colnames(res) <- c('Type', 'Method', 'Fdr.Diff', 'AUC')
 saveRDS(res, paste0(rdir, 'perf.rds'))
 rm(list=ls())
-
 
 
