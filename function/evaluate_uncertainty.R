@@ -1,4 +1,5 @@
 evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL){
+  ## subset.cell: a character vector of the names of the selected cells where boostrap will happen on. If NULL, then boostrap from all the cells. 
   if (is.null(subset.cell)) {
     pr <- inferobj$pca
   } else {
