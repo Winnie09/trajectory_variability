@@ -1,8 +1,17 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'slope', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
   set.seed(12345)
+  library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   expr <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
+  ## demean
+  expr.demean <- lapply(unique(cellanno[,2]), function(s){
+    tmp <- expr[, cellanno[cellanno[,2] == s, 1]]
+    tmp2 <- tmp- rowMeans(tmp)
+  })
+  expr.demean <- do.call(cbind, expr.demean)
+  expr <- expr.demean[, colnames(expr)]
+
   if (type=='Time') {
     unis <- unique(cellanno[,2])
     design = matrix(1,nrow=length(unis),ncol=1,dimnames = list(unis,'intercept'))
@@ -37,23 +46,21 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       } else if (type=='Variable'){
         print('testing Variable ...')
         print(paste0('iteration ', iter))
-        perpsn <- sapply(rownames(design), function(s){
-          dn <- paste0(as.vector(design),collapse = '_')
-          perdn <- dn
-          while(perdn==dn) {
-            perid <- sample(1:nrow(design))
-            perdesign <- design[perid,,drop=F]
-            perdn <- paste0(as.vector(perdesign),collapse = '_')  
-          }
-          row.names(perdesign) <- row.names(design)
-          sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
-          perexpr <- expr[,sampcell,drop=F]
-          percellanno <- cellanno[sampcell,,drop=F]
-          psn <- pseudotime[colnames(expr)]
-          psn <- psn[sampcell]
-          colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-          fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
-        })
+        dn <- paste0(as.vector(design),collapse = '_')
+        perdn <- dn
+        while(perdn==dn) {
+          perid <- sample(1:nrow(design))
+          perdesign <- design[perid,,drop=F]
+          perdn <- paste0(as.vector(perdesign),collapse = '_')  
+        }
+        row.names(perdesign) <- row.names(design)
+        sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
+        perexpr <- expr[,sampcell,drop=F]
+        percellanno <- cellanno[sampcell,,drop=F]
+        psn <- pseudotime[colnames(expr)]
+        psn <- psn[sampcell]
+        colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
+        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
       }
     }
   }
@@ -81,32 +88,32 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   #---------------------------------
   # use beta2 to get mean difference
   # --------------------------------
-  beta2diff <- sapply(names(orifit$parameter), function(g){
+  max.abs.beta2 <- sapply(names(orifit$parameter), function(g){
       beta <- orifit$parameter[[g]]$beta
-      tmp <- unlist(sapply(1:length(beta), function(i){
+      tmp <- abs(unlist(sapply(1:length(beta), function(i){
         if (i%%2 == 0) beta[i]
-      }))
+      })))
       a <- ceiling(length(tmp)/3)
       b <- ceiling(length(tmp)*2/3)
       if (test.pattern == 'overall'){
         if (test.position == 'all'){
-          return(mean(tmp, na.rm = TRUE))
+          return(max(tmp, na.rm = TRUE))
         } else if (test.position == 'start'){
-          return(mean(tmp[c(1, seq(2, a))], na.rm = TRUE))
+          return(max(tmp[c(1, seq(2, a))], na.rm = TRUE))
         } else if (test.position == 'middle'){
-          return(mean(tmp[c(1, seq(a+1, b))], na.rm = TRUE))
+          return(max(tmp[c(1, seq(a+1, b))], na.rm = TRUE))
         } else if (test.position == 'end'){
-          return(mean(tmp[c(1, seq(b+1, length(tmp)))], na.rm = TRUE))
+          return(max(tmp[c(1, seq(b+1, length(tmp)))], na.rm = TRUE))
         }
       } else if (test.pattern == 'slope'){
         if (test.position == 'all'){
-          return(mean(tmp[seq(2, length(tmp))], na.rm = TRUE))
+          return(max(tmp[seq(2, length(tmp))], na.rm = TRUE))
         } else if (test.position == 'start'){
-          return(mean(tmp[seq(2, a)], na.rm = TRUE))
+          return(max(tmp[seq(2, a)], na.rm = TRUE))
         } else if (test.position == 'middle'){
-          return(mean(tmp[seq(a+1, b)], na.rm = TRUE))
+          return(max(tmp[seq(a+1, b)], na.rm = TRUE))
         } else if (test.position == 'end'){
-          return(mean(tmp[seq(b+1, length(tmp))], na.rm = TRUE))
+          return(max(tmp[seq(b+1, length(tmp))], na.rm = TRUE))
         }
       } else if (test.pattern == 'intercept'){
         return(tmp[1])
@@ -115,9 +122,11 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # -------------------------------
   if (return.all.data){
     pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, beta2diff = beta2diff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
   } else {
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, beta2diff = beta2diff, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
+
+
 

@@ -1,10 +1,8 @@
 get_population_fit <- function(testobj, variable, value = NULL, gene){
   design = testobj$design
   pseudotime = testobj$pseudotime
-  knotnum = testobj$knotnum
   pseudotime = pseudotime[order(pseudotime)]
-  
-  beta <- lapply(testobj$parameter[gene], function(i){
+  beta <- lapply(testobj$trenddiff.parameter[gene], function(i){
     i$beta
   })
   names(beta) <- gene
@@ -12,9 +10,9 @@ get_population_fit <- function(testobj, variable, value = NULL, gene){
   colnames(design)[1] <- 'intercept'
   variable = 'condition'
   design <- unique(design[,c('intercept', variable)])
-
+  
   rownames(design) <- paste0(variable, '_', unique(design[, variable]))
-
+  
   x <- sapply(row.names(design),function(i) {
         kronecker(diag(knotnum[[gene]] + 4), design[i,])
       },simplify = F)
@@ -28,10 +26,10 @@ get_population_fit <- function(testobj, variable, value = NULL, gene){
     }
   })
   names(philist) <- as.character(0:maxknotallowed)
-
+    
   phi <- philist[[as.character(knotnum[gene])]]
   beta <- beta[[gene]]
-
+  
   fit <- lapply(x, function(i){
     phi %*% t(i) %*% beta
   })
