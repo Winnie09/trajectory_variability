@@ -38,9 +38,13 @@ colann <- data.frame(sample=sub(':.*','',colnames(expr)))
 rownames(colann) <- colnames(expr)
 colann$group <- as.factor(ifelse(colann[,1] %in% paste0('BM', c(3:4, 7:9)), 'Addsignal', 'Nosignal'))
 
-rowann <- data.frame(cluster = clu[tg],
+rowann <- data.frame(cluster = as.character(clu[tg]),
                      spikein = ifelse(tg %in% selgene, 'Yes', 'No'))
 rownames(rowann) <- tg
+
+expr.bak = expr
+expr[expr > 5] <- 5
+expr[expr < -5] <- -5
 
 library(pheatmap)
 c1 <- brewer.pal(8,'Set1')
@@ -48,20 +52,21 @@ names(c1) <- paste0('BM',1:8)
 c2 <- brewer.pal(8,'Dark2')[1:2]
 names(c2) <- unique(colann$group)
 r1 <- brewer.pal(10,'Set3')
-names(r1) <- unique(rowann$cluster)
+names(r1) <- as.character(seq(1, max(clu)))
 cpl <- colorRampPalette(rev(brewer.pal(n = 7, name =  "RdYlBu")))(100)
-cpl <- c(rep(cpl[1],30),cpl,rep(cpl[length(cpl)],10))
+# cpl <- c(rep(cpl[1],30),cpl,rep(cpl[length(cpl)],10))
+cpl <- c(rep(cpl[1],100),cpl,rep(cpl[length(cpl)],100))
 
-# gaps_row=cumsum(rle(clu[1:30])$lengths)
-# gaps_col = cumsum(rle(as.character(colann[,1]))$lengths)
-
-png('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/plot/clu/geneclu.30.10.png')
-# png('geneclu.30.10.png')
+png('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/plot/clu/geneclu.png',width=1200,height=1400, res=200)
 pheatmap(expr[names(clu),],
               color=cpl, 
               cluster_rows = F,cluster_cols = F,show_rownames = F,show_colnames = F,
               annotation_col = colann,
               annotation_row = rowann[names(clu),,drop = F],
-              annotation_colors = list(patient=c1, group = c2, cluster = r1))
+              annotation_colors = list(patient=c1, group = c2, cluster = r1),
+              cellwidth = 200/ncol(expr), cellheight = 3000/nrow(expr),
+              gaps_row=cumsum(rle(clu)$lengths),
+              gaps_col = cumsum(rle(as.character(colann[,1]))$lengths))
 dev.off()
+
 

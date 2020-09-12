@@ -1,4 +1,4 @@
-get_population_fit <- function(testobj, variable, value = NULL, gene){
+get_population_fit <- function(testobj, variable = 'condition', value = NULL, gene){
   design = testobj$design
   pseudotime = testobj$pseudotime
   knotnum = testobj$knotnum
@@ -10,7 +10,6 @@ get_population_fit <- function(testobj, variable, value = NULL, gene){
   names(beta) <- gene
   if (sum(design[,1])!=nrow(design)) print("The first column of design matrix should be all 1s (intercept)!")
   colnames(design)[1] <- 'intercept'
-  variable = 'condition'
   design <- unique(design[,c('intercept', variable)])
 
   rownames(design) <- paste0(variable, '_', unique(design[, variable]))

@@ -2,15 +2,15 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
-  expr <- expr[, names(pseudotime)]
+  expr.ori <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   ## demean
   expr.demean <- lapply(unique(cellanno[,2]), function(s){
-    tmp <- expr[, cellanno[cellanno[,2] == s, 1]]
+    tmp <- expr.ori[, cellanno[cellanno[,2] == s, 1]]
     tmp2 <- tmp- rowMeans(tmp)
   })
   expr.demean <- do.call(cbind, expr.demean)
-  expr <- expr.demean[, colnames(expr)]
+  expr <- expr.demean[, colnames(expr.ori)]
 
   if (type=='Time') {
     unis <- unique(cellanno[,2])
@@ -122,11 +122,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # -------------------------------
   if (return.all.data){
     pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expression = expr))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
   } else {
     return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
-
-
 

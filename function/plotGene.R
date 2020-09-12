@@ -1,7 +1,8 @@
-plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE){
+plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, original.expr = FALSE){
   ## testptObj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
+  ## expression: a character ('demean',or 'original') to define the expression values shown on the plots. if "demean"(default), show demeaned expression. if 'original", show original gene expression.
   library(ggplot2)
   library(gridExtra)
   library(viridis)   
@@ -9,7 +10,11 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
   pseudotime <- testptObj[['pseudotime']]
   cellanno <- testptObj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
-  expression <- testptObj[['expression']]
+  if (!original.expr){
+    expression <- testptObj[['expr.demean']]
+  } else {
+    expression <- testptObj[['expr.ori']]
+  }
   predict.values <- testptObj$predict.values
   pseudotime = pseudotime[colnames(expression)]
   cellanno <- cellanno[match(colnames(expression), cellanno[,1]), ]
@@ -132,5 +137,6 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     print(p)
   }
 }
+
 
 
