@@ -52,7 +52,7 @@ oldres <- readRDS(paste0(rdir, 'EM_SelectKnots/clusterType9_1_testres.rds'))
 plot(oldres$fdr ~ testres$fdr, pch = 20)
 selgene <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/selgene/selgene.rds')
 
-pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/plot/compare_demean_and_not_demean.pdf', width = 5, height = 3.5)
+pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/plot/compare_demean_and_not_demean_clusterType', clusterType, '_', pctGene, '.pdf'), width = 5, height = 3.5)
 plot(oldres$fdr ~ testres$fdr, pch = 20, col = ifelse(names(oldres$fdr) %in% selgene, 'red', 'black'), xlab = 'fdr (centered data)', ylab = 'fdr (un-centered data)')
 dev.off()
 

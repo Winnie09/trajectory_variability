@@ -3,6 +3,7 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
   ## expression: a character ('demean',or 'original') to define the expression values shown on the plots. if "demean"(default), show demeaned expression. if 'original", show original gene expression.
+  library(splines)
   library(ggplot2)
   library(gridExtra)
   library(viridis)   
@@ -10,12 +11,13 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
   pseudotime <- testptObj[['pseudotime']]
   cellanno <- testptObj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
-  if (!original.expr){
-    expression <- testptObj[['expr.demean']]
-  } else {
+  if (original.expr){
     expression <- testptObj[['expr.ori']]
+    predict.values <- predict_fitting(expr = expression, knotnum = testptObj$knotnum, design = testptObj$design, cellanno = cellanno, pseudotime = pseudotime[colnames(expression)])
+  } else {
+    expression <- testptObj[['expr.demean']]
+    predict.values <- testptObj$predict.values
   }
-  predict.values <- testptObj$predict.values
   pseudotime = pseudotime[colnames(expression)]
   cellanno <- cellanno[match(colnames(expression), cellanno[,1]), ]
   predict.values <- predict.values[, colnames(expression)]
@@ -46,8 +48,9 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     if (is.null(variable)){
       if (plot.point){
         p <- ggplot() + 
-          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size) +
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size)
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size) +
+          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size) 
+          
       } else {
         p <- ggplot() + 
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size)   
@@ -55,8 +58,8 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     } else {
       if (plot.point){
         p <- ggplot() + 
-          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size) +
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size)
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size) +
+          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size) 
       } else {
         p <- ggplot() + 
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size)   
@@ -107,8 +110,9 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     if (is.null(variable)){
       if (plot.point){
          p <- ggplot() + 
-          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size) +
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size)
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size) +
+          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size)
+          
       } else {
         p <- ggplot() + 
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size)   
@@ -117,8 +121,8 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     } else {
       if (plot.point){
         p <- ggplot() + 
-          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample), alpha=line.alpha, size=line.size) +
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size)
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size) +
+          geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample), alpha=line.alpha, size=line.size) 
       } else {
         p <- ggplot() + 
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample), alpha=line.alpha, size=line.size) 
@@ -137,6 +141,5 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     print(p)
   }
 }
-
 
 

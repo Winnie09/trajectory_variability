@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = c('mean', 'slope', 'overall'), test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=30, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
   print('Running fitpt ...')
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -8,6 +8,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   ## pseudotime: a numeric vecotor of pseudotime, the names are ordered cell names
   ## design: design: sample by feature design matrix. rownames are sample names. first column is 1, second column is the group partition, currently only one variable.
   ## cellanno: dataframe, first column is cell names, second column is sample names.
+  ## test.pattern: c('slope', 'intercept', 'overall).
   pseudotime <- pseudotime[colnames(expr)]
   cellanno <- cellanno[match(colnames(expr),cellanno[,1]),]
   sname <- sapply(row.names(design),function(i) cellanno[cellanno[,2]==i,1],simplify = F)

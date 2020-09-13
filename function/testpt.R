@@ -1,4 +1,5 @@
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
+  
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
@@ -20,7 +21,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   }
   fitfunc <- function(iter) {
     if (iter==1) {
-      fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+      fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)  
     } else {
       if (type=='Time') {
         print('testing Time ...')
@@ -42,7 +43,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         percellanno <- cellanno[sampcell,,drop=F]
         perpsn <- perpsn[sampcell]
         colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
+        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)
       } else if (type=='Variable'){
         print('testing Variable ...')
         print(paste0('iteration ', iter))
@@ -127,4 +128,5 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
+
 
