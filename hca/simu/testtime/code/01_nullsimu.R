@@ -47,14 +47,13 @@ if (grepl('tradeSeq', method)){
   suppressMessages(library(SingleCellExperiment))
   suppressMessages(library(slingshot))
   suppressMessages(library(tradeSeq))
- 
+  ##  one grouop
   counts <- round(exp(expr + 1))
   pdt <- data.frame(curve1 = pseudotime, curve2 = pseudotime)
   rownames(pdt) <- names(pseudotime)
+  pdt = pdt[colnames(expr), ]
   
-  pdt = pdt[colnames(counts), ]
-  
-  v <- (cellanno$sample %in% paste0('BM',c(1,2,5,6)) + 0)
+  v <- (cellanno$sample %in% paste0('BM',seq(1,8)) + 0)
   v <- ifelse(v==1, 0.99, 0.01)
   cellWeights <- data.frame(curve1 = v, curve2 = 1-v)
   rownames(cellWeights) <- colnames(counts)
@@ -63,23 +62,22 @@ if (grepl('tradeSeq', method)){
   sce <- fitGAM(counts = counts, pseudotime = pdt, cellWeights = cellWeights,
                 nknots = 6, verbose = FALSE,parallel=TRUE)
   saveRDS(sce, paste0(rdir, method,'/sce.rds'))
-    
+  
+  #######
   Final <- list()
-  for (TestType in (c('diffEndTest', 'patternTest', 'earlyDETest'))){
+  for (TestType in (c('startVsEndTest', 'associationTest'))){
     print(TestType)
-    if (grepl('diffEndTest', TestType)){
-      Res <- diffEndTest(sce)  
-    } else if (grepl('patternTest', TestType)){
-      Res <- patternTest(sce)  
-    } else if (grepl('earlyDETest', TestType)){
-      Res <- earlyDETest(sce, knots = c(1,2), global = TRUE, pairwise = TRUE)
-    }
+    if (grepl('startVsEndTest', TestType)){
+      Res <- startVsEndTest(sce)
+    } else if (grepl('associationTest', TestType)){
+      Res <- associationTest(sce)
+    } 
     res <- data.frame(waldStat = Res[,'waldStat'], P.Value = Res[,'pvalue'] ,adj.P.Val = p.adjust(Res$pvalue, method='fdr'))
     row.names(res) <- row.names(Res)
     res <- res[order(res[,3], -res[,1]), ]
     Final[[TestType]] <- res
   }
-  saveRDS(Final, paste0(rdir, method,'/testres.rds'))  
+    saveRDS(Final, paste0(rdir, method,'/testres.rds'))  
 }
 
 if (method == 'tscan'){
@@ -100,4 +98,5 @@ if (method == 'monocle3'){
   res <- monocle3_time(expr=expr, cell_coords = pca[,1:4])
   saveRDS(res, paste0(rdir, method,'/testres.rds'))
 }
+
 
