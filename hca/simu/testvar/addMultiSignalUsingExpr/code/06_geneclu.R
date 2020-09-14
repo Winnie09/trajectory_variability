@@ -29,8 +29,28 @@ tg <- rownames(res)[res$fdr < 0.05]
 p <- sub(':.*','',colnames(expr))
 expr <- expr[,order(p,pseudotime[colnames(expr)])]
 
+# --------------------------------
+# scale data first for clustering
+tmp = expr[tg,]
+library(matrixStats)
+scalematrix <- function(data) {  ## standadize for rows
+  cm <- rowMeans(data)
+  csd <- rowSds(data, center = cm)
+  (data - cm) / csd
+}
+
+cellanno = cellanno[match(colnames(expr), cellanno[,1]), ]
+tmp1_list <- lapply(unique(cellanno[,2]), function(i){
+  scalematrix(tmp[, cellanno[,2] == i])
+})
+tmp1 <- do.call(cbind, tmp1_list)
+tmp1 <- tmp1[, colnames(expr)]
+tmp1[is.na(tmp1)] <- 0
+
+
+# ---------------
 set.seed(12345)
-clu <- kmeans(expr[tg,],10,iter.max = 1000)$cluster
+clu <- kmeans(tmp1,10,iter.max = 1000)$cluster
 clu <- sort(clu)
 saveRDS(clu, paste0(rdir, 'clu/geneclu.rds'))
 
@@ -68,5 +88,4 @@ pheatmap(expr[names(clu),],
               gaps_row=cumsum(rle(clu)$lengths),
               gaps_col = cumsum(rle(as.character(colann[,1]))$lengths))
 dev.off()
-
 
