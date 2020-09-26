@@ -19,6 +19,7 @@ df1<- t(sapply(af, function(f){
 ## EM_NOT_centered, centered
 rdir2 <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/old_without_demean/result/addsignal/EM_SelectKnots/'
 af = list.files(rdir2)
+af = af[grepl('testres', af)]
 df6<- t(sapply(af, function(f){
   print(f)
   Res = readRDS(paste0(rdir2, f))

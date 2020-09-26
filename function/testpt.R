@@ -1,5 +1,4 @@
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
-  
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
@@ -43,7 +42,15 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         percellanno <- cellanno[sampcell,,drop=F]
         perpsn <- perpsn[sampcell]
         colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)
+        # << --- 20200926 
+        # fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)
+        tryCatch(res <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position), warning = function(w){}, error = function(e) {})
+        if (exists('res')) {
+          return(res)
+        } else {
+          return(NULL)
+        }
+        # --- 20200926 --->>
       } else if (type=='Variable'){
         print('testing Variable ...')
         print(paste0('iteration ', iter))
@@ -71,7 +78,10 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   } else {
     fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(i)}, mc.cores = ncores)
   }
-  
+  # << --- 20200926 
+  permuiter <- sum(!sapply(fit,is.null)) -1
+  fit <- fit[!sapply(fit,is.null)]
+  # --- 20200926 --- >>
   orifit <- fit[[1]]
   knotnum <- orifit$knotnum
   orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
@@ -128,5 +138,4 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
-
 
