@@ -1,6 +1,7 @@
-plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, original.expr = FALSE){
+ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, original.expr = FALSE){
   ## testptObj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
+  ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
   ## expression: a character ('demean',or 'original') to define the expression values shown on the plots. if "demean"(default), show demeaned expression. if 'original", show original gene expression.
   library(splines)
@@ -24,9 +25,14 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
   knotnum <- testptObj$knotnum
   knotnum[knotnum==0] <- 1  ## in case the fitting of line would cause bugs
   design <- testptObj[['design']]
+  
+  
   cellanno <- data.frame(Cell = as.character(cellanno[,1]), 
                         Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   variable.d <- if(is.null(variable)) 1 else variable
+  if (!is.null(variable.text) & exists('variable.d')) {
+    design[,variable.d] <- ifelse(design[, variable.d] == 0, variable.text[1], variable.text[2])
+  }
   a <- if (free.scale) 'free' else 'fixed'
   if (length(gene) == 1){
     print('plotting one gene ...')
@@ -141,5 +147,4 @@ plotGene <- function(testptObj, gene, variable = NULL, free.scale = TRUE, facet.
     print(p)
   }
 }
-
 

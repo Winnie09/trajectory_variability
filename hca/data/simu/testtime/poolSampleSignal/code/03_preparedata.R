@@ -65,12 +65,12 @@ clu <- kmeans(tmp,10,iter.max = 1000)
 clu <- clu$cluster
 saveRDS(clu, './null/geneCluster.rds')
 
-clumean <- sapply(1:10,function(i) colMeans(tmp[clu==i,]))
-clumean <- clumean[pt[,1],]
-rownames(clumean) <- 1:nrow(clumean)
-library(reshape2)
-pd <- melt(clumean)
-colnames(pd) <- c('pt','cluster','savercnt')
+# clumean <- sapply(1:10,function(i) colMeans(tmp[clu==i,]))
+# clumean <- clumean[pt[,1],]
+# rownames(clumean) <- 1:nrow(clumean)
+# library(reshape2)
+# pd <- melt(clumean)
+# colnames(pd) <- c('pt','cluster','savercnt')
 # ggplot(pd,aes(x=pt,y=savercnt)) + geom_point(col='grey', size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('scaled saver count expression')
 ### add signal to permuted expression (both cnt and savercnt) 
 dir.create('count/', showWarnings = F, recursive = T)
@@ -85,12 +85,22 @@ dir.create('saver/', showWarnings = F, recursive = T)
 fitmat <- get_spline_fit(trainData = savercnt[othgene,pt[,1]], trainX = pt[,2], fit.min = min(pt[,2]), fit.max = max(pt[,2]), fit.num.points = nrow(pt))
 colnames(fitmat) <- colnames(savercnt)    
 sds <- apply(fitmat, 1, sd)
+# g = "DPM1:ENSG00000000419" 
+# smoothScatter(savercnt[g,pt[,1]]~pt[,2],pch=20, col='grey',main=g,xlab='pseudotime',ylab='SAVER-imputed count')
+# points(fitmat[g,pt[,1]]~pt[,2], pch = 20, col='red')
+
+
+fitcntmat <- get_spline_fit(trainData = cnt[othgene,pt[,1]], trainX = pt[,2], fit.min = min(pt[,2]), fit.max = max(pt[,2]), fit.num.points = nrow(pt))
+colnames(fitcntmat) <- colnames(savercnt)   
+# g = "DPM1:ENSG00000000419" 
+# smoothScatter(cnt[g,pt[,1]]~pt[,2],pch=20, col='grey',main=g,xlab='pseudotime',ylab='count')
+# points(fitcntmat[g,pt[,1]]~pt[,2], pch = 20, col='red')
 
 for( i in seq(1,10)){
   print(i)
   for (j in seq(1,4)) {
     # i = 9
-    fitclumat <- fitmat[names(clu[clu==i]),]
+    # fitclumat <- fitmat[names(clu[clu==i]),]
 
     ## add signals of othgene to selgene !!!
     
@@ -99,16 +109,16 @@ for( i in seq(1,10)){
     # j = 1:4
     set.seed(12345)
     addgene <- sample(s[(1+0.25*(j-1)*length(s)) : (0.25*j*length(s))], length(selgene), replace = T)
-    addsavercnt <- savercnt[addgene, pt[,1]]
+    addsavercnt <- fitmat[addgene, pt[,1]]
     ressavercnt <-  pmsavercnt[selgene, pt[,1]] + addsavercnt
     
     mat <- rbind(ressavercnt[selgene, pt[,1]], pmsavercnt[othgene, pt[,1]])
     saveRDS(mat, paste0('saver/clusterType', i, '_', j,'.rds'))
     saveRDS(list(selgene = selgene, addgene = rownames(addsavercnt)), paste0('saver/clusterType', i, '_', j,'_selgene_addgene.rds'))
-    
-    addsavercnt <- cnt[addgene, pt[,1]]
-    ressavercnt <-  pmcnt[selgene, pt[,1]] + addsavercnt
-    mat <- rbind(ressavercnt[selgene, pt[,1]], pmcnt[othgene, pt[,1]])
+    # this way to generate count data might be inaccurately
+    addcnt <- fitcntmat[addgene, pt[,1]]
+    rescnt <-  pmcnt[selgene, pt[,1]] + addcnt
+    mat <- rbind(rescnt[selgene, pt[,1]], pmcnt[othgene, pt[,1]])
     saveRDS(mat, paste0('count/clusterType', i, '_', j,'.rds'))
   }
 }

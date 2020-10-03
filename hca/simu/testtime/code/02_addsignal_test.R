@@ -70,7 +70,7 @@ if (grepl('tradeSeq', method)){
   saveRDS(Final, paste0(rdir, method,'/clusterType', clusterType, '_', pctGene,'.rds'))  
 }
 
-if (method == 'EM_SelectKnots'){
+if (method == 'EM_centered'){
   expr <- readRDS(paste0(ddir, 'saver/clusterType', clusterType, '_', pctGene, '.rds'))
   expr <- log2(expr + 1)
   expr <- expr[rowMeans(expr > 0.1) > 0.1, ]
