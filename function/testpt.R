@@ -1,17 +1,20 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE, demean = TRUE) {
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   expr.ori <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
-  ## demean
-  expr.demean <- lapply(unique(cellanno[,2]), function(s){
-    tmp <- expr.ori[, cellanno[cellanno[,2] == s, 1]]
-    tmp2 <- tmp- rowMeans(tmp)
-  })
-  expr.demean <- do.call(cbind, expr.demean)
-  expr <- expr.demean[, colnames(expr.ori)]
-
+  if (demean){
+    ## demean
+    expr.demean <- lapply(unique(cellanno[,2]), function(s){
+      tmp <- expr.ori[, cellanno[cellanno[,2] == s, 1]]
+      tmp2 <- tmp- rowMeans(tmp)
+    })
+    expr.demean <- do.call(cbind, expr.demean)
+    expr <- expr.demean[, colnames(expr.ori)]
+  } else {
+    expr <- expr.ori
+  }
   if (type=='Time') {
     unis <- unique(cellanno[,2])
     design = matrix(1,nrow=length(unis),ncol=1,dimnames = list(unis,'intercept'))
@@ -133,9 +136,14 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # -------------------------------
   if (return.all.data){
     pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
+    if (demean){
+      return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
+    } else {
+      return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr))
+    } 
   } else {
     return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
   } 
 }
+
 

@@ -17,12 +17,11 @@ get_spline_fit <- function(trainData, trainX, fit.min, fit.max, fit.num.points =
       coef = t(chol2inv(chol(crossprod(base))) %*% t(base) %*% t(trainData) ) 
       pred = t(predbase[, -colidx] %*% t(coef)) 
     } else {
-      coef = t(chol2inv(chol(crossprod(base), pivot = TRUE)) %*% t(base) %*% t(trainData) ) 
-      pred = t(predbase %*% t(coef))   
+      coef = t(chol2inv(chol(crossprod(base))) %*% t(base) %*% t(trainData) ) 
+      pred = t(predbase %*% t(coef))
     }
   } else {
     coef = t(chol2inv(chol(crossprod(base))) %*% t(base) %*% t(trainData) ) 
     pred = t(predbase %*% t(coef)) 
   }
 }
-

@@ -4,6 +4,7 @@
 clusterType <- as.numeric(commandArgs(trailingOnly = T)[[1]])
 pctGene <- as.numeric(commandArgs(trailingOnly = T)[[2]])
 method <- as.character(commandArgs(trailingOnly = T)[[3]])
+
 # clusterType <- 9
 # pctGene <- 1
 # method <- 'EM_SelectKnots'
@@ -12,7 +13,7 @@ print(method)
 print(paste0('clusterType', clusterType, '_', pctGene))
 
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
-ddir <- './hca/data/simu/testtime/poolSampleSignal/'
+ddir <- './hca/data/simu/testtime/'
 rdir <- './hca/simu/testtime/result/addsignal/'
 dir.create(paste0(rdir,method), recursive = T, showWarnings = F)
 source('./function/01_function.R')
@@ -24,7 +25,7 @@ suppressMessages(library(limma))
 # ------------
 # prepare data
 # ------------
-pt <- readRDS('./hca/data/simu/testtime/poolSampleSignal/null/pseudotime.rds')
+pt <- readRDS('./hca/data/simu/testtime/null/pseudotime.rds')
 pseudotime <- pt[,2]
 names(pseudotime) <- pt[,1]
 
@@ -82,20 +83,6 @@ if (method == 'EM_SelectKnots'){
   saveRDS(testres, paste0(rdir, method,'/clusterType', clusterType, '_', pctGene,'.rds'))  
 }
 
-
-if (method == 'EM_NOT_centered'){
-  expr <- readRDS(paste0(ddir, 'saver/clusterType', clusterType, '_', pctGene, '.rds'))
-  expr <- log2(expr + 1)
-  expr <- expr[rowMeans(expr > 0.1) > 0.1, ]
-  design = matrix(rep(1,8), nrow=8)
-  dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept'))
-  cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
-  # design = cbind(1,design)
-  testres <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=8, permuiter=100, type = 'Time', demean = FALSE)
-  saveRDS(testres, paste0(rdir, method,'/clusterType', clusterType, '_', pctGene,'.rds'))  
-}
-
-
 if (method == 'tscan'){
   expr <- readRDS(paste0(ddir, 'saver/clusterType', clusterType, '_', pctGene, '.rds'))
   expr <- expr[, names(pseudotime)]
@@ -114,7 +101,7 @@ if (method == 'monocle3'){
   library(spdep)
   expr <- readRDS(paste0(ddir, 'saver/clusterType', clusterType, '_', pctGene, '.rds'))
   expr <- expr[, names(pseudotime)]
-  pca = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/poolSampleSignal/null/hsc_mep_ery_integrated_pca.rds')
+  pca = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/null/hsc_mep_ery_integrated_pca.rds')
   res <- monocle3_time(expr=expr, cell_coords = pca[,1:4])
   saveRDS(res, paste0(rdir, method,'/clusterType', clusterType, '_', pctGene,'.rds'))  
 }
