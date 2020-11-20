@@ -119,7 +119,9 @@ for( i in seq(1,10)){
     addcnt <- fitcntmat[addgene, pt[,1]]
     rescnt <-  pmcnt[selgene, pt[,1]] + addcnt
     mat <- rbind(rescnt[selgene, pt[,1]], pmcnt[othgene, pt[,1]])
-    saveRDS(mat, paste0('count/clusterType', i, '_', j,'.rds'))
+    tmp <- matrix(pmax(0, mat), nrow = nrow(mat))
+    dimnames(tmp) <- dimnames(mat)
+    saveRDS(tmp, paste0('count/clusterType', i, '_', j,'.rds'))
   }
 }
     

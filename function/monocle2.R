@@ -50,3 +50,18 @@ monocle2_time <- function(expr,pseudotime, parallel=F, n.cores = 8) {
   res$fdr <- p.adjust(res[,1],method='fdr')
   res
 }
+
+
+monocle2_testvar <- function(expr, cellanno, design, pseudotime){
+  ## count: gene by cell count matrix
+  ## cellanno: 1st column cell name (chr), 2nc column sample name (chr)
+  ## design: 1st column the group division (num), colname are the variable name (e.g. 'group'). rownames are sample names.
+  ## pseudotime: 1st column cell name (chr), 2nd column pseudotime (num).
+  design = cbind(1,design)
+  psn = pseudotime[,2]
+  names(psn) = pseudotime[,1]
+  branch = sapply(1:nrow(cellanno), function(i) ((design[cellanno[i, 2], 2] == 1) + 0))
+  res = monocle2_group(expr, psn, branch)
+  return(res)
+}
+

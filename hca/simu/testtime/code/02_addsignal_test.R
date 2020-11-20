@@ -4,9 +4,9 @@
 clusterType <- as.numeric(commandArgs(trailingOnly = T)[[1]])
 pctGene <- as.numeric(commandArgs(trailingOnly = T)[[2]])
 method <- as.character(commandArgs(trailingOnly = T)[[3]])
-# clusterType <- 9
+# clusterType <- 1
 # pctGene <- 1
-# method <- 'EM_SelectKnots'
+# method <- 'tradeSeq'
 
 print(method)
 print(paste0('clusterType', clusterType, '_', pctGene))
@@ -48,11 +48,13 @@ if (grepl('tradeSeq', method)){
   v <- (cellanno$sample %in% paste0('BM',seq(1,8)) + 0)
   v <- ifelse(v==1, 0.99, 0.01)
   cellWeights <- data.frame(curve1 = v, curve2 = 1-v)
-  rownames(cellWeights) <- colnames(counts)
+  rownames(cellWeights) <- colnames(expr)
   
   set.seed(12345)
-  sce <- fitGAM(counts = expr, pseudotime = pdt, cellWeights = cellWeights,
-                nknots = 6, verbose = FALSE,parallel=TRUE)
+  sce <- fitGAM(counts = round(expr), pseudotime = pdt, cellWeights = cellWeights,
+              nknots = 6, verbose = FALSE,parallel=F)
+  # sce <- fitGAM(counts = round(expr), pseudotime = pdt, cellWeights = cellWeights,
+  #               nknots = 6, verbose = FALSE,parallel=TRUE, BPPARAM = MulticoreParam(2))
   saveRDS(sce, paste0(rdir, method,'/clusterType', clusterType, '_', pctGene,'_sce.rds'))
   Final <- list()
   for (TestType in (c('startVsEndTest', 'associationTest'))){
