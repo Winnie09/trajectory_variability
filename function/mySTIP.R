@@ -48,7 +48,7 @@ mySTIP <- function(fit, gl) {
   plotdata <- fit[geneorder, ]
   plotdata <- melt(plotdata)
   colnames(plotdata) <- c("Gene", "Pseudotime", "Expression")
-  
+  gl <- gl[order(match(gl,levels(plotdata$Gene)))]
   p1 <-
     ggplot(plotdata, aes(Pseudotime, Gene, fill = Expression)) + geom_tile() + theme_classic() + scale_fill_gradient2(low =
                                                                                                                         "blue",
@@ -68,12 +68,12 @@ mySTIP <- function(fit, gl) {
     round(seq(length(gene)*0.1, length(gene)*0.9, length.out = length(inid)))
   yax[yaxglid] <- gl
   yax[setdiff(1:length(yax), yaxglid)] <- setdiff(gene, gl)
-  gl <- gl[order(match(gl,levels(plotdata$Gene)))]
+  
   p2 <-
     ggplot() + geom_point(data = data.frame(gene = factor(yax, levels = yax), x =
                                               1),
                           aes(x = x, y = gene),
-                          col = "white") + geom_text(data = data.frame(text = gl, id = gl, x = 1),
+                          col = "white") + geom_text(data = data.frame(text = factor(gl, levels = gl), id = factor(gl, levels = gl), x = 1),
                                                      aes(x = x, y = id, label = gl),
                                                      size = 3) + geom_segment(
                                                        data = data.frame(
