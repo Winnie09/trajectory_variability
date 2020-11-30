@@ -142,7 +142,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr))
     } 
   } else {
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum))
+    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
   } 
 }
 
