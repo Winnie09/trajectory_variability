@@ -5,13 +5,12 @@ mySTIP <- function(fit, gl) {
   fit <- t(apply(fit, 1, scale))
   dimnames(fit) <- dn
   gene <- row.names(fit)
+  gl <- intersect(gl,gene)
   
   zpdirection <- fit[, 1] < fit[, ncol(fit)]
   
   zp <- apply(fit, 1, function(sf) {
-    names(which(sapply(1:(length(
-      sf
-    ) - 1), function(i)
+    names(which(sapply(1:(length(sf) - 1), function(i)
       sf[i] * sf[i + 1] < 0)))
   })
   zpnum <- sapply(zp, length)
@@ -26,29 +25,30 @@ mySTIP <- function(fit, gl) {
   if (length(deczp) > 0) {
     tmp <- unlist(zp[deczp])
     n <- names(tmp)
-    tmp <- as.numeric(tmp)
+    tmp <- match(tmp,colnames(fit))
     names(tmp) <- n
     geneorder <-
       c(geneorder, names(sort(tmp, decreasing = F)))
   }
   geneorder <-
     c(geneorder, names(sort(sapply(zp[m2], function(i)
-      as.numeric(i[1])))))
+      match(i[1],colnames(fit))))))
   if (length(inczp) > 0) {
     tmp <- unlist(zp[inczp])
     n <- names(tmp)
-    tmp <- as.numeric(tmp)
+    tmp <- match(tmp,colnames(fit))
     names(tmp) <- n
     geneorder <- c(geneorder, names(sort(tmp)))
   }
   geneorder <-
     c(geneorder, names(sort(sapply(zp[m1], function(i)
-      as.numeric(i[1])))))
+      match(i[1],colnames(fit))))))
   geneorder <- rev(geneorder)
-  plotdata <- fit[geneorder, ]
+  plotdata <- fit[geneorder,]
   plotdata <- melt(plotdata)
   colnames(plotdata) <- c("Gene", "Pseudotime", "Expression")
-  gl <- gl[order(match(gl,levels(plotdata$Gene)))]
+  plotdata$Pseudotime <- match(plotdata$Pseudotime,colnames(fit))
+  gl <- gl[order(match(gl, levels(plotdata$Gene)))]
   p1 <-
     ggplot(plotdata, aes(Pseudotime, Gene, fill = Expression)) + geom_tile() + theme_classic() + scale_fill_gradient2(low =
                                                                                                                         "blue",
@@ -62,40 +62,43 @@ mySTIP <- function(fit, gl) {
                                                                                                                       ) + scale_x_continuous(expand = c(0.001, 0.001))
   
   yax <- rep("A", length(gene))
-  inid <- which(gl %in% gene)
-  oid <- which(!gl %in% gene)
   yaxglid <-
-    round(seq(length(gene)*0.1, length(gene)*0.9, length.out = length(inid)))
+    round(seq(length(gene)*0.05, length(gene) * 0.95, length.out = length(gl)))
   yax[yaxglid] <- gl
   yax[setdiff(1:length(yax), yaxglid)] <- setdiff(gene, gl)
   
   p2 <-
-    ggplot() + geom_point(data = data.frame(gene = factor(yax, levels = yax), x =
-                                              1),
+    ggplot() + geom_point(data = data.frame(gene = factor(yax,levels=yax), x =1),
                           aes(x = x, y = gene),
-                          col = "white") + geom_text(data = data.frame(text = factor(gl, levels = gl), id = factor(gl, levels = gl), x = 1),
-                                                     aes(x = x, y = id, label = gl),
-                                                     size = 3) + geom_segment(
-                                                       data = data.frame(
-                                                         x = 1.5,
-                                                         xend = 2,
-                                                         y = gl,
-                                                         yend = yax[match(gl, geneorder)]
-                                                       ),
-                                                       aes(
-                                                         x = x,
-                                                         y = y,
-                                                         xend = xend,
-                                                         yend = yend
-                                                       ),
-                                                       size = 0.1
-                                                     ) + theme_classic() + coord_cartesian(xlim = c(0.5, 2)) + theme(
-                                                       axis.title = element_text(color = "white"),
-                                                       axis.line = element_line(color = "white"),
-                                                       axis.text = element_text(color = "white"),
-                                                       axis.ticks = element_line(color = "white"),
-                                                       plot.margin = margin(2, 0, 2, 2)
-                                                     ) + scale_x_continuous(expand = c(0, 0))
+                          col = "white") + geom_text(
+                            data = data.frame(
+                              text = factor(gl,levels=gl),
+                              id = factor(gl,levels=gl),
+                              x = 1),
+                            aes(x = x, y = id, label = text),
+                            size = 3
+                          ) + geom_segment(
+                            data = data.frame(
+                              x = 1.5,
+                              xend = 2,
+                              y = factor(gl,levels=gl),
+                              yend = yax[match(gl, geneorder)]
+                            ),
+                            aes(
+                              x = x,
+                              y = y,
+                              xend = xend,
+                              yend = yend
+                            ),
+                            size = 0.1
+                          ) + theme_classic() + coord_cartesian(xlim = c(0.5, 2)) + theme(
+                            axis.title = element_text(color = "white"),
+                            axis.line = element_line(color = "white"),
+                            axis.text = element_text(color = "white"),
+                            axis.ticks = element_line(color = "white"),
+                            plot.margin = margin(2, 0, 2, 2)
+                          ) + scale_x_continuous(expand = c(0, 0))
   gridExtra::grid.arrange(p2, p1, nrow = 1, layout_matrix = cbind(1, 2, 2, 2))
 }
+
 
