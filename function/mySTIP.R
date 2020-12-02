@@ -62,10 +62,15 @@ mySTIP <- function(fit, gl) {
                                                                                                                       ) + scale_x_continuous(expand = c(0.001, 0.001))
   
   yax <- rep("A", length(gene))
-  yaxglid <-
-    round(seq(length(gene)*0.05, length(gene) * 0.95, length.out = length(gl)))
+  if (length(gl) < length(gene)) {
+    yaxglid <-
+    round(seq(length(gene)*0.02, length(gene) * 0.98, length.out = length(gl)))
+  } else {
+    yaxglid <-
+    round(seq(1, length(gene), length.out = length(gl)))
+  }
   yax[yaxglid] <- gl
-  yax[setdiff(1:length(yax), yaxglid)] <- setdiff(gene, gl)
+  if (length(yaxglid)<length(yax)) yax[setdiff(1:length(yax), yaxglid)] <- setdiff(gene, gl)
   
   p2 <-
     ggplot() + geom_point(data = data.frame(gene = factor(yax,levels=yax), x =1),
