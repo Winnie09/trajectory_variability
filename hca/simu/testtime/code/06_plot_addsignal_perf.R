@@ -3,6 +3,7 @@
 # ----------------
 pdir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/plot/addsignal/'
 perf <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/addsignal/perf/perf.rds')
+#perf <- perf[perf[,2]!='EM_centered',]
 pd <- data.frame(perf, SignalType = gsub('_.*','',sub('clusterType','',perf[,1])), stringsAsFactors = F)
 pd$SignalStreghth <- as.numeric(sapply(pd$Type, function(i) sub('.*_', '', i) ))
 pd[,2] = as.factor(pd[,2])
@@ -29,6 +30,4 @@ ggplot(pd, aes(x = SignalStreghth, y = AUC, color=Method)) +
   scale_color_brewer(palette = 'Set1') + 
   facet_wrap(~SignalType, scales = 'free')
 dev.off()
-
-
 

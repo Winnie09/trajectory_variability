@@ -13,7 +13,7 @@ suppressMessages(library(splines))
 suppressMessages(library(limma))
 suppressMessages(library(RColorBrewer))
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-pseudotime <- readRDS(paste0('./data/simu/testtime/null/pseudotime.rds'))
+pseudotime <- readRDS(paste0('./data/simu/testtime/poolSampleSignal/null/pseudotime.rds'))
 selgene <- readRDS(paste0(ddir, 'selgene/selgene.rds'))
 dir.create(paste0(rdir, method), showWarnings = FALSE, recursive = TRUE)
 
@@ -59,7 +59,7 @@ if (grepl('tradeSeq', method)){
   saveRDS(Final, fn)  
 }
 
-if (method == 'EM'){
+if (method == 'EM_centered'){
   print(method)
   ### prepare data
   expr <- readRDS(paste0(ddir, 'saver/', signal, '.rds'))
@@ -72,7 +72,7 @@ if (method == 'EM'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=8, permuiter=100, type = 'Variable')
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=8, permuiter=100, type = 'Variable', demean = TRUE)
   saveRDS(testres, fn)  
   # ### calculate auc, fdr.diff
   # res <- data.frame(adj.P.Val = testres$fdr, foldchange = testres$foldchange, stringsAsFactors = F)
@@ -80,6 +80,23 @@ if (method == 'EM'){
   # res <- res[order(res[,1], -res[,2]),,drop = FALSE]
   # testres[['sensfdr']] <-  c(method, AreaUnderSensFdr(SensFdr(TruePositive = selgene, Statistics = res)))
   # saveRDS(testres, paste0(rdir, method,'/', signal, '_perf.rds'))  
+}
+
+if (method == 'EM_NOT_centered'){
+  print(method)
+  ### prepare data
+  expr <- readRDS(paste0(ddir, 'saver/', signal, '.rds'))
+  expr <- log2(expr + 1)
+  expr <- expr[rowMeans(expr>0)>0.01, ]
+  
+  design = matrix( c(rep(1, 8),1,1,0,0,1,1,0,0), nrow=8)
+  dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept','group'))
+  cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
+  pt <- pseudotime[, 2]
+  names(pt) <- pseudotime[, 1]
+  ### run test
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=4, permuiter=100, type = 'Variable', demean = FALSE)
+  saveRDS(testres, fn)  
 }
 
 if (method == 'tscan'){
@@ -136,8 +153,5 @@ warnings()
 # pseudotime: numeric vector (1,2,3,4....) with names same as colnames(expr)
 # branch: 0,1 vector indicating whether each cell is from group 1 or 2, can get from as.numeric(sub(':.*','',colnames(expr)) %in% paste0('BM',c(1,2,5,6)))
 # cell_coords: the pca you sent me, only use the first 4 (if correct) dimensions
-
-
-
 
 

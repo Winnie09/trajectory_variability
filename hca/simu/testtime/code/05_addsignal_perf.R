@@ -1,15 +1,17 @@
-source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-selgene <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/poolSampleSignal/selgene/selgene.rds')
-rdir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/addsignal/'
+library(here)
+here()
+source(here('function', '01_function.R'))
+selgene <- readRDS(here('hca', 'data', 'simu', 'testtime', 'poolSampleSignal','selgene','selgene.rds'))
+rdir <- here('hca', 'simu','testtime','result','addsignal')
 
 ## EM_centered
 perflist <- list()
-af = list.files(paste0(rdir, 'EM_centered/'))
+af = list.files(paste0(rdir, '/EM_centered/'))
 f = af[1]
 if (length(af) > 0){
   df1<- t(sapply(af, function(f){
     print(f)
-    Res = readRDS(paste0(rdir, 'EM_centered/', f))
+    Res = readRDS(paste0(rdir, '/EM_centered/', f))
     res = data.frame(fdr = Res$fdr, foldchange = Res$foldchange)
     res = res[order(res[,1], -res[,2]), ]
     c(sub('.rds','',f), 'EM_centered', AreaUnderSensFdr(SensFdr(selgene, res)))
@@ -18,12 +20,12 @@ if (length(af) > 0){
 }
   
 ## EM_NOT_centered
-rdir2 <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/addsignal/EM_NOT_centered/'
+rdir2 <- here('hca','simu','testtime','result','addsignal','EM_NOT_centered')
 af = list.files(rdir2)
 if (length(af) > 0){
   df6<- t(sapply(af, function(f){
     print(f)
-    Res = readRDS(paste0(rdir2, f))
+    Res = readRDS(paste0(rdir2, '/',f))
     res = data.frame(fdr = Res$fdr, foldchange = Res$foldchange)
     res = res[order(res[,1], -res[,2]), ]
     c(sub('.rds','',f), 'EM_NOT_centered', AreaUnderSensFdr(SensFdr(selgene, res)))
@@ -33,15 +35,19 @@ if (length(af) > 0){
   
 ## tradeSeq
 m = 'tradeSeq'
-af = list.files(paste0(rdir, m, '/'))
+af = list.files(paste0(rdir, '/',m, '/'))
 af = af[grep('.rds', af)]
 af = af[!grepl('sce', af)]
 if (length(af) > 0){
   df <- lapply(af, function(f){
     print(f)
-    r = readRDS(paste0(rdir, m, '/', f))
-    a = c(sub('.rds','',f), 'tradeSeq_startVsEndTest', AreaUnderSensFdr(SensFdr(selgene, r[['startVsEndTest']])))
-    b = c(sub('.rds','',f), 'tradeSeq_associationTest', AreaUnderSensFdr(SensFdr(selgene, r[['associationTest']])))
+    r = readRDS(paste0(rdir,'/', m, '/', f))
+    tmp <- r[['startVsEndTest']]
+    tmp <- tmp[complete.cases(tmp), ]
+    a = c(sub('.rds','',f), 'tradeSeq_startVsEndTest', AreaUnderSensFdr(SensFdr(selgene, tmp)))
+    tmp <- r[['associationTest']]
+    tmp <- tmp[complete.cases(tmp), ]
+    b = c(sub('.rds','',f), 'tradeSeq_associationTest', AreaUnderSensFdr(SensFdr(selgene, tmp)))
     rbind(a, b)
   })
   df2 <- do.call(rbind, df)
@@ -50,11 +56,11 @@ if (length(af) > 0){
   
 ## tscan
 m = 'tscan'
-af = list.files(paste0(rdir, m, '/'))
+af = list.files(paste0(rdir, '/',m, '/'))
 if (length(af) > 0){
   df3 <- t(sapply(af, function(f){
     print(f)
-    r = readRDS(paste0(rdir, m, '/', f))
+    r = readRDS(paste0(rdir, '/', m, '/', f))
     c(sub('.rds','',f),  'tscan', AreaUnderSensFdr(SensFdr(selgene, r)))
   }))
   perflist[['tscan']] <- df3
@@ -63,11 +69,11 @@ if (length(af) > 0){
 
 ## monocle2
 m = 'monocle2'
-af = list.files(paste0(rdir, m, '/'))
+af = list.files(paste0(rdir, '/', m, '/'))
 if (length(af) > 0){
   df4 <- t(sapply(af, function(f){
     print(f)
-    r = readRDS(paste0(rdir, m, '/', f))
+    r = readRDS(paste0(rdir, '/', m, '/', f))
     c(sub('.rds','',f),  'monocle2', AreaUnderSensFdr(SensFdr(selgene, r)))
   }))
   perflist[['monocle2']] <- df4
@@ -76,11 +82,11 @@ if (length(af) > 0){
 
 ## monocle3
 m = 'monocle3'
-af = list.files(paste0(rdir, m, '/'))
+af = list.files(paste0(rdir, '/', m, '/'))
 if (length(af) > 0){
   df5 <- t(sapply(af, function(f){
     print(f)
-    r = readRDS(paste0(rdir, m, '/', f))
+    r = readRDS(paste0(rdir, '/', m, '/', f))
     c(sub('.rds','',f),  'monocle3', AreaUnderSensFdr(SensFdr(selgene, r)))
   }))
   perflist[['monocle3']] <- df5
@@ -90,6 +96,7 @@ if (length(af) > 0){
 ## concatenate
 perf <- do.call(rbind, perflist)
 colnames(perf) <- c('Type', 'Method', 'Fdr.Diff', 'AUC')
-saveRDS(perf, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/addsignal/perf/perf.rds')
+saveRDS(perf, here('hca', 'simu','testtime','result','addsignal','perf','perf.rds'))
 rm(list=ls())
+
 
