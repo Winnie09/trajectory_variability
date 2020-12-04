@@ -12,6 +12,6 @@ source('/dcl02/hongkai/data/whou/trajectory_variability/function/01_function.R')
 rdir <- '/dcl02/hongkai/data/whou/trajectory_variability/covid/result/'
 dir.create(rdir, recursive = T)
 
-res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Time', ncores = 8)
-saveRDS(res, paste0(rdir, 'temra_testtime.rds'))
+res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Time', ncores = 8, demean = T)
+saveRDS(res, paste0(rdir, 'temra_testtime_centered.rds'))
 

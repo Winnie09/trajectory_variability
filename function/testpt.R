@@ -134,8 +134,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       }
   })
   # -------------------------------
+  pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
   if (return.all.data){
-    pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
     if (demean){
       return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
     } else {
@@ -145,5 +145,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
   } 
 }
+
+
+
+
 
 
