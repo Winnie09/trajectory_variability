@@ -75,7 +75,7 @@ if (method == 'EM_centered'){
   design = matrix(rep(1,8), nrow=8)
   dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept'))
   cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
-  res <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=1, permuiter=100, type = 'Time')
+  res <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=8, permuiter=100, type = 'Time', demean = TRUE, return.all.data = TRUE)
 }
 
 

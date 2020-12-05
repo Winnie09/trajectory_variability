@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+fitpt_parallel_version <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
   print('Running fitpt ...')
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -13,7 +13,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   cellanno <- cellanno[match(colnames(expr),cellanno[,1]),]
   sname <- sapply(row.names(design),function(i) cellanno[cellanno[,2]==i,1],simplify = F)
   design = as.matrix(design)
- 
+  
   philist <- lapply(0:maxknotallowed,function(num.knot) {
     if (num.knot==0) {
       phi <- cbind(1,bs(pseudotime))
@@ -23,10 +23,10 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     }
   })
   names(philist) <- as.character(0:maxknotallowed)
- 
+  
   maxknot <- 0
   testpos <- 1
- 
+
   while (testpos & maxknot < maxknotallowed) {
     maxknot <- maxknot + 1
     phi <- philist[[as.character(maxknot)]]
@@ -34,10 +34,10 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       is.positive.definite(crossprod(phi[sname[[ss]],,drop=F]))
     })) == 1
   }
- 
+  
   maxknot <- maxknot - 1
   sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
- 
+
   bicfunc <- function(num.knot) {
     phi <- philist[[as.character(num.knot)]]
     ll <- sapply(names(sname), function(ss) {
@@ -49,19 +49,17 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     })
     rowSums(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*rowSums(!is.na(ll)))
   }
- 
+  
   if (ncores!=1) {
     bic <- mclapply(0:maxknot,bicfunc,mc.cores=ncores)
     bic <- do.call(cbind,bic)
   } else {
     bic <- sapply(0:maxknot,bicfunc)
   }
- 
-  rm('sexpr')
- 
+  
   knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
   names(knotnum) <- row.names(expr)
- 
+  
  
   sfit <- function(num.knot) {
     gid <- names(which(knotnum==num.knot))
@@ -70,7 +68,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     phicrossprod <- apply(phi,1,tcrossprod)
     phicrossprod <- sapply(names(sname),function(ss) phicrossprod[,sname[[ss]]],simplify = F)
     phi <- sapply(names(sname),function(ss) phi[sname[[ss]],],simplify = F)
-   
+    
     # --------------
     # change here >>
     # --------------
@@ -100,27 +98,27 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
         }
       }
     } else if (test.pattern == 'intercept'){
-      for (id in seq(1, length(xs))){
-        xs[[id]][,1] <- xs_test[[id]][,1]
-      }
+        for (id in seq(1, length(xs))){
+          xs[[id]][,1] <- xs_test[[id]][,1]
+        }
     } else if (test.pattern == 'overall'){
-      if (is.na(test.position) | test.position == 'all'){
-        xs <- xs_test
-      } else if (test.position == 'start'){
-        for (id in seq(1, length(xs))){
-          xs[[id]][, c(1, seq(2, ceiling(ncol(xs[[1]])/3)))] <- xs_test[[id]][ , c(1, seq(2, ceiling(ncol(xs[[1]])/3)))]
+        if (is.na(test.position) | test.position == 'all'){
+          xs <- xs_test
+        } else if (test.position == 'start'){
+            for (id in seq(1, length(xs))){
+              xs[[id]][, c(1, seq(2, ceiling(ncol(xs[[1]])/3)))] <- xs_test[[id]][ , c(1, seq(2, ceiling(ncol(xs[[1]])/3)))]
+            }
+        } else if (test.position == 'middle'){
+            for (id in seq(1, length(xs))){
+              xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))]
+            }
+        } else if (test.position == 'end'){
+          for (id in seq(1, length(xs))){
+            xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))]
+          }
         }
-      } else if (test.position == 'middle'){
-        for (id in seq(1, length(xs))){
-          xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])/3+1), ceiling(ncol(xs[[1]])*2/3)))]
-        }
-      } else if (test.position == 'end'){
-        for (id in seq(1, length(xs))){
-          xs[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))] <- xs_test[[id]][, c(1, seq(ceiling(ncol(xs[[1]])*2/3+1), ceiling(ncol(xs[[1]]))))]
-        }
-      }
     }
-   
+    
     # --------------
     # change here <<
     # --------------
@@ -129,7 +127,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     phi_xs_rbind <- do.call(rbind,phi_xs)
     phi_xs_rbind <- phi_xs_rbind[colnames(expr),]
     beta <- sexpr %*% (phi_xs_rbind %*% chol2inv(chol(crossprod(phi_xs_rbind))))
-   
+    
     sexpr <- sapply(names(xs),function(ss) sexpr[,sname[[ss]],drop=F],simplify = F)
     ## initialize tau
     indfit <- sapply(names(xs), function(ss){
@@ -143,7 +141,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       m <- m-rowMeans(m)
       tcrossprod(m) / (ncol(m)-1) + diag(nrow(m)) * 0.01
     })
-   
+    
     ## initialize gamma
     gamma <- sapply(names(xs), function(ss){
       diff <- sexpr[[ss]] - tcrossprod(indfit[[ss]],phi[[ss]])
@@ -156,10 +154,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       row.names(gamma) <- gid
     }
     gamma[gamma < 0.01] <- 0.01
-   
-    rm('indfit')
-    rm('indfitdiff')
-   
+    
     iter <- 0
     ll <- rep(-Inf,length(gid))
     names(ll) <- gid
@@ -177,62 +172,55 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
         phi_xs_beta[[ss]] <- sexpr[[ss]] - phi_xs_beta[[ss]]
         M[,ss] <- (rowSums((phi_xs_beta[[ss]] - E_phi_u_e[[ss]])^2) + rowSums(sigma1s))/ncol(sigma1s)
       }
-     
-      rm('sigma1s')
-     
+      
       tauinv <- sapply(gidr,function(i) {
         chol2inv(chol(matrix(tau[,i],nrow=ncol(phi[[1]]))))
       },simplify = F)
-     
+      
       E_u_con_theta <- sapply(names(sname),function(ss) {
         m <- matrix(rowSums(phicrossprod[[ss]]),nrow=ncol(phi[[ss]]))
         tmp <- sapply(gidr,function(i) {
           chol2inv(chol(m/gamma[i,ss] + tauinv[[i]]))
         },simplify = F)
       },simplify = F)
-     
-      rm('tauinv')
-     
+
+      k_s <- sapply(names(sname),function(ss){
+        tmp <- phi_xs_beta[[ss]] %*% phi[[ss]]
+        rowsum(as.vector(t(tmp)) * do.call(rbind,E_u_con_theta[[ss]]),rep(1:nrow(tmp),each=ncol(tmp))) / gamma[gidr,ss]
+      },simplify = F)
+      
       tmp2 <- (1/gamma[gidr,,drop=F]) %*% t(sapply(names(xs), function(ss){
         crossprod(phi_xs[[ss]])
       }))
-     
+      
       tmp3 <- lapply(names(xs), function(ss){
         (sexpr[[ss]] - E_phi_u_e[[ss]]) %*% phi_xs[[ss]] / gamma[gidr,ss]
       })
       tmp3 <- Reduce('+', tmp3)
       newbeta <- t(sapply(row.names(tmp2),function(i) chol2inv(chol(matrix(tmp2[i,],nrow=ncol(beta)))) %*% tmp3[i,]))
-     
-      rm('tmp2')
-      rm('tmp3')
-     
+      
       ### gamma
-      #newgamma <- M
-     
+      newgamma <- M
+      
       ### tau
       tmp <- lapply(names(xs), function(ss) {
-        tm <- phi_xs_beta[[ss]] %*% phi[[ss]]
-        k_s <- rowsum(as.vector(t(tm)) * do.call(rbind,E_u_con_theta[[ss]]),rep(1:nrow(tm),each=ncol(tm))) / gamma[gidr,ss]
-        sapply(E_u_con_theta[[ss]],as.vector) + apply(k_s,1,tcrossprod)
+        sapply(E_u_con_theta[[ss]],as.vector) + apply(k_s[[ss]],1,tcrossprod)
       })
       newtau <- Reduce('+', tmp)/length(xs)
-     
-      rm('E_u_con_theta')
-      rm('tmp')
-     
+      
       ### log L
       tmpll <- sapply(names(xs), function(ss) {
         tmp <- 2 * (phi_tau_phi[[ss]] + gamma[gidr,ss])
         rowSums(-log(pi * tmp))/2 - rowSums(phi_xs_beta[[ss]]*phi_xs_beta[[ss]] / tmp)
       })
-     
+      
       if (is.vector(tmpll)) {
         tmpll <- t(tmpll)
         row.names(tmpll) <- gidr
       }
       ll[gidr] <- rowSums(tmpll)
       beta[gidr,] <- newbeta
-      gamma[gidr,] <- M
+      gamma[gidr,] <- newgamma
       tau[,gidr] <- newtau
       iter <- iter + 1
       gidr <- names(which(ll-llold > EMitercutoff))
@@ -244,7 +232,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   } else {
     allres <- lapply(unique(knotnum),sfit)
   }
- 
+  
   para <- list()
   for (i in 1:length(allres)) {
     for (j in row.names(allres[[i]][[1]])) {
