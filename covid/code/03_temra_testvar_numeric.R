@@ -24,7 +24,7 @@ dir.create(rdir, recursive = T)
 # saveRDS(res, paste0(rdir, '/temra_trenddiff_centered,'/temra_trenddiff.rds'))
 
 res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Variable', ncores = 8, demean = FALSE)
-saveRDS(res, paste0(rdir,'/temra_NOT_centered' '/temra_NOT_centered.rds'))
+saveRDS(res, paste0(rdir,'/temra_NOT_centered', '/temra_NOT_centered.rds'))
 
 # ## meandiff
 # meanres <- meandiff(expr = expr, cellanno = cellanno, design = design, ncores =8)
