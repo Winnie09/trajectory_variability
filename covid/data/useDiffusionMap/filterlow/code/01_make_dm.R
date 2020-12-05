@@ -9,13 +9,26 @@ str(expr) ##
 dm <- DiffusionMap(t(expr), )
 str(dm)
 saveRDS(dm, here('covid', 'data', 'useDiffusionMap', 'result','dm.obj.rds'))
-dmap <- dm@@eigenvectors
+dmap <- dm@eigenvectors
 saveRDS(dmap, here('covid','data','useDiffusionMap','result','dm.rds'))
 
 
-pdf(here('covid','data','useDiffusionMap','plot', 'dm.pdf'), width = 6, height = 6)
+pdf(here('covid','data','useDiffusionMap','plot', 'dm_12dc.pdf'), width = 6, height = 5)
 plot(dm,1:2,
 pch = 20) # pch for prettier points
 dev.off()
+
+pdf(here('covid','data','useDiffusionMap','plot', 'dm_23dc.pdf'), width = 6, height = 5)
+plot(dm,2:3,
+pch = 20) # pch for prettier points
+dev.off()
+
+
+pdf(here('covid','data','useDiffusionMap','plot', 'dm_3dc.pdf'), width = 6, height = 6)
+plot(dm,1:3,
+pch = 20) # pch for prettier points
+dev.off()
+
+
 
 
