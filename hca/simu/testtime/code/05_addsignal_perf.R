@@ -1,7 +1,7 @@
 library(here)
 here()
 source(here('function', '01_function.R'))
-selgene <- readRDS(here('hca', 'data', 'simu', 'testtime', 'poolSampleSignal','selgene','selgene.rds'))
+selgene <- readRDS(here('hca', 'data', 'simu', 'testtime', 'addMultiSignalUsingExpr','selgene','selgene.rds'))
 rdir <- here('hca', 'simu','testtime','result','addsignal')
 
 ## EM_centered
