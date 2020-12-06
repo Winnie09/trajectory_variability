@@ -3,7 +3,8 @@ get_population_fit <- function(testobj,
                                value = NULL,
                                gene) {
   library(splines)
-  ## if variable = NA, then return population fit for test on time
+  ## if variable = NA, then return population fit (a vector) for constant test (test on time)
+  ## if variable = a character (one of the colname in design matrix), then return population fit for all levels of that character.
   design = testobj$design
   pseudotime = testobj$pseudotime
   knotnum = testobj$knotnum
@@ -26,7 +27,7 @@ get_population_fit <- function(testobj,
   
   
   x <- sapply(row.names(design), function(i) {
-    kronecker(diag(knotnum[[gene]] + 4), design[i, , drop = FALSE])
+    kronecker(diag(knotnum[gene] + 4), design[i, , drop = FALSE]) ###
   }, simplify = FALSE)
   maxknotallowed <- 30
   philist <- lapply(0:maxknotallowed, function(num.knot) {
@@ -40,7 +41,7 @@ get_population_fit <- function(testobj,
   })
   names(philist) <- as.character(0:maxknotallowed)
   
-  phi <- philist[[as.character(knotnum[gene])]]
+  phi <- philist[[as.vector(as.character(knotnum[gene]))]]
   beta <- beta[[gene]]
   
   if (is.na(variable)) {
@@ -53,3 +54,4 @@ get_population_fit <- function(testobj,
   }
   return(fit)
 }
+
