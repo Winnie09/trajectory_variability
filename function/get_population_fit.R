@@ -2,6 +2,7 @@ get_population_fit <- function(testobj,
                                variable = 'condition',
                                value = NULL,
                                gene) {
+  library(splines)
   ## if variable = NA, then return population fit for test on time
   design = testobj$design
   pseudotime = testobj$pseudotime
