@@ -72,14 +72,8 @@ if (method == 'EM_centered'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=8, permuiter=100, type = 'Variable', demean = TRUE)
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=4, permuiter=100, type = 'Variable', demean = TRUE)
   saveRDS(testres, fn)  
-  # ### calculate auc, fdr.diff
-  # res <- data.frame(adj.P.Val = testres$fdr, foldchange = testres$foldchange, stringsAsFactors = F)
-  # rownames(res) <- names(testres$fdr)
-  # res <- res[order(res[,1], -res[,2]),,drop = FALSE]
-  # testres[['sensfdr']] <-  c(method, AreaUnderSensFdr(SensFdr(TruePositive = selgene, Statistics = res)))
-  # saveRDS(testres, paste0(rdir, method,'/', signal, '_perf.rds'))  
 }
 
 if (method == 'EM_NOT_centered'){

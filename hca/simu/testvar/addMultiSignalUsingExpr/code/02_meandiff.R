@@ -1,7 +1,7 @@
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca')
 rdir <- './simu/testvar/addMultiSignalUsingExpr/result/'
 ddir <- './data/simu/testvar/addMultiSignalUsingExpr/'
-method = 'EM_meandiff'
+method = 'meandiff'
 
 for (signal in 1:4){
   print(signal)
