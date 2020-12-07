@@ -1,6 +1,3 @@
-# ----------------------------------------------------
-# fit population pattern, clustering, and then plot
-# ----------------------------------------------------
 library(ggplot2)
 library(RColorBrewer)
 library(pheatmap)
@@ -23,8 +20,9 @@ for (dataType  in seq(1,4)){
   ## -----------
   ## clustering
   ## -----------
+  clu.true = readRDS(paste0(ddir, '/null/geneCluster.rds'))
   set.seed(12345)
-  clu <- kmeans(fit.scale, 10, iter.max = 1000)$cluster
+  clu <- kmeans(fit.scale, max(clu.true), iter.max = 1000)$cluster
   clu <- sort(clu)
   table(clu)
   saveRDS(clu, paste0(rdir, '/cluster.rds'))
@@ -115,20 +113,19 @@ for (dataType  in seq(1,4)){
   ## confusion matrix
   ## ----------------
   library(caret)
-  fromgene = readRDS(paste0(ddir, '/fromgene/1.rds'))
+  fromgene = readRDS(paste0(ddir, '/fromgene/', dataType, '.rds'))
   selgene = readRDS(paste0(ddir, '/selgene/selgene.rds'))
-  clu.true = readRDS(paste0(ddir, '/null/geneCluster.rds'))
   clu.true = clu.true[fromgene]
   clu.true = paste0('cluster', clu.true)
   names(clu.true) <- selgene
   
   m <- confusionMatrix(data = as.factor(paste0('cluster',clu)), reference = as.factor(clu.true[names(clu)]), 
-                       dnn = c('diffGeneCluster','SignalCluster'))
+                       dnn = c('diffGeneCluster','SignalCluster'))  ## dnn = c("Prediction", "Reference")
   tb <- t(m$table)
   tb <- tb/rowSums(tb)
   pdf(paste0(pdir, '/confusionMatrix_hm.pdf'), width = 3.5, height = 3)
   print(pheatmap(tb))
   dev.off()
-
 }
   
+
