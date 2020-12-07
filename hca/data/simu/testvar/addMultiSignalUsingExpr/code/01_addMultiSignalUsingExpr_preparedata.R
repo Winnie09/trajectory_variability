@@ -1,158 +1,150 @@
-geneProp <- 0.2
-setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testvar/addMultiSignalUsingExpr/')
-# ddir <- './testtime/data/data/'
-ddir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/null/'
-rdir <-'/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testvar/addMultiSignalUsingExpr/'
-source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/myfunc/01_function.R')
+library(here)
+setwd(here('hca','data','simu','testvar','addMultiSignalUsingExpr'))
+source(here('function','01_function.R'))
+source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/function.R')
+dir.create('fromgene', recursive = TRUE, showWarnings = FALSE)
 
-### load saver, and count matrix
-expr <- readRDS(paste0(ddir, 'hsc_mep_ery_saver.rds')) ## log2
-cnt <- readRDS(paste0(ddir, 'hsc_mep_ery_count.rds'))
+### load saver, count matrix, and pseudotime
+geneProp <- 0.2
+saverlog <- readRDS(here('hca','data','simu','testtime','poolSampleSignal','null','hsc_mep_ery_saver.rds'))
+cnt <- readRDS(here('hca','data','simu','testtime','poolSampleSignal','null','hsc_mep_ery_count.rds'))
+pt <- readRDS(here('hca','data','simu','testtime','poolSampleSignal','null','pseudotime.rds'))
+saverlog <- saverlog[, pt[,1]]
+cnt <- cnt[, pt[,1]]
 
 ### prepare count, imputed, selected genes
+savercnt <- 2^saverlog - 1
+rownames(savercnt) <- sapply(rownames(savercnt), function(i) sub('_','-',i))
+rownames(saverlog) <- rownames(savercnt)
 rownames(cnt) <- sapply(rownames(cnt), function(i) sub('_','-',i))
-rownames(expr) <- sapply(rownames(expr), function(i) sub('_','-',i))
-expr.bak = expr
-expr <- 2^expr - 1
-
-
-design <- cbind(c(1,1,0,0,1,1,0,0))
-row.names(design) <- paste0('BM',1:8)
-colnames(design) <- 'group'
+allp = sub(':.*','', colnames(savercnt))
+names(allp) <- colnames(savercnt)
+# BM1:52:female   BM2:50:male   BM3:39:male   BM4:29:male   BM5:29:male 
+#          1453           513           794          2123          4085 
+# BM6:26:female BM7:36:female BM8:32:female 
+#          1633          1090          1578 
+## do not change the order of group1 and group2 codes
+savercnt2 <- savercnt[ , allp %in% paste0('BM', c(3,4,7,8))] ## group2, do not add signals
+saverlog2 <- saverlog[ , allp %in% paste0('BM', c(3,4,7,8))] ## group2, do not add signals
+cnt2 <- cnt[ , allp %in% paste0('BM', c(3,4,7,8))] ## group2, do not add signals
+savercnt <- savercnt[ , allp %in% paste0('BM', c(1,2,5,6))] ## group1, add signals
+saverlog <- saverlog[ , allp %in% paste0('BM', c(1,2,5,6))] ## group1, add signals
+cnt <- cnt[ , allp %in% paste0('BM', c(1,2,5,6))] ## group1, add signals
+allp = sub(':.*','', colnames(savercnt))
+names(allp) <- colnames(savercnt)
+pt1 <- pt[pt[,1] %in% colnames(cnt), ] ## pseudotime for only group1
 
 set.seed(12345)
-selgene <- sample(row.names(expr), round(geneProp * nrow(expr)))
-othgene <- setdiff(rownames(expr), selgene)
-saveRDS(selgene, paste0(rdir, 'selgene/selgene.rds'))
+selgene <- sample(row.names(savercnt), round(geneProp * nrow(savercnt)))
+othgene <- setdiff(rownames(savercnt), selgene)
+dir.create('selgene/', showWarnings = F, recursive = T)
+saveRDS(selgene, './selgene/selgene.rds')
 
-### order cells by pseudotime, and get the optimal clusters using saver imputed 80% genes
-pt <- readRDS(paste0(ddir,'pseudotime.rds'))
-expr <- expr[, pt[,1]] ##  NOT log2
-tmp <- expr.bak[othgene, pt[,1]]  ##  log2
-cnt <- cnt[, colnames(expr)]
+## select highly pseudotime-variable genes 
+library(splines)
+tmp <- saverlog[othgene, ]
+xm <- bs(1:ncol(tmp))
+fstat <- t(sapply(rownames(tmp), function(i) { ## larger f, stronger signal
+  summary(lm(tmp[i,pt1[,1]]~xm))$fstatistic
+}))
 
-### seperate by two group
-sample <- sub(':.*','',colnames(expr))
-names(sample) <- colnames(expr)
-expr1 <- expr[, sample %in% rownames(design[design[,'group']==0, , drop = F])] ## NOT log2
-expr2 <- expr[, sample %in% rownames(design[design[,'group']==1, , drop = F])]  ## NOT log2
-tmp1 <- tmp[, colnames(expr1)] ## log2
-tmp2 <- tmp[, colnames(expr2)] ## log2
+tmp.fit <- get_spline_fit(trainData = tmp, trainX = seq(1, ncol(tmp)), fit.min = 1, fit.max = ncol(tmp), fit.num.points = 1000, num.base=10, remove.correlated=TRUE)
 
-### scale NOT log2 each sample 
+cor(apply(tmp.fit, 1, sd),rowMeans(tmp.fit))  ##  0.5540323
+tmp.fit.sd <- apply(tmp.fit, 1, sd)
+tmp.fit.mean <- rowMeans(tmp.fit)
+
+xm <- bs(tmp.fit.mean)
+resid <- resid(lm(tmp.fit.sd ~ xm))
+pdf('./null/bs_fitted_sd_versus_mean_marked_by_residule.pdf', width = 3.8, height = 3.6)
+plot(apply(tmp.fit, 1, sd)~rowMeans(tmp.fit), pch = 20, col = ifelse(resid>0, 'red', 'black'), xlab='mean', ylab='sd')
+dev.off()
+pdf('./null/bs_fitted_sd_versus_fstat_marked_by_residule.pdf', width = 3.8, height = 3.6)
+plot(apply(tmp.fit, 1, sd)~fstat[,1], pch = 20, col = ifelse(resid>0, 'red', 'black'), main = paste0('PCC=',round(cor(apply(tmp.fit, 1, sd),fstat[,1]),2)), xlab='f statistics', ylab='sd')
+dev.off()
+
+othgene <- names(resid[resid >0])
+saveRDS(othgene, './selgene/othgene.rds')
+
+### get the optimal clusters using log2-saver imputed 80% genes
 library(matrixStats)
-scalematrix <- function(data) {  ## standadize for rows
+scalematrix <- function(data) {
   cm <- rowMeans(data)
   csd <- rowSds(data, center = cm)
   (data - cm) / csd
 }
 
-tmp1p <- sapply(colnames(tmp1), function(i) sub(':.*', '', i))
-tmp1_list <- lapply(unique(tmp1p), function(i){
-  scalematrix(tmp1[, tmp1p == i])
-})
-tmp1 <- do.call(cbind, tmp1_list)
-tmp1 <- tmp1[, colnames(expr1)]
-tmp1[is.na(tmp1)] <- 0
+tmp <- saverlog[othgene, ]
+tmp <- scalematrix(tmp)
+library(parallel)
+rss <- mclapply(1:10,function(clunum) {
+  tmp <- kmeans(tmp,clunum,iter.max = 1000)
+  tmp$betweenss/tmp$totss
+},mc.cores=10)
+rss <- unlist(rss)
+names(rss) <- paste0(seq(1,10), 'cluster')
+saveRDS(rss, './null/number_clusters_rss.rds')
+
+pdf('./null/number_of_clusters_rss.pdf', width = 3.8, height = 3.8)
+plot(rss,pch=20,xlab='number of clusters', ylab = 'betweenss/totss')
+dev.off()
 
 set.seed(12345)
-clu <- kmeans(tmp1,10,iter.max = 1000)
+clu <- kmeans(tmp,5,iter.max = 1000) ### 
 clu <- clu$cluster
-saveRDS(clu, paste0(rdir, 'clu/geneCluster.rds'))
+dir.create('null/', showWarnings = F, recursive = T)
+saveRDS(clu, './null/geneCluster.rds')
 
-# > table(clu)
-# clu
-#    1    2    3    4    5    6    7    8    9   10 
-# 1726  437  890  580  652  861  600  189  823  498 
+clumean <- sapply(1:max(clu),function(i) colMeans(tmp[clu==i,]))
+clumean <- clumean[pt1[,1],]
+rownames(clumean) <- 1:nrow(clumean)
+library(ggplot2)
+library(reshape2)
+pd <- melt(clumean)
+colnames(pd) <- c('pt','cluster','saverlog')
+pdf('./null/gene_cluster.pdf', width = 6, height = 5)
+ggplot(pd,aes(x=pt,y=saverlog)) + geom_point(col='grey', size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('Scaled gene expression') + xlab('Pseudotime') + theme_classic()
+dev.off()
 
-# set.seed(12345)
-# clu2 <- mykmeans(t(tmp1))$cluster
-# > table(clu2)
-# clu2
-#    1    2    3 
-# 2991 1772 2493 
-
-# -----
-# plot
-# -----
-# # plot cluster mean of standadized expression
-# clumean <- sapply(1:max(clu),function(i) colMeans(tmp1[clu==i,, drop=F]))
-# clumean <- clumean[pt[,1][pt[,1] %in% colnames(tmp1)], ]
-# rownames(clumean) <- 1:nrow(clumean)
-# pd <- reshape2::melt(clumean)
-# colnames(pd) <- c('pt','cluster','expr')
-# 
-# library(ggplot2)
-# ggplot(pd,aes(x=pt,y=expr)) + 
-#   geom_point(col='grey', size=0.01) + 
-#   geom_smooth() + 
-#   facet_wrap(~cluster,scales = 'free') + ylab('cluster mean of standadized expression') +
-#   theme_classic()
-# 
-# # plot all genes expr vs. pt in each group with linew
-# pd.clu = lapply(1:max(clu), function(i) reshape2::melt(tmp1[clu==i, ]))
-# pd.clu = do.call(rbind, pd.clu)
-# colnames(pd.clu) <- c('gene', 'cell', 'expr')
-# pd.clu$clu <- clu[pd.clu$gene]
-# pd.clu$pt <- pt[pd.clu$gene, 2]
-# ggplot(data = pd.clu, aes(x = pt, y = expr, group = gene)) +
-#   geom_line(color='grey', size = 0.01) +
-#   theme_classic() +
-#   facet_wrap(~clu, scales = 'free')
-## plot
-# clumean <- sapply(1:10,function(i) colMeans(expr1[names(clu[clu==i]),, drop=F]))
-# clumean <- clumean[pt[,1][pt[,1] %in% colnames(tmp1)], ]
-# # rownames(clumean) <- 1:nrow(clumean)
-# rownames(clumean) <- colnames(expr1) ##
-# pd <- melt(clumean)
-# v = sapply(as.character(pd[,1]), function(i) sub(':.*', '', i))
-# rownames(clumean) <- 1:nrow(clumean)
-# pd = melt(clumean)
-# pd = cbind(pd, sample = v)
-# colnames(pd) <- c('pt','cluster','expr', 'sample')
-# ggplot(pd,aes(x=pt,y=expr,col=sample)) + geom_point(size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('scaled expression')
-
-
-# -------------------------------------------------------
-### add signal to permuted expression (both cnt and expr)
-# -------------------------------------------------------
-dir.create(paste0(rdir, 'count/'), showWarnings = F, recursive = T)
-dir.create(paste0(rdir, 'saver/'), showWarnings = F, recursive = T)
-for (j in seq(1,4)) { # signal from strongest -> weakest
+### add signal to permuted expression (both cnt and savercnt) 
+dir.create('count/', showWarnings = F, recursive = T)
+dir.create('saver/', showWarnings = F, recursive = T)
+for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
   print(j)
   fromgene <- lapply(seq(1, max(clu)), function(i){
     print(i)
-    clumat = expr1[names(clu[clu==i]), ]  ## NOT log2
-    allp <- sapply(colnames(expr1), function(i) sub(':.*','', i))
-    sds <- sapply(unique(allp), function(p){
-      tmp <- clumat[, allp == p]
-      sd <- apply(tmp, 1, sd) 
-      rank(sd)
-    })
-    s <- names(sort(rowMeans(sds), decreasing = TRUE)) ## genes sd largest -> smallest
-    
+    clumat = saverlog[names(clu[clu==i]), ]  # log2 expression
+    fstat.clu <- fstat[rownames(clumat), 1]
+    s <- names(sort(fstat.clu))
     set.seed(12345)
-    fromgene <- sample(s[(1+0.25*(j-1)*length(s)) : (0.25*j*length(s))], floor(length(selgene)/10), replace = T)
-  })
+    fromgenetmp <- sample(s[(1+0.25*(j-1)*length(s)) : (0.25*j*length(s))], floor(length(selgene)/10), replace = T)
+  }) ## j = 1, smallest fstat, weakest signal
   fromgene = unlist(fromgene)
   if (length(fromgene) < length(selgene)){
-    fromgene = c(fromgene, fromgene[seq(1, length(selgene) - length(fromgene))])
+    set.seed(12345)
+    fromgene = c(fromgene, sample(fromgene, length(selgene) - length(fromgene), replace = TRUE))
   }
-  saveRDS(fromgene, paste0(rdir, 'fromgene/', j, '.rds'))
-  resexpr <-  expr1[selgene, ] + expr1[fromgene, ] # NOT log2
-  mat <- rbind(resexpr[selgene, ], expr1[othgene,])
-  mat <- cbind(mat, expr2[rownames(mat), ])
-  saveRDS(mat, paste0(rdir, 'saver/', j, '.rds'))
-
-  resexpr <-  cnt[selgene, colnames(expr1)] + cnt[fromgene, colnames(expr1)]
-  mat <- rbind(resexpr[selgene, ], cnt[othgene, colnames(expr1)])
-  mat <- cbind(mat, cnt[rownames(mat), colnames(expr2)])
-  saveRDS(mat, paste0(rdir, 'count/', j, '.rds'))
-
+  saveRDS(fromgene, paste0('fromgene/', j, '.rds'))
+  
+  resexpr <-  savercnt[selgene, ] + savercnt[fromgene, ] # NOT log2
+  mat <- rbind(resexpr[selgene, ], savercnt[setdiff(rownames(savercnt),selgene),])
+  mat <- cbind(mat, savercnt2[rownames(mat), ])
+  saveRDS(mat, paste0('saver/', j,'.rds'))
+  
+  resexpr <-  cnt[selgene, ] + cnt[fromgene, ]
+  mat <- rbind(resexpr[selgene, ], cnt[setdiff(rownames(savercnt),selgene), ])
+  mat <- cbind(mat, cnt2[rownames(mat), ])
+  saveRDS(mat, paste0('count/', j,'.rds'))
+  
+  ## double check
+  logmat <- log2(mat+1)
+  summary(sapply(sample(selgene,10),function(i) {  ## should be larger
+    summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
+  }))
+  summary(sapply(sample(othgene,10),function(i) { ## should be much smaller
+    summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
+  }))
 }
 
-  
 
-    
-    
+
