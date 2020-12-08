@@ -13,8 +13,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   cellanno <- cellanno[match(colnames(expr),cellanno[,1]),]
   sname <- sapply(row.names(design),function(i) cellanno[cellanno[,2]==i,1],simplify = F)
   design = as.matrix(design)
-  ori.design = as.matrix(ori.design) ############## changed !!!!!
- 
+  ori.design = as.matrix(ori.design) 
   philist <- lapply(0:maxknotallowed,function(num.knot) {
     if (num.knot==0) {
       phi <- cbind(1,bs(pseudotime))
@@ -40,6 +39,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
  
   bicfunc <- function(num.knot) {
+    print(paste0('num.knot = ', num.knot))
     phi <- philist[[as.character(num.knot)]]
     ll <- sapply(names(sname), function(ss) {
       phiss <- phi[sname[[ss]],,drop=F]
@@ -65,6 +65,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
  
  
   sfit <- function(num.knot) {
+    print(paste0('num.knot=', num.knot))
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F]
     phi <- philist[[as.character(num.knot)]]
@@ -146,6 +147,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     })
    
     ## initialize gamma
+    print('## initialize gamma')
     gamma <- sapply(names(xs), function(ss){
       diff <- sexpr[[ss]] - tcrossprod(indfit[[ss]],phi[[ss]])
       m <- rowMeans(diff)
@@ -156,8 +158,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       colnames(gamma) <- names(xs)
       row.names(gamma) <- gid
     }
-    gamma[gamma < 0.01] <- 0.01
-   
+    gamma[gamma < 1e-5] <- 1e-5   
     rm('indfit')
     rm('indfitdiff')
    
@@ -211,6 +212,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       #newgamma <- M
      
       ### tau
+      print('### tau')
       tmp <- lapply(names(xs), function(ss) {
         tm <- phi_xs_beta[[ss]] %*% phi[[ss]]
         k_s <- rowsum(as.vector(t(tm)) * do.call(rbind,E_u_con_theta[[ss]]),rep(1:nrow(tm),each=ncol(tm))) / gamma[gidr,ss]
@@ -222,6 +224,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       rm('tmp')
      
       ### log L
+      print('### log L')
       tmpll <- sapply(names(xs), function(ss) {
         tmp <- 2 * (phi_tau_phi[[ss]] + gamma[gidr,ss])
         rowSums(-log(pi * tmp))/2 - rowSums(phi_xs_beta[[ss]]*phi_xs_beta[[ss]] / tmp)
@@ -234,6 +237,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       ll[gidr] <- rowSums(tmpll)
       beta[gidr,] <- newbeta
       gamma[gidr,] <- M
+      gamma[gamma < 1e-5] <- 1e-5
       tau[,gidr] <- newtau
       iter <- iter + 1
       gidr <- names(which(ll-llold > EMitercutoff))
