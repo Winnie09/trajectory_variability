@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores()) {
+fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=1) {
   print('Running fitpt ...')
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -13,6 +13,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   cellanno <- cellanno[match(colnames(expr),cellanno[,1]),]
   sname <- sapply(row.names(design),function(i) cellanno[cellanno[,2]==i,1],simplify = F)
   design = as.matrix(design)
+  ori.design = as.matrix(ori.design) ############## changed !!!!!
  
   philist <- lapply(0:maxknotallowed,function(num.knot) {
     if (num.knot==0) {
@@ -69,7 +70,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     phi <- philist[[as.character(num.knot)]]
     phicrossprod <- apply(phi,1,tcrossprod)
     phicrossprod <- sapply(names(sname),function(ss) phicrossprod[,sname[[ss]]],simplify = F)
-    phi <- sapply(names(sname),function(ss) phi[sname[[ss]],],simplify = F)
+    phi <- sapply(names(sname),function(ss) phi[sname[[ss]],],simplify = F) 
    
     # --------------
     # change here >>
@@ -254,6 +255,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
                         ll=allres[[i]][[4]][j])
     }
   }
+  print('fitpt success!')
   list(parameter=para,knotnum=knotnum)
 }
 
