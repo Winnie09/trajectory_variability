@@ -1,6 +1,6 @@
 library(here)
 ddir <- paste0(here('hca','simu', 'testvar', 'addMultiSignalUsingExpr', 'result'), '/')
-rdir <- paste0(here('hca','simu', 'testvar', 'addMultiSignalUsingExpr', 'perf'), '/')
+rdir <- paste0(here('hca','simu', 'testvar', 'addMultiSignalUsingExpr', 'result','perf'), '/')
 
 selgene <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testvar/addMultiSignalUsingExpr/selgene/selgene.rds')
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
@@ -28,7 +28,7 @@ df1.nc <- sapply(af, function(f){
 })
 perflist[['EM_not_centered']] = t(df1.nc)
 
-m = 'EM_meandiff'
+m = 'meandiff'
 af = list.files(paste0(ddir, m, '/'))
 df2 <- sapply(af, function(f){
   print(f)
@@ -42,7 +42,7 @@ perflist[['meandiff']] = t(df2)
 ## concatenate
 perf <- do.call(rbind, perflist)
 colnames(perf) <- c('Type', 'Method', 'Fdr.Diff', 'AUC')
-saveRDS(perf, paste0((rdir,'perf.rds'))
+saveRDS(perf, paste0(rdir,'perf.rds'))
 rm(list=ls())
 
 

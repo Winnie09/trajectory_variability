@@ -133,11 +133,11 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
   saveRDS(fromgene, paste0('fromgene/', j, '.rds'))
   
   resexpr <-  pmsavercnt[selgene, pt[,1]] + savercnt[fromgene, pt[,1]] # NOT log2
-  mat <- rbind(resexpr[selgene, ], pmsavercnt[setdiff(rownames(savercnt),selgene),pt[,1]])
+  mat <- rbind(resexpr[selgene, ], pmsavercnt[othgene,pt[,1]])
   saveRDS(mat, paste0('saver/', j,'.rds'))
   
   resexpr <-  pmcnt[selgene, pt[,1]] + cnt[fromgene, pt[,1]]
-  mat <- rbind(resexpr[selgene, ], pmcnt[setdiff(rownames(cnt),selgene), pt[,1]])
+  mat <- rbind(resexpr[selgene, ], pmcnt[othgene, pt[,1]])
   saveRDS(mat, paste0('count/', j,'.rds'))
   
   # ## double check

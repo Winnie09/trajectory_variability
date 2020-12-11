@@ -4,17 +4,19 @@
 suppressMessages(library(parallel))
 suppressMessages(library(splines))
 suppressMessages(library(limma))
+library(here)
+here()
 method <- 'monocle3'
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/myfunc/01_function.R')
-source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-ddir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/addMultiSignalUsingExpr/'
-rdir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testtime/result/addsignal/'
+source(here('function/01_function.R'))
+ddir <- here('hca/data/simu/testtime/addMultiSignalUsingExpr/')
+rdir <- here('hca/simu/testtime/result/addsignal/')
 dir.create(paste0(rdir,method), recursive = T, showWarnings = F)
 
 # ------------
 # prepare data
 # ------------
-pt <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/data/simu/testtime/poolSampleSignal/null/pseudotime.rds')
+pt <- readRDS(here('hca/data/simu/testtime/poolSampleSignal/null/pseudotime.rds'))
 pseudotime <- pt[,2]
 names(pseudotime) <- pt[,1]
 
@@ -22,7 +24,6 @@ names(pseudotime) <- pt[,1]
 # test  [one group along pseudotime]
 # ----------------------------------
 for (dataType in seq(1, 4)){
-  print(dataType)
   library(spdep)
   expr <- readRDS(paste0(ddir, 'saver/', dataType, '.rds'))
   expr <- expr[, names(pseudotime)]
@@ -30,5 +31,4 @@ for (dataType in seq(1, 4)){
   res <- monocle3_time(expr=expr, cell_coords = pca[,1:4])
   saveRDS(res, paste0(rdir, method,'/', dataType,'.rds'))  
 }
-
 

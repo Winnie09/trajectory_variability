@@ -1,4 +1,4 @@
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE, demean = TRUE) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE) {
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
@@ -22,6 +22,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     design = as.matrix(design)  
   }
   fitfunc <- function(iter) {
+    print(paste0('iter ', iter, '\n'))
     if (iter==1) {
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)  
     } else {

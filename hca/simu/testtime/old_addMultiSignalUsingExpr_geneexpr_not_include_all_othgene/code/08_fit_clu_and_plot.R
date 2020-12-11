@@ -7,14 +7,12 @@ source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/myfunc/01_function.R')
 source(here('function/01_function.R'))
 
 for (dataType  in seq(1,4)){
-  ddir <- here('hca','data','simu','testvar','addMultiSignalUsingExpr')
-  rdir <- here('hca','simu','testvar','addMultiSignalUsingExpr','result', 'cluster',dataType)
-  pdir <- here('hca','simu','testvar','addMultiSignalUsingExpr','plot', dataType)
-  dir.create(rdir, recursive = TRUE, showWarnings = FALSE)
-  dir.create(pdir, recursive = TRUE, showWarnings = FALSE)
-  Res <- readRDS(here('hca','simu','testvar','addMultiSignalUsingExpr','result','EM_NOT_centered',paste0(dataType,'.rds')))
+  ddir <- here('hca','data','simu','testtime','addMultiSignalUsingExpr')
+  rdir <- here('hca','simu','testtime','result','addsignal', 'cluster',dataType)
+  pdir <- here('hca','simu','testtime','plot','addsignal', dataType)
+  Res <- readRDS(here('hca','simu','testtime','result','addsignal', 'EM_NOT_centered',paste0(dataType,'.rds')))
   fit <- t(sapply(names(Res$fdr[Res$fdr < 0.05]), function(g){
-    tmp <- get_population_fit(Res, variable = 'group', gene = g)
+    tmp <- get_population_fit(Res, variable = NA, gene = g)
   }))
   saveRDS(fit, paste0(rdir, '/population_fit.rds')) ##########
   

@@ -11,12 +11,12 @@ expr <- expr[rowMeans(expr>0.1)>0.01, ]
 
 source(here('function','01_function.R'))
 ## trenddiff
-rdir <- here('covid','GSE155673_pbmc','useDiffusionMap','useNotImpute','diffTest','result')
+rdir <- here('covid','GSE155673_pbmc','useDiffusionMap','useNotImpute','diffTest','result','temra_testtime')
 dir.create(rdir, recursive = T)
 
 system.time({
   res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Time', ncores = 4, demean = FALSE)
 })
-saveRDS(res, paste0(rdir, '/temra_testtime.rds'))
+saveRDS(res, paste0(rdir, '/res.rds'))
 
 

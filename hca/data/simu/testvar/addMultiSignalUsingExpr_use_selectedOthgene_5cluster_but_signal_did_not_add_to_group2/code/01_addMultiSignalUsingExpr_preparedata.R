@@ -1,5 +1,5 @@
 library(here)
-setwd(here('hca','data','simu','testtime','addMultiSignalUsingExpr'))
+setwd(here('hca','data','simu','testvar','addMultiSignalUsingExpr'))
 source(here('function','01_function.R'))
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/function.R')
 dir.create('fromgene', recursive = TRUE, showWarnings = FALSE)
@@ -19,44 +19,38 @@ rownames(saverlog) <- rownames(savercnt)
 rownames(cnt) <- sapply(rownames(cnt), function(i) sub('_','-',i))
 allp = sub(':.*','', colnames(savercnt))
 names(allp) <- colnames(savercnt)
+# BM1:52:female   BM2:50:male   BM3:39:male   BM4:29:male   BM5:29:male 
+#          1453           513           794          2123          4085 
+# BM6:26:female BM7:36:female BM8:32:female 
+#          1633          1090          1578 
+## do not change the order of group1 and group2 codes
+savercnt2 <- savercnt[ , allp %in% paste0('BM', c(3,4,7,8))] ## group2, do not add signals
+saverlog2 <- saverlog[ , allp %in% paste0('BM', c(3,4,7,8))] ## group2, do not add signals
+cnt2 <- cnt[ , allp %in% paste0('BM', c(3,4,7,8))] ## group2, do not add signals
+savercnt <- savercnt[ , allp %in% paste0('BM', c(1,2,5,6))] ## group1, add signals
+saverlog <- saverlog[ , allp %in% paste0('BM', c(1,2,5,6))] ## group1, add signals
+cnt <- cnt[ , allp %in% paste0('BM', c(1,2,5,6))] ## group1, add signals
+allp = sub(':.*','', colnames(savercnt))
+names(allp) <- colnames(savercnt)
+pt1 <- pt[pt[,1] %in% colnames(cnt), ] ## pseudotime for only group1
+
 set.seed(12345)
 selgene <- sample(row.names(savercnt), round(geneProp * nrow(savercnt)))
 othgene <- setdiff(rownames(savercnt), selgene)
 dir.create('selgene/', showWarnings = F, recursive = T)
 saveRDS(selgene, './selgene/selgene.rds')
 
-### permute the pseudotime for each sample
-pmlist <- lapply(unique(allp), function(p){
-  tmp <- savercnt[,allp==p]
-  set.seed(12345)
-  colnames(tmp) <- sample(colnames(tmp))
-  tmp
-})
-pmsavercnt <- do.call(cbind, pmlist)
-pmsavercnt <- pmsavercnt[, pt[,1]]
-
-pmlist <- lapply(unique(allp), function(p){ 
-  tmp <- cnt[,allp==p]
-  set.seed(12345)
-  colnames(tmp) <- sample(colnames(tmp))
-  tmp
-})
-pmcnt <- do.call(cbind, pmlist)
-pmcnt <- pmcnt[, pt[,1]]
-identical(colnames(pmsavercnt), colnames(pmcnt)) 
-identical(rownames(pmsavercnt), rownames(pmcnt)) 
-
 ## select highly pseudotime-variable genes 
 library(splines)
 tmp <- saverlog[othgene, ]
 xm <- bs(1:ncol(tmp))
 fstat <- t(sapply(rownames(tmp), function(i) { ## larger f, stronger signal
-  summary(lm(tmp[i,pt[,1]]~xm))$fstatistic
+  summary(lm(tmp[i,pt1[,1]]~xm))$fstatistic
 }))
 
 tmp.fit <- get_spline_fit(trainData = tmp, trainX = seq(1, ncol(tmp)), fit.min = 1, fit.max = ncol(tmp), fit.num.points = 1000, num.base=10, remove.correlated=TRUE)
 
-cor(apply(tmp.fit, 1, sd),rowMeans(tmp.fit))
+cor(apply(tmp.fit, 1, sd),rowMeans(tmp.fit))  ##  0.5540323
 tmp.fit.sd <- apply(tmp.fit, 1, sd)
 tmp.fit.mean <- rowMeans(tmp.fit)
 
@@ -92,7 +86,7 @@ names(rss) <- paste0(seq(1,10), 'cluster')
 saveRDS(rss, './null/number_clusters_rss.rds')
 
 pdf('./null/number_of_clusters_rss.pdf', width = 3.8, height = 3.8)
-plot(rss,pch=20,xlab='number of clusters')
+plot(rss,pch=20,xlab='number of clusters', ylab = 'betweenss/totss')
 dev.off()
 
 set.seed(12345)
@@ -102,7 +96,7 @@ dir.create('null/', showWarnings = F, recursive = T)
 saveRDS(clu, './null/geneCluster.rds')
 
 clumean <- sapply(1:max(clu),function(i) colMeans(tmp[clu==i,]))
-clumean <- clumean[pt[,1],]
+clumean <- clumean[pt1[,1],]
 rownames(clumean) <- 1:nrow(clumean)
 library(ggplot2)
 library(reshape2)
@@ -132,25 +126,25 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
   }
   saveRDS(fromgene, paste0('fromgene/', j, '.rds'))
   
-  resexpr <-  pmsavercnt[selgene, pt[,1]] + savercnt[fromgene, pt[,1]] # NOT log2
-  mat <- rbind(resexpr[selgene, ], pmsavercnt[setdiff(rownames(savercnt),selgene),pt[,1]])
+  resexpr <-  savercnt[selgene, ] + savercnt[fromgene, ] # NOT log2
+  mat <- rbind(resexpr[selgene, ], savercnt[setdiff(rownames(savercnt),selgene),])
+  mat <- cbind(mat, savercnt2[rownames(mat), ])
   saveRDS(mat, paste0('saver/', j,'.rds'))
   
-  resexpr <-  pmcnt[selgene, pt[,1]] + cnt[fromgene, pt[,1]]
-  mat <- rbind(resexpr[selgene, ], pmcnt[setdiff(rownames(cnt),selgene), pt[,1]])
+  resexpr <-  cnt[selgene, ] + cnt[fromgene, ]
+  mat <- rbind(resexpr[selgene, ], cnt[setdiff(rownames(savercnt),selgene), ])
+  mat <- cbind(mat, cnt2[rownames(mat), ])
   saveRDS(mat, paste0('count/', j,'.rds'))
   
-  # ## double check
-  # logmat <- log2(mat+1)
-  # summary(sapply(sample(selgene,10),function(i) {  ## should be larger
-  #   summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
-  # }))
-  # summary(sapply(sample(othgene,10),function(i) { ## should be much smaller
-  #   summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
-  # }))
+  ## double check
+  logmat <- log2(mat+1)
+  summary(sapply(sample(selgene,10),function(i) {  ## should be larger
+    summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
+  }))
+  summary(sapply(sample(othgene,10),function(i) { ## should be much smaller
+    summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
+  }))
 }
-
-
 
 
 
