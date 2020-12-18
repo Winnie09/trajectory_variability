@@ -1,7 +1,7 @@
 library(here)
 setwd(here('hca','data','simu','testvar','addMultiSignalUsingExpr'))
 source(here('function','01_function.R'))
-source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/function.R')
+source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/myfunc/01_function.R')
 dir.create('fromgene', recursive = TRUE, showWarnings = FALSE)
 
 ### load saver, count matrix, and pseudotime
@@ -39,6 +39,13 @@ selgene <- sample(row.names(savercnt), round(geneProp * nrow(savercnt)))
 othgene <- setdiff(rownames(savercnt), selgene)
 dir.create('selgene/', showWarnings = F, recursive = T)
 saveRDS(selgene, './selgene/selgene.rds')
+
+selgene1 <- selgene[1:round(length(selgene)/3)]
+selgene2 <- selgene[(length(selgene1)+1) : round(2*length(selgene)/3+1)]
+selgene3 <- selgene[(length(selgene1)+length(selgene2) + 1) : length(selgene)]
+saveRDS(selgene1, './selgene/selgene1.rds')
+saveRDS(selgene2, './selgene/selgene2.rds')
+saveRDS(selgene3, './selgene/selgene3.rds')
 
 ## select highly pseudotime-variable genes 
 library(splines)
@@ -106,7 +113,65 @@ pdf('./null/gene_cluster.pdf', width = 6, height = 5)
 ggplot(pd,aes(x=pt,y=saverlog)) + geom_point(col='grey', size=0.01) + geom_smooth() + facet_wrap(~cluster,scales = 'free') + ylab('Scaled gene expression') + xlab('Pseudotime') + theme_classic()
 dev.off()
 
-### add signal to permuted expression (both cnt and savercnt) 
+### permuted a group1 matrix for adding mean
+allp <-  sub(':.*','', colnames(savercnt))
+pmlist <- lapply(unique(allp), function(p){
+  tmpmat <- savercnt[, allp == p]
+  set.seed(12345)
+  colnames(tmpmat) <- sample(colnames(tmpmat))
+  tmpmat
+})
+pmsavercnt <- do.call(cbind, pmlist)
+pmsavercnt <- pmsavercnt[, pt[pt[,1] %in% colnames(savercnt), 1]] ## pseudotime for group1
+
+pmlist <- lapply(unique(allp), function(p){
+  tmpmat <- cnt[, allp == p]
+  set.seed(12345)
+  colnames(tmpmat) <- sample(colnames(tmpmat))
+  tmpmat
+})
+pmcnt <- do.call(cbind, pmlist)
+pmcnt <- pmcnt[, pt[pt[,1] %in% colnames(cnt), 1]] ## pseudotime for group1
+
+### permuted a group2 matrix for adding mean
+allp2 <-  sub(':.*','', colnames(savercnt2))
+pmlist2 <- lapply(unique(allp2), function(p){
+  tmpmat <- savercnt2[, allp2 == p]
+  set.seed(12345)
+  colnames(tmpmat) <- sample(colnames(tmpmat))
+  tmpmat
+})
+pmsavercnt2 <- do.call(cbind, pmlist2)
+pmsavercnt2 <- pmsavercnt2[, pt[pt[,1] %in% colnames(savercnt2), 1]] ## pseudotime for group2
+
+allp2 <-  sub(':.*','', colnames(cnt2))
+pmlist2 <- lapply(unique(allp2), function(p){
+  tmpmat <- cnt2[, allp2 == p]
+  set.seed(12345)
+  colnames(tmpmat) <- sample(colnames(tmpmat))
+  tmpmat
+})
+pmcnt2 <- do.call(cbind, pmlist2)
+pmcnt2 <- pmcnt2[, pt[pt[,1] %in% colnames(cnt2), 1]] ## pseudotime for group2
+
+### demean a group2 matrix for adding trend
+allp2 <-  sub(':.*','', colnames(savercnt2))
+pmlist2 <- lapply(unique(allp2), function(p){
+  tmpmat <- savercnt2[, allp2 == p]
+  tmpmat - rowMeans(tmpmat)
+})
+savercnt2.demean <- do.call(cbind, pmlist2)
+savercnt2.demean <- savercnt2.demean[, pt[pt[,1] %in% colnames(savercnt2), 1]] ## pseudotime for group2
+
+allp2 <-  sub(':.*','', colnames(cnt2))
+pmlist2 <- lapply(unique(allp2), function(p){
+  tmpmat <- cnt2[, allp2 == p]
+  tmpmat - rowMeans(tmpmat)
+})
+cnt2.demean <- do.call(cbind, pmlist2)
+cnt2.demean <- cnt2.demean[, pt[pt[,1] %in% colnames(cnt2), 1]] ## pseudotime for group2
+
+### add signal to  expression (both cnt and savercnt) 
 dir.create('count/', showWarnings = F, recursive = T)
 dir.create('saver/', showWarnings = F, recursive = T)
 for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
@@ -118,6 +183,8 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
     s <- names(sort(fstat.clu))
     set.seed(12345)
     fromgenetmp <- sample(s[(1+0.25*(j-1)*length(s)) : (0.25*j*length(s))], floor(length(selgene)/10), replace = T)
+    set.seed(12345)
+    sample(fromgenetmp)  ## randomize for three types of selgenes
   }) ## j = 1, smallest fstat, weakest signal
   fromgene = unlist(fromgene)
   if (length(fromgene) < length(selgene)){
@@ -126,25 +193,37 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
   }
   saveRDS(fromgene, paste0('fromgene/', j, '.rds'))
   
-  resexpr <-  savercnt[selgene, ] + savercnt[fromgene, ] # NOT log2
+  ### SAVER
+  resexpr <-  rbind(savercnt[selgene1, ] + savercnt[fromgene[1:length(selgene1)], ], 
+              savercnt[selgene2,] + pmsavercnt[fromgene[(length(selgene1)+1) : (length(selgene1)+length(selgene2))],],
+              savercnt[selgene3,] + savercnt[fromgene[((length(selgene1)+length(selgene2)+1):(length(selgene1)+length(selgene2)+length(selgene3)))], ])
   mat <- rbind(resexpr[selgene, ], savercnt[setdiff(rownames(savercnt),selgene),])
-  mat <- cbind(mat, savercnt2[rownames(mat), ])
+  #### add three type of signals to group2 compared to group1: mean only, trend only, and mean and trend only.
+  add1 <- savercnt2[selgene1, ] + pmsavercnt2[fromgene[1:length(selgene1)], ] ## add mean, so trend only difference
+  savercnt2.new <- rbind(add1, savercnt2[setdiff(rownames(savercnt2), selgene1), ]) ## others do not add
+  #### bind group1 and group2
+  mat <- cbind(mat, savercnt2.new[rownames(mat), ])
   saveRDS(mat, paste0('saver/', j,'.rds'))
   
-  resexpr <-  cnt[selgene, ] + cnt[fromgene, ]
-  mat <- rbind(resexpr[selgene, ], cnt[setdiff(rownames(savercnt),selgene), ])
-  mat <- cbind(mat, cnt2[rownames(mat), ])
+  ### count
+  resexpr <-  rbind(cnt[selgene1, ] + cnt[fromgene[1:length(selgene1)], ], 
+              cnt[selgene2,] + pmcnt[fromgene[(length(selgene1)+1) : (length(selgene1)+length(selgene2))],],
+              cnt[selgene3,] + cnt[fromgene[((length(selgene1)+length(selgene2)+1):(length(selgene1)+length(selgene2)+length(selgene3)))], ])
+  mat <- rbind(resexpr[selgene, ], cnt[setdiff(rownames(cnt),selgene),])
+  add1 <- cnt2[selgene1, ] + pmcnt2[fromgene[1:length(selgene1)], ] 
+  cnt2.new <- rbind(add1, cnt2[setdiff(rownames(cnt2), selgene1), ])
+  mat <- cbind(mat, cnt2.new[rownames(mat), ])
   saveRDS(mat, paste0('count/', j,'.rds'))
   
   ## double check
   logmat <- log2(mat+1)
+  sum(logmat < 0 )
   summary(sapply(sample(selgene,10),function(i) {  ## should be larger
-    summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
+    summary(lm(logmat[i,pt[pt[,1] %in% colnames(logmat),1]]~I(1:ncol(logmat))))$fstatistic[1]
   }))
   summary(sapply(sample(othgene,10),function(i) { ## should be much smaller
-    summary(lm(logmat[i,pt[,1]]~I(1:ncol(logmat))))$fstatistic[1]
+    summary(lm(logmat[i,pt[pt[,1] %in% colnames(logmat),1]]~I(1:ncol(logmat))))$fstatistic[1]
   }))
 }
-
 
 
