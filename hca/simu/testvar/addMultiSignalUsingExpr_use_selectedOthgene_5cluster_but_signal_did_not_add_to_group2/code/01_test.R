@@ -14,9 +14,51 @@ suppressMessages(library(limma))
 suppressMessages(library(RColorBrewer))
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
 pseudotime <- readRDS(paste0('./data/simu/testtime/poolSampleSignal/null/pseudotime.rds'))
+selgene <- readRDS(paste0(ddir, 'selgene/selgene.rds'))
 dir.create(paste0(rdir, method), showWarnings = FALSE, recursive = TRUE)
 
 ### two group along pseudotime
+if (grepl('tradeSeq', method)){
+  suppressMessages(library(SingleCellExperiment))
+  suppressMessages(library(slingshot))
+  suppressMessages(library(tradeSeq))
+  ### prepare data [Note: in two group senario, these should be different: design, v, cellWeights]
+  expr <- readRDS(paste0(ddir, 'count/', signal, '.rds'))
+  expr <- expr[rowMeans(expr > 0) > 0.01, ]
+  design = matrix(c(1,1,0,0,1,1,0,0), nrow=8)
+  dimnames(design) = list(paste0('BM',seq(1,8)), 'group')
+  cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
+  pdt <- data.frame(curve1 = pseudotime[,2], curve2 = pseudotime[,2])
+  rownames(pdt) <- pseudotime[,1]
+  pdt = pdt[colnames(expr), ]
+  v <- (cellanno$sample %in% paste0('BM',c(1,2,5,6)) + 0)
+  v <- ifelse(v==1, 0.99, 0.01)
+  cellWeights <- data.frame(curve1 = v, curve2 = 1-v)
+  rownames(cellWeights) <- colnames(counts)
+  ### run test
+  set.seed(12345)
+  sce <- fitGAM(counts = expr, pseudotime = pdt, cellWeights = cellWeights,
+                nknots = 6, verbose = FALSE,parallel=TRUE)
+  saveRDS(sce, paste0(rdir, method,'/', signal, '_sce.rds'))
+  Final <- list()
+  for (TestType in (c('diffEndTest', 'patternTest', 'earlyDETest'))){
+    print(TestType)
+    if (grepl('diffEndTest', TestType)){
+      Res <- diffEndTest(sce)  
+    } else if (grepl('patternTest', TestType)){
+      Res <- patternTest(sce)  
+    } else if (grepl('earlyDETest', TestType)){
+      Res <- earlyDETest(sce, knots = c(1,2), global = TRUE, pairwise = TRUE)
+    }
+    res <- data.frame(waldStat = Res[,'waldStat'], P.Value = Res[,'pvalue'] ,adj.P.Val = p.adjust(Res$pvalue, method='fdr'))
+    row.names(res) <- row.names(Res)
+    res <- res[order(res[,3], -res[,1]), ]
+    Final[[TestType]] <- list(res = res,
+                              sensfdr = c(method, AreaUnderSensFdr(SensFdr(TruePositive = selgene, Statistics=res))))
+  }
+  saveRDS(Final, fn)  
+}
+
 if (method == 'EM_centered'){
   print(method)
   ### prepare data
@@ -30,7 +72,7 @@ if (method == 'EM_centered'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=2, permuiter=100, type = 'Variable', demean = TRUE)
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=4, permuiter=100, type = 'Variable', demean = TRUE)
   saveRDS(testres, fn)  
 }
 
@@ -47,7 +89,7 @@ if (method == 'EM_NOT_centered'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=2, permuiter=100, type = 'Variable', demean = FALSE)
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=4, permuiter=100, type = 'Variable', demean = FALSE)
   saveRDS(testres, fn)  
 }
 
