@@ -4,7 +4,7 @@ method <- as.character(commandArgs(trailingOnly = T)[[2]])
 # method = 'EM'
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca')
 rdir <- './simu/testvar/addMultiSignalUsingExpr/result/'
-ddir <- './data/simu/testvar/addMultiSignalUsingExpr/'
+ddir <- './simu/testvar/addMultiSignalUsingExpr/data/'
 fn <- paste0(rdir, method,'/', signal, '.rds')
 print(fn)
 if (file.exists(fn)) break 
@@ -13,7 +13,7 @@ suppressMessages(library(splines))
 suppressMessages(library(limma))
 suppressMessages(library(RColorBrewer))
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-pseudotime <- readRDS(paste0('./data/simu/testtime/poolSampleSignal/null/pseudotime.rds'))
+pseudotime <- readRDS(paste0('./simu/testtime/poolSampleSignal/data/null/pseudotime.rds'))
 dir.create(paste0(rdir, method), showWarnings = FALSE, recursive = TRUE)
 
 ### two group along pseudotime
@@ -105,5 +105,6 @@ warnings()
 # pseudotime: numeric vector (1,2,3,4....) with names same as colnames(expr)
 # branch: 0,1 vector indicating whether each cell is from group 1 or 2, can get from as.numeric(sub(':.*','',colnames(expr)) %in% paste0('BM',c(1,2,5,6)))
 # cell_coords: the pca you sent me, only use the first 4 (if correct) dimensions
+
 
 

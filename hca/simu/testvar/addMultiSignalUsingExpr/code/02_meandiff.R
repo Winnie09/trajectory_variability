@@ -1,6 +1,6 @@
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca')
 rdir <- './simu/testvar/addMultiSignalUsingExpr/result/'
-ddir <- './data/simu/testvar/addMultiSignalUsingExpr/'
+ddir <- './simu/testvar/addMultiSignalUsingExpr/data/'
 method = 'meandiff'
 
 for (signal in 1:4){
@@ -27,3 +27,4 @@ for (signal in 1:4){
   saveRDS(res, fn)
 }
   
+
