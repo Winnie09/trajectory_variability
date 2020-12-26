@@ -195,7 +195,7 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
   
   ### SAVER
   m_with_halfmean <- pmsavercnt2[fromgene[((length(selgene1)+length(selgene2)+1):(length(selgene1)+length(selgene2)+length(selgene3)))],]
-  m_with_halfmean <- m_with_halfmean - rowMeans(m_with_halfmean)/2
+  m_with_halfmean <- m_with_halfmean/2
                             
   resexpr <-  rbind(savercnt[selgene1, ] + savercnt[fromgene[1:length(selgene1)], ], 
               savercnt[selgene2,] + pmsavercnt[fromgene[(length(selgene1)+1) : (length(selgene1)+length(selgene2))],],
@@ -212,7 +212,7 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
   
   ### count
   m_with_halfmean <- pmcnt2[fromgene[((length(selgene1)+length(selgene2)+1):(length(selgene1)+length(selgene2)+length(selgene3)))],]
-  m_with_halfmean <- m_with_halfmean - rowMeans(m_with_halfmean)/2
+  m_with_halfmean <- m_with_halfmean/2
   
   resexpr <-  rbind(cnt[selgene1, ] + cnt[fromgene[1:length(selgene1)], ], 
               cnt[selgene2,] + pmcnt[fromgene[(length(selgene1)+1) : (length(selgene1)+length(selgene2))],],
@@ -237,5 +237,6 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
     summary(lm(logmat[i,pt[pt[,1] %in% colnames(logmat),1]]~I(1:ncol(logmat))))$fstatistic[1]
   }))
 }
+
 
 
