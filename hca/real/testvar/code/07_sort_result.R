@@ -3,8 +3,8 @@ setwd(here())
 source('function/01_function.R')
 ddir <- rdir <- 'hca/real/testvar/result/'
 pdir <- 'hca/real/testvar/plot/'
-path = 'monocyte'
-for (path in c('erythroid', 'lymph')){
+
+for (path in c('erythroid', 'lymph', 'monocyte')){
   dir.create(paste0(pdir, path))
   Res <- readRDS(paste0(ddir, path, '/age_res.rds'))
   res = data.frame(fdr = Res$fdr, pvalue = Res$pvalue, fc = Res$foldchange,
@@ -87,7 +87,7 @@ for (path in c('erythroid', 'lymph')){
   }
   library(ggplot2)
   library(RColorBrewer)
-  pdf(paste0(pdir, path, 'curve_number.pdf'), width=3.5, height=3.5)
+  pdf(paste0(pdir, path, '/curve_number.pdf'), width=3.5, height=3.5)
   print(ggplot(mat,aes(x=order,y=v,col=type, fill=type), alpha=.2) + 
     geom_line() + 
     xlim(c(0,30)) + 
