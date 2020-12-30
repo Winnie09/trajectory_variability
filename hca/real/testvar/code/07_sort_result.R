@@ -37,6 +37,18 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   allg = sub(':.*', '', rownames(res[res[,1] < 0.05,]))
   str(allg)
   
+  allg.full <- rownames(res[res[,1] < 0.05,])
+  allg.full <- allg.full[allg %in% u1]
+  pdf(paste0(pdir, path, '/gender_true_diffgene_chrX.pdf'), width = 12, height = 12)
+  plotGenePopulation(Res, allg.full[1:min(25,length(allg.full))], variable = 'gender', sep = ':.*')
+  dev.off()
+  
+  allg.full <- rownames(res[res[,1] < 0.05,])
+  allg.full <- allg.full[allg %in% u2]
+  pdf(paste0(pdir, path, '/gender_true_diffgene_chrY.pdf'), width = 12, height = 12)
+  plotGenePopulation(Res, allg.full[1:min(25,length(allg.full))], variable = 'gender', sep = ':.*')
+  dev.off()
+
   v1 <- cumsum(allg %in% u1)
   v2 <- cumsum(allg %in% u2)
   
@@ -66,14 +78,14 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     xlab('mean of cumulated sum')+
     ggtitle('chrX')
   
-  p2 <- ggplot(data = pd, aes(x=chrX_pm)) + 
+  p2 <- ggplot(data = pd, aes(x=chrY_pm)) + 
    geom_histogram(aes(y=..density..), colour="black", fill="white", stat = )+
    geom_density(alpha=.2, fill="lightblue") +
    geom_vline(xintercept = mean(v1), color = 'darkblue') +
     theme_classic()+
     xlab('mean of cumulated sum')+
     ggtitle('chrY')
-  pdf(paste0(pdir, path, '/hist_mean_cumulated_sum.pdf'), width = 7, height = 3)
+  pdf(paste0(pdir, path, '/gender_hist_mean_cumulated_sum.pdf'), width = 7, height = 3)
   gridExtra::grid.arrange(p1,p2,nrow=1)
   dev.off()
   
@@ -87,7 +99,7 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   }
   library(ggplot2)
   library(RColorBrewer)
-  pdf(paste0(pdir, path, '/curve_number.pdf'), width=3.5, height=3.5)
+  pdf(paste0(pdir, path, '/gender_curve_number.pdf'), width=3.5, height=3)
   print(ggplot(mat,aes(x=order,y=v,col=type, fill=type), alpha=.2) + 
     geom_line() + 
     xlim(c(0,30)) + 
@@ -97,6 +109,5 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     xlab('top n genes')+
     scale_color_manual(values = brewer.pal(14, 'Paired')[c(1,7,2,8)]))
   dev.off()
-
 }
-  
+
