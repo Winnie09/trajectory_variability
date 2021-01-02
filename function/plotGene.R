@@ -1,4 +1,4 @@
- plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, original.expr = TRUE){
+ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, original.expr = TRUE, sep = NA, palette = 'Dark2'){
   ## testptObj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
@@ -74,13 +74,17 @@
     p <- p + 
       theme_classic() +
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
-      ggtitle(sub(':.*','',gene)) +
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable)
+    if (!is.na(sep)){
+      p <- p + ggtitle(sub(':.*','',gene)) 
+    } else {
+      p <- p + ggtitle(gene)
+    }
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
-      p <- p + scale_color_brewer(palette = 'Dark2') 
+      p <- p + scale_color_brewer(palette = palette) 
     }
       if (facet.sample){
           print(p + facet_wrap(~Sample, scales=a))
@@ -113,6 +117,10 @@
     ld <- do.call(rbind, ldlist)
     ld[, 'Variable'] <- as.factor(ld[ ,'Variable'])
     ld <- ld[order(ld$pseudotime), ] 
+    if (!is.na(sep)) {
+      pd$g <- gsub(sep, '', pd$g)
+      ld$g <- gsub(sep, '', ld$g)
+    }
     if (is.null(variable)){
       if (plot.point){
          p <- ggplot() + 
@@ -142,9 +150,10 @@
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
-      p <- p + scale_color_brewer(palette = 'Dark2') 
+      p <- p + scale_color_brewer(palette = palette) 
     }
     print(p)
   }
+  
 }
 
