@@ -30,4 +30,3 @@ getCovariateGroupDiff <- function(testobj,
   colnames(fit) <- gene
   return(t(fit))
 }
-
