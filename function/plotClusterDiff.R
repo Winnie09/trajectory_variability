@@ -1,6 +1,6 @@
 plotClusterDiff <- function(testobj, 
-                            gene = NULL,
-                            cluster,
+                            gene = names(Res$cluster),
+                            cluster = testobj[['cluster']],
                             each = FALSE){
   if ('covariateGroupDiff' %in% names(testobj)){
     fit <- testobj$covariateGroupDiff[gene, ]
@@ -37,4 +37,5 @@ if (each){
 }
    print(p)
 }
+
 
