@@ -1,5 +1,6 @@
 plotClusterMeanAndDiff <- function(testobj, 
-                            cluster){
+                            cluster = testobj[['cluster']],
+                            free.scale = TRUE){
   ## only works for Covariate Test. 
   if ('populationFit' %in% names(testobj)){
     fit <- testobj$populationFit
@@ -10,6 +11,7 @@ plotClusterMeanAndDiff <- function(testobj,
   library(RColorBrewer)
   library(reshape2)
   library(gridExtra)
+  a <- ifelse(free.scale, 'free', 'fixed') 
   int <- intersect(rownames(fit[[1]]), names(cluster))
   clu <- cluster[int]
   pd <- lapply(1:length(fit), function(i){
@@ -25,7 +27,7 @@ plotClusterMeanAndDiff <- function(testobj,
   pd$cluster <- factor(pd$cluster)
   p1 <- ggplot(data = pd) + geom_line(aes(x = pseudotime, y = populationFitClusterMean, color = type), size = 1)+
     theme_classic() + 
-    facet_wrap(~cluster, nrow = length(unique(pd$cluster)))+
+    facet_wrap(~cluster, nrow = length(unique(pd$cluster)), scales = a)+
     theme(legend.position = 'none') 
   if (length(unique(pd$type)) < 8){
     p1 <- p1 + scale_color_brewer(palette = 'Dark2')
@@ -35,7 +37,7 @@ plotClusterMeanAndDiff <- function(testobj,
    
    
   if ('covariateGroupDiff' %in% names(testobj)){
-    fit <- testobj$covariateGroupDiff[gene, ]
+    fit <- testobj$covariateGroupDiff
   } else {
     fit <- getCovariateGroupDiff(testobj = testobj, gene = int)
   }
@@ -54,7 +56,7 @@ plotClusterMeanAndDiff <- function(testobj,
   pd2$cluster <- factor(pd2$cluster)
   p2<- ggplot(data = pd2) + geom_line(aes(x = pseudotime, y = covariateGroupDiff), size = 1)+
     theme_classic() +
-    facet_wrap(~cluster, nrow = length(unique(pd2$cluster)))
+    facet_wrap(~cluster, nrow = length(unique(pd2$cluster)), scales = a)
   if (length(unique(pd$cluster)) < 8){
     p2 <- p2 + scale_color_brewer(palette = 'Set1')
   } else {
@@ -62,4 +64,5 @@ plotClusterMeanAndDiff <- function(testobj,
   }
   grid.arrange(p1,p2,ncol=2)
 }
+
 
