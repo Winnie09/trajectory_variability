@@ -1,4 +1,5 @@
 library(here)
+library(ggplot2)
 setwd(here())
 source('function/01_function.R')
 ddir <- rdir <- 'hca/real/testvar/result/'
@@ -16,7 +17,7 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   
   res <- res[res[,1]<0.05,]
   pdf(paste0(pdir, path, '/age_diffgene.pdf'), width = 12, height = 12)
-  plotGenePopulation(Res, rownames(res)[1:min(25, nrow(res))], variable = 'age', sep = ':.*')
+  plotGenePopulation(Res, rownames(res)[1:min(25, nrow(res))], type = 'variable', sep = ':.*')
   dev.off()
   
   ###
@@ -29,40 +30,43 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   write.csv(res, paste0(rdir, path, '/gender_fdr_res.csv'))
   
   pdf(paste0(pdir, path, '/gender_diffgene.pdf'), width = 12, height = 12)
-  plotGenePopulation(Res, rownames(res)[1:min(25,nrow(res))], variable = 'gender', sep = ':.*')
+  plotGenePopulation(Res, rownames(res)[1:min(25,nrow(res))], type = 'variable', sep = ':.*')
   dev.off()
   
   u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
   u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
-  allg = sub(':.*', '', rownames(res[res[,1] < 0.05,]))
-  str(allg)
+  allg <- sub(':.*', '', rownames(res))
+  diffgene = sub(':.*', '', rownames(res[res[,1] < 0.05,]))
+  str(diffgene)
   
-  allg.full <- rownames(res[res[,1] < 0.05,])
-  allg.full <- allg.full[allg %in% u1]
+  diffgene.full <- rownames(res[res[,1] < 0.05,])
+  diffgene.full <- diffgene.full[diffgene %in% u1]
   pdf(paste0(pdir, path, '/gender_true_diffgene_chrX.pdf'), width = 12, height = 12)
-  plotGenePopulation(Res, allg.full[1:min(25,length(allg.full))], variable = 'gender', sep = ':.*')
+  plotGenePopulation(Res, diffgene.full[1:min(25,length(diffgene.full))], type = 'variable', sep = ':.*')
   dev.off()
   
-  allg.full <- rownames(res[res[,1] < 0.05,])
-  allg.full <- allg.full[allg %in% u2]
+  diffgene.full <- rownames(res[res[,1] < 0.05,])
+  diffgene.full <- diffgene.full[diffgene %in% u2]
   pdf(paste0(pdir, path, '/gender_true_diffgene_chrY.pdf'), width = 12, height = 12)
-  plotGenePopulation(Res, allg.full[1:min(25,length(allg.full))], variable = 'gender', sep = ':.*')
+  plotGenePopulation(Res, diffgene.full[1:min(25,length(diffgene.full))], type = 'variable', sep = ':.*')
   dev.off()
 
-  v1 <- cumsum(allg %in% u1)
-  v2 <- cumsum(allg %in% u2)
+  v1 <- cumsum(allg %in% u1)/seq(1,length(allg))
+  v2 <- cumsum(allg %in% u2)/seq(1,length(allg))
+  saveRDS(mean(v1), paste0(rdir, path, 'gender_chrX_overlap.rds'))
+  saveRDS(mean(v2), paste0(rdir, path, 'gender_chrY_overlap.rds'))
   
   v1_pm <- do.call(cbind,mclapply(seq(1,1e4), function(myseed){
     set.seed(myseed)
-    w1 = sample(intersect(allg,u1), length(intersect(allg,u1)), replace = TRUE)
-    v1 <- cumsum(allg %in% w1)
+    w1 = sample(allg, length(intersect(allg,u1)))
+    v1 <- cumsum(allg %in% w1)/seq(1,length(allg))
   },mc.cores=detectCores()))
   summary(colMeans(v1_pm))
   
   v2_pm <- do.call(cbind,mclapply(seq(1,1e4), function(myseed){
     set.seed(myseed)
-    w1 = sample(intersect(allg,u2), length(intersect(allg,u2)), replace = TRUE)
-    v1 <- cumsum(allg %in% w1)
+    w1 = sample(allg, length(intersect(allg,u2)))
+    v1 <- cumsum(diffgene %in% w1)/seq(1,length(allg))
   },mc.cores=detectCores()))
   summary(colMeans(v2_pm))
   
@@ -75,7 +79,7 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
    geom_density(alpha=.2, fill="#FF6666") +
    geom_vline(xintercept = mean(v1), color = 'red') +
     theme_classic()+
-    xlab('mean of cumulated sum')+
+    xlab('overlap proportion mean')+
     ggtitle('chrX')
   
   p2 <- ggplot(data = pd, aes(x=chrY_pm)) + 
@@ -83,12 +87,12 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
    geom_density(alpha=.2, fill="lightblue") +
    geom_vline(xintercept = mean(v1), color = 'darkblue') +
     theme_classic()+
-    xlab('mean of cumulated sum')+
+    xlab('overlap proportion mean')+
     ggtitle('chrY')
-  pdf(paste0(pdir, path, '/gender_hist_mean_cumulated_sum.pdf'), width = 7, height = 3)
+  
+  pdf(paste0(pdir, path, '/gender_hist_overlap_proportion_mean.pdf'), width = 7, height = 3)
   gridExtra::grid.arrange(p1,p2,nrow=1)
   dev.off()
-  
   
   df = data.frame(chrX=v1, chrY=v2, chrX_pm = rowMeans(v1_pm), chrY_pm = rowMeans(v2_pm), order = seq(1,length(v1)))
   # saveRDS(df, './hca/geneexpr/result/df_chrX_chrY_pm_order.rds')
@@ -109,5 +113,16 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     xlab('top n genes')+
     scale_color_manual(values = brewer.pal(14, 'Paired')[c(1,7,2,8)]))
   dev.off()
+  
+  ### compare with limma
+  res.lm <- readRDS(paste0(ddir, path,'/meandiff_gender_res.rds'))
+  allg.lm <- sub(':.*', '', rownames(res.lm))
+  v1.lm <- cumsum(allg.lm %in% u1)/seq(1,length(allg.lm))
+  v2.lm <- cumsum(allg.lm %in% u2)/seq(1,length(allg.lm))  
+  saveRDS(mean(v1.lm), paste0(rdir, path, 'meandiff_gender_chrX_overlap.rds'))
+  saveRDS(mean(v2.lm), paste0(rdir, path, 'meandiff_gender_chrY_overlap.rds'))
+  
 }
+
+
 
