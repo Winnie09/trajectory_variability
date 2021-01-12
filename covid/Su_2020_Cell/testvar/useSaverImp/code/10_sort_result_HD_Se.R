@@ -10,7 +10,7 @@ Res <- readRDS(paste0(ddir, 'numeric_HD_Se_res.rds'))
 Res$populationFit <- getPopulationFit(Res, gene = names(Res$fdr[Res$fdr < 0.05]), type = 'variable')
 Res$covariateGroupDiff <- getCovariateGroupDiff(testobj = Res, gene = names(Res$fdr[Res$fdr < 0.05]))
 
-Res$cluster <- clusterGene(Res, gene = names(Res$fdr[Res$fdr < 0.05]), type = 'variable', k=5)
+Res$cluster <- clusterGene(Res, gene = names(Res$fdr[Res$fdr < 0.05]), type = 'variable', k=3)
 
 allg <- names(Res$fdr[Res$fdr < 0.05])
 res <- data.frame(gene = allg, pvalue = Res$pvalue[allg], fdr = Res$fdr[allg], foldchange = Res$foldchange[allg], cluster = Res$cluster[allg])
@@ -27,14 +27,13 @@ nn <- sapply(1:length(goRes), function(i){
   return(0)
 })
   
-pdf(paste0(pdir, 'cluster_mean_and_diff'), width = 5, height = 9)  
+pdf(paste0(pdir, 'cluster_mean_and_diff.pdf'), width = 4, height = 5.5)  
 plotClusterMeanAndDiff(Res, cluster = Res$cluster)
 dev.off()
 
-for (i in 1:max(clu)){
+for (i in 1:max(Res$cluster)){
   print(i)
-  gene <- names(clu)[clu == i]
-  tmp <- res[gene, ]
+  gene <- rownames(res[res$cluster == i, ])
   png(paste0(pdir, 'diffgene_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
   plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)])
   dev.off()
