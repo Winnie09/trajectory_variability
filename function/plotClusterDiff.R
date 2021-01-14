@@ -1,9 +1,10 @@
 plotClusterDiff <- function(testobj, 
-                            gene = names(Res$cluster),
+                            gene = names(testobj$cluster),
                             cluster = testobj[['cluster']],
-                            each = FALSE){
+                            each = FALSE,
+                            sep = ''){
   if ('covariateGroupDiff' %in% names(testobj)){
-    fit <- testobj$covariateGroupDiff[gene, ]
+    fit <- testobj$covariateGroupDiff[gene, ,drop=FALSE]
   } else {
     fit <- getCovariateGroupDiff(testobj = testobj, gene = gene)
   }
@@ -14,6 +15,7 @@ plotClusterDiff <- function(testobj,
 if (each){
   pd <- melt(fit)
   colnames(pd) <- c('gene', 'pseudotime', 'covariateGroupDiff')
+  pd[,1] <- sub(sep, '', pd[,1])
   p <- ggplot(data = pd) + geom_line(aes(x = pseudotime, y = covariateGroupDiff))+
     theme_classic()+
     facet_wrap(~gene)
