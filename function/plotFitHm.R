@@ -1,4 +1,4 @@
-plotFitHm <- function(testobj){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450){
   library(pheatmap)
   library(gridExtra)
   fit <- Res$populationFit
@@ -65,7 +65,7 @@ plotFitHm <- function(testobj){
     expr.scale,
     cluster_rows = F,
     cluster_cols = FALSE,
-    show_rownames = F,
+    show_rownames = showRowName,
     show_colnames = FALSE,
     color = cpl,
     annotation_col = colann,
@@ -75,8 +75,8 @@ plotFitHm <- function(testobj){
       pseudotime = col.pseudotime,
       expression = col.expression,
       cluster = col.clu),
-    cellwidth = 250 / ncol(expr.scale),
-    cellheight = 450 / nrow(expr.scale),
+    cellwidth = cellWidthTotal / ncol(expr.scale),
+    cellheight = cellHeightTotal / nrow(expr.scale),
     border_color = NA, silent = TRUE)
   plist[[1]] <- p1[[4]]
   
@@ -91,7 +91,7 @@ plotFitHm <- function(testobj){
     fit.scale,
     cluster_rows = F,
     cluster_cols = FALSE,
-    show_rownames = FALSE,
+    show_rownames = showRowName,
     show_colnames = FALSE,
     color = cpl,
     annotation_col = colann2,
@@ -100,8 +100,8 @@ plotFitHm <- function(testobj){
       expression = col.expression,
       pseudotime = col.pseudotime,
       cluster = col.clu),
-      cellwidth = 250 / ncol(fit.scale),
-      cellheight = 450 / nrow(fit.scale),
+      cellwidth = cellWidthTotal / ncol(fit.scale),
+      cellheight = cellHeightTotal / nrow(fit.scale),
       border_color = NA, silent = TRUE)
   plist[[3]] <- p2[[4]]
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
@@ -112,4 +112,5 @@ plotFitHm <- function(testobj){
   return(g)
 }  
   
+
 
