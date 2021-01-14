@@ -39,7 +39,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
  
   bicfunc <- function(num.knot) {
-    print(paste0('num.knot = ', num.knot))
     phi <- philist[[as.character(num.knot)]]
     ll <- sapply(names(sname), function(ss) {
       phiss <- phi[sname[[ss]],,drop=F]
@@ -65,7 +64,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
  
  
   sfit <- function(num.knot) {
-    print(paste0('num.knot=', num.knot))
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F]
     phi <- philist[[as.character(num.knot)]]
@@ -147,7 +145,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     })
    
     ## initialize gamma
-    print('## initialize gamma')
     gamma <- sapply(names(xs), function(ss){
       diff <- sexpr[[ss]] - tcrossprod(indfit[[ss]],phi[[ss]])
       m <- rowMeans(diff)
