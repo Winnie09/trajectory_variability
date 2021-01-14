@@ -98,12 +98,11 @@ plotFitHm <- function(testobj){
     annotation_row = rowann,
     annotation_colors = list(
       expression = col.expression,
-       pseudotime = col.pseudotime,
-      addsignal = col.addsignal,
+      pseudotime = col.pseudotime,
       cluster = col.clu),
-    cellwidth = 250 / ncol(fit.scale),
-    cellheight = 450 / nrow(fit.scale),
-    border_color = NA, silent = TRUE)
+      cellwidth = 250 / ncol(fit.scale),
+      cellheight = 450 / nrow(fit.scale),
+      border_color = NA, silent = TRUE)
   plist[[3]] <- p2[[4]]
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
   
@@ -113,3 +112,4 @@ plotFitHm <- function(testobj){
   return(g)
 }  
   
+
