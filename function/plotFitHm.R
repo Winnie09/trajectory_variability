@@ -1,4 +1,5 @@
 plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450){
+  ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   library(pheatmap)
   library(gridExtra)
   fit <- Res$populationFit
@@ -51,15 +52,19 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   # col.sample = colorRampPalette(rev(brewer.pal(n = 8, name = "Set1")))(length(unique(colann$sample)))
   # names(col.sample) = unique(colann$sample)
   
-  col.expression = brewer.pal(n = 8, name = "Set1")[1:2]
+  col.expression = brewer.pal(n = 8, name = "Pastel1")[1:2]
   names(col.expression) = c('Original', 'Model Fitted')
   col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$pseudotime)))
   names(col.pseudotime) = unique(colann$pseudotime)
-  col.clu = colorRampPalette(brewer.pal(8, 'Set1'))(max(clu))
+  if (length(unique(clu)) < 8){
+    col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
+  } else {
+    col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
+  }
   names(col.clu) = unique(clu)
+  
   #### save png
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
-  
   plist <- list()
   p1 <- pheatmap(
     expr.scale,
