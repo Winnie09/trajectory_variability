@@ -2,7 +2,8 @@ library(here)
 setwd(here())
 source('function/01_function.R')
 ddir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/'
-for (comparison in c('HD_Se', 'HD_Mi','Mod_Se','HD_Mod', 'Se_Mi', 'Recovered_Deceased')){
+# for (comparison in c('HD_Se', 'HD_Mi','Mod_Se','HD_Mod', 'Se_Mi', 'Recovered_Deceased')){
+for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   print(comparison)
   rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', comparison, '/')
   pdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/plot/', comparison, '/')
