@@ -37,7 +37,7 @@ getPopulationFit <- function(testobj,
       knots = seq(min(pseudotime), max(pseudotime), length.out = knotnum[g] + 2)[2:(knotnum[g] + 1)]
       phi <- cbind(1, bs(pseudotime, knots = knots))
     }
-    if (is.na(variable)) {
+    if (exists('variable')) {
       if (ncol(phi) == ncol(x[[1]])){
          fit <- t(phi %*% t(x[[1]]) %*% beta)[1,]
        } else {
@@ -64,5 +64,6 @@ getPopulationFit <- function(testobj,
   names(fitres) <- names(fitlist[[1]])
   return(fitres)
 }
+
 
 
