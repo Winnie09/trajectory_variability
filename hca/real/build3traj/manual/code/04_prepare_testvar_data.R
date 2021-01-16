@@ -16,7 +16,7 @@ for (path in c('lymph', 'monocyte', 'erythroid')){
   print(design)
   pseudotime = seq(1, length(pt))
   names(pseudotime) <- pt
-  saveRDS(m, paste0(rdir,'input_expr.res'))
+  saveRDS(m, paste0(rdir,'input_expr.rds'))
   saveRDS(cellanno, paste0(rdir,'input_cellanno.rds'))
   saveRDS(design, paste0(rdir,'input_design.rds'))
   saveRDS(pseudotime, paste0(rdir,'input_pseudotime.rds'))
