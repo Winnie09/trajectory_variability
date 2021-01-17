@@ -2,6 +2,8 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   library(pheatmap)
   library(gridExtra)
+  library(RColorBrewer)
+  library(ggplot2)
   fit <- Res$populationFit
   fit.bak = fit
   clu <- Res$cluster
