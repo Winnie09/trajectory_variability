@@ -2,7 +2,8 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05,  k = 5, use.clusters = TRUE, ty
   ## k: numeric. number of clusters. Default = 5. Only useful when use.clusters = TRUE. 
   ## type: "time" or "variable". Only useful when "cluster" in not in testobj.
   ## species: currently only work for "human". will include "mouse".
-  fdr <- testobj$fdr
+  fdr <- testobj$statistics[,'fdr']
+  
   if (sum(fdr < fdr.cutoff) == 0){
     print('There is no differential genes! GoEnrich stopped.')
     break
@@ -16,10 +17,8 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05,  k = 5, use.clusters = TRUE, ty
       diffgeneList <- sapply(unique(clu), function(i){
         names(clu)[clu == i]
       })
-      
     } else (
-      diffgeneList <- list(diffgene = names(testobj$fdr[testobj$fdr < fdr.cutoff]))
-      
+      diffgeneList <- list(diffgene = rownames(testobj$statistics)[fdr < fdr.cutoff])
     )
     
     resList <- lapply(diffgeneList, function(diffgene){
@@ -44,4 +43,5 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05,  k = 5, use.clusters = TRUE, ty
   }
     
 }
+
 
