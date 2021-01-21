@@ -1,4 +1,4 @@
-fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=1) {
+fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=100, EMitercutoff=1, verbose=F, ncores=1, model = 3) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
@@ -74,12 +74,33 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     # change here >>
     # --------------
     design = design[rownames(ori.design), ,drop=F]
-    xs <- sapply(row.names(ori.design),function(i) {  
-      kronecker(diag(num.knot + 4), ori.design[i,])
-    },simplify = F)
-    xs_test <- sapply(row.names(design),function(i) {  
-      kronecker(diag(num.knot + 4),design[i,])
-    },simplify = F)
+   
+    
+    if (model == 1) {
+      xs <- sapply(row.names(ori.design), function(i) {
+        kronecker(diag(num.knot + 4), ori.design[i, 1, drop = F]) 
+      }, simplify = F)
+      xs_test <- sapply(row.names(design), function(i) {
+        kronecker(diag(num.knot + 4), design[i, 1, drop = F]) 
+      }, simplify = F)
+    } else if (model == 2) {
+      xs <- sapply(row.names(ori.design), function(i) {
+        tmp <- kronecker(diag(num.knot + 4), ori.design[i, ]) 
+        tmp <- tmp[-seq(4, nrow(tmp), 2), ] 
+      }, simplify = F)
+      xs_test <- sapply(row.names(design), function(i) {
+        tmp <- kronecker(diag(num.knot + 4), design[i, ]) 
+        tmp <- tmp[-seq(4, nrow(tmp), 2), ] 
+      }, simplify = F)
+    } else if (model == 3) {
+      xs <- sapply(row.names(ori.design), function(i) {
+        kronecker(diag(num.knot + 4), ori.design[i, ]) 
+      }, simplify = F)
+      xs_test <- sapply(row.names(design), function(i) {
+        kronecker(diag(num.knot + 4), design[i, ]) 
+      }, simplify = F)
+    }
+    
     if (test.pattern == 'slope'){
       if (is.na(test.position) | test.position == 'all'){
         for (id in seq(1, length(xs))){
