@@ -21,10 +21,15 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   } else {
     design = as.matrix(design)  
   }
-  fitfunc <- function(iter) {
+  fitfunc <- function(iter, diffType = 'both') {
     print(paste0('iter ', iter, '\n'))
     if (iter==1) {
-      fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)  
+      if (diffType == 'both' | diffType == 'trendDiff') {
+        model = 3
+      } else if (diffType == 'meanDiff') {
+        model = 2
+      } 
+      fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = 'overall', test.position = test.position, model = model) 
     } else {
       if (type=='Time') {
         print('testing Time ...')
@@ -72,20 +77,77 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         psn <- pseudotime[colnames(expr)]
         psn <- psn[sampcell]
         colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)  
+        if (diffType == 'both'){
+          test.pattern = 'overall'
+          model = 3
+        } else if (diffType == 'meanDiff'){
+          test.pattern = 'intercept'
+          model = 2
+        } else if (diffType == 'trendDiff'){
+          test.pattern = 'slope'
+          model = 3
+        }
+        fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = model)  
       }
     }
   }
   print('fitting model ...')
+  ## meanDiff pvalues: Model 2 vs. model 1
   if (ncores == 1){
-    fit <- lapply(1:(permuiter+1),fitfunc)
+    fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff'))
   } else {
-    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(i)}, mc.cores = ncores)
+    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'meanDiff')}, mc.cores = ncores)
   }
-  # << --- 20200926 
   permuiter <- sum(!sapply(fit,is.null)) -1
   fit <- fit[!sapply(fit,is.null)]
-  # --- 20200926 --- >>
+  orifit <- fit[[1]]
+  knotnum <- orifit$knotnum
+  orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
+  print('meandiff: performing permutation test ...')
+  perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+  print('meanDiff: calculationg p-values ...')
+  pval <- sapply(1:nrow(perll), function(i) {
+    z <- perll[i,]
+    den <- density(z,bw='SJ')$bw
+    mean(pnorm(orill[i], z, sd=den,lower.tail = F))
+  })
+  fdr <- p.adjust(pval,method='fdr')
+  names(pval) <- names(fdr) <- row.names(perll)
+  foldchange <- orill - rowMeans(perll)
+  res <- data.frame(meanDiff.fdr = fdr, meanDiff.fc = foldchange, meanDiff.pvalue = pval, stringsAsFactors = FALSE)
+  
+  ## trendDiff pvalues: Model 3 vs. model 2
+  if (ncores == 1){
+    fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'trendDiff'))
+  } else {
+    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff')}, mc.cores = ncores)
+  }
+  permuiter <- sum(!sapply(fit,is.null)) -1
+  fit <- fit[!sapply(fit,is.null)]
+  orifit <- fit[[1]]
+  knotnum <- orifit$knotnum
+  orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
+  print('trendDiff: performing permutation test ...')
+  perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+  print('trendDiff: calculationg p-values ...')
+  pval <- sapply(1:nrow(perll), function(i) {
+    z <- perll[i,]
+    den <- density(z,bw='SJ')$bw
+    mean(pnorm(orill[i], z, sd=den,lower.tail = F))
+  })
+  fdr <- p.adjust(pval,method='fdr')
+  names(pval) <- names(fdr) <- row.names(perll)
+  foldchange <- orill - rowMeans(perll)
+  res <- cbind(res, trendDiff.fdr = fdr, trendDiff.fc = foldchange, trendDiff.pvalue = pval)
+
+  ## overall (both) pvalues: Model 3 vs. model 2
+  if (ncores == 1){
+    fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'both'))
+  } else {
+    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'both')}, mc.cores = ncores)
+  }
+  permuiter <- sum(!sapply(fit,is.null)) -1
+  fit <- fit[!sapply(fit,is.null)]
   orifit <- fit[[1]]
   knotnum <- orifit$knotnum
   orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
@@ -100,54 +162,53 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   fdr <- p.adjust(pval,method='fdr')
   names(pval) <- names(fdr) <- row.names(perll)
   foldchange <- orill - rowMeans(perll)
+  res <- cbind(res, both.fdr = fdr, both.fc = foldchange, both.pvalue = pval)
   #---------------------------------
   # use beta2 to get mean difference
   # --------------------------------
-  max.abs.beta2 <- sapply(names(orifit$parameter), function(g){
-      beta <- orifit$parameter[[g]]$beta
-      tmp <- abs(unlist(sapply(1:length(beta), function(i){
-        if (i%%2 == 0) beta[i]
-      })))
-      a <- ceiling(length(tmp)/3)
-      b <- ceiling(length(tmp)*2/3)
-      if (test.pattern == 'overall'){
-        if (test.position == 'all'){
-          return(max(tmp, na.rm = TRUE))
-        } else if (test.position == 'start'){
-          return(max(tmp[c(1, seq(2, a))], na.rm = TRUE))
-        } else if (test.position == 'middle'){
-          return(max(tmp[c(1, seq(a+1, b))], na.rm = TRUE))
-        } else if (test.position == 'end'){
-          return(max(tmp[c(1, seq(b+1, length(tmp)))], na.rm = TRUE))
-        }
-      } else if (test.pattern == 'slope'){
-        if (test.position == 'all'){
-          return(max(tmp[seq(2, length(tmp))], na.rm = TRUE))
-        } else if (test.position == 'start'){
-          return(max(tmp[seq(2, a)], na.rm = TRUE))
-        } else if (test.position == 'middle'){
-          return(max(tmp[seq(a+1, b)], na.rm = TRUE))
-        } else if (test.position == 'end'){
-          return(max(tmp[seq(b+1, length(tmp))], na.rm = TRUE))
-        }
-      } else if (test.pattern == 'intercept'){
-        return(tmp[1])
-      }
-  })
+  # max.abs.beta2 <- sapply(names(orifit$parameter), function(g){
+  #     beta <- orifit$parameter[[g]]$beta
+  #     tmp <- abs(unlist(sapply(1:length(beta), function(i){
+  #       if (i%%2 == 0) beta[i]
+  #     })))
+  #     a <- ceiling(length(tmp)/3)
+  #     b <- ceiling(length(tmp)*2/3)
+  #     if (test.pattern == 'overall'){
+  #       if (test.position == 'all'){
+  #         return(max(tmp, na.rm = TRUE))
+  #       } else if (test.position == 'start'){
+  #         return(max(tmp[c(1, seq(2, a))], na.rm = TRUE))
+  #       } else if (test.position == 'middle'){
+  #         return(max(tmp[c(1, seq(a+1, b))], na.rm = TRUE))
+  #       } else if (test.position == 'end'){
+  #         return(max(tmp[c(1, seq(b+1, length(tmp)))], na.rm = TRUE))
+  #       }
+  #     } else if (test.pattern == 'slope'){
+  #       if (test.position == 'all'){
+  #         return(max(tmp[seq(2, length(tmp))], na.rm = TRUE))
+  #       } else if (test.position == 'start'){
+  #         return(max(tmp[seq(2, a)], na.rm = TRUE))
+  #       } else if (test.position == 'middle'){
+  #         return(max(tmp[seq(a+1, b)], na.rm = TRUE))
+  #       } else if (test.position == 'end'){
+  #         return(max(tmp[seq(b+1, length(tmp))], na.rm = TRUE))
+  #       }
+  #     } else if (test.pattern == 'intercept'){
+  #       return(tmp[1])
+  #     }
+  # })
   # -------------------------------
   pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
   if (return.all.data){
     if (demean){
-      return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
+      return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
     } else {
-      return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr))
+      return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr))
     } 
   } else {
-    return(list(fdr = fdr, foldchange = foldchange, pvalue = pval, max.abs.beta2 = max.abs.beta2, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
+    return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
   } 
 }
-
-
 
 
 
