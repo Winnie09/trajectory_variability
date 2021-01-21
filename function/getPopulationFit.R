@@ -2,7 +2,7 @@ getPopulationFit <- function(testobj,
                              gene,
                              type = 'time'){
   library(splines)
-  ## if type = 'time', then return population fit (a vector) for constant test (test on time)
+  ## if type = 'time', then return population fit (a vector for a gene; or a gene by num.cell matrix) for constant test (test on time)
   ## if type = 'variable', then return population fit for all levels of that character (a matrix, columns are population fit for each level in the variabel). 
   ## gene: a vector of gene names. 
   design = testobj$design
@@ -56,13 +56,20 @@ getPopulationFit <- function(testobj,
     return(fit)
   })
   names(fitlist) <- gene
-  fitres <- lapply(names(fitlist[[1]]), function(i){
-    tmp <- t(sapply(fitlist, function(j){
-      j[[i]]
-    }))
-  })  
-  names(fitres) <- names(fitlist[[1]])
+  if (type == 'variable'){
+    fitres <- lapply(names(fitlist[[1]]), function(i){
+      tmp <- t(sapply(fitlist, function(j){
+        j[[i]]
+      }))
+    })  
+    names(fitres) <- names(fitlist[[1]])
+  } else if (type == 'time'){
+    fitres <- t(sapply(fitlist, function(i){
+      i[[1]]
+    }))  
+  }
   return(fitres)
+  
 }
 
 
