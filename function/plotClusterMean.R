@@ -29,30 +29,34 @@ plotClusterMean <- function(testobj,
     p <- ggplot(data = pd) + geom_line(aes(x = pseudotime, y = populationFitClusterMean, color = type), size = 1)+
       theme_classic() + 
       facet_wrap(~cluster)
+    if (length(unique(pd$type)) < 8){
+      p <- p + scale_color_brewer(palette = 'Dark2')
+    } else {
+      p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8,'Dark2'))(length(unique(pd$type))))
+    }
   } else if (type == 'time'){
     int <- intersect(rownames(fit), names(cluster))
     clu <- cluster[int]
-    
-      mat <- fit[int, ]
-      tmp <- sapply(sort(unique(clu)), function(i){
-        colMeans(mat[clu == i, , drop = FALSE])
-      })
-      pd <- melt(tmp)
-      colnames(pd) <- c('pseudotime', 'cluster', 'populationFitClusterMean')
-      
-    
+    mat <- fit[int, ]
+    tmp <- sapply(sort(unique(clu)), function(i){
+      colMeans(mat[clu == i, , drop = FALSE])
+    })
+    pd <- melt(tmp)
+    colnames(pd) <- c('pseudotime', 'cluster', 'populationFitClusterMean')
+    pd$pseudotime <- as.numeric(pd$pseudotime)
     pd$cluster <- factor(pd$cluster)
     p <- ggplot(data = pd) + geom_line(aes(x = pseudotime, y = populationFitClusterMean, color = cluster), size = 1)+
       theme_classic() 
     if (facet){
       p <- p + facet_wrap(~cluster)
     }
+    if (length(unique(pd$cluster)) < 8){
+      p <- p + scale_color_brewer(palette = 'Dark2')
+    } else {
+      p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8,'Dark2'))(length(unique(pd$cluster))))
+    }
   }
-  if (length(unique(pd$type)) < 8){
-    p <- p + scale_color_brewer(palette = 'Dark2')
-  } else {
-    p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8,'Dark2'))(length(unique(pd$type))))
-  }
+    
    print(p)
 }
 
