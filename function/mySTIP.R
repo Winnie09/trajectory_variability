@@ -1,4 +1,4 @@
-mySTIP <- function(fit, gl) {
+mySTIP <- function(fit, gl, maxChangePoint = 5) {
   ## fit: gene by cell matrix. colnames: pseudotime of the cells. rownames: gene names.
   ## gl: a vector of genes (should be within the rownames) to be highlighted by texts.
   dn <- dimnames(fit)
@@ -7,18 +7,19 @@ mySTIP <- function(fit, gl) {
   gene <- row.names(fit)
   gl <- intersect(gl,gene)
   
-  zpdirection <- fit[, 1] < fit[, ncol(fit)]
+  zpdirection <- fit[, ncol(fit)/20] < fit[, ncol(fit)/20*19] ## direction (low to high; or high to low)
   
   zp <- apply(fit, 1, function(sf) {
-    names(which(sapply(1:(length(sf) - 1), function(i)
-      sf[i] * sf[i + 1] < 0)))
-  })
+    setdiff(names(which(sapply(1:(length(sf) - 1), function(i)
+      sf[i] * sf[i + 1] < 0))),colnames(fit)[c(1:(ncol(fit)/20),(ncol(fit)/20*19):ncol(fit))])
+  }) ## change point positions
+  zp <- sapply(zp, function(i) i[1:min(2,length(i))])
   zpnum <- sapply(zp, length)
   inczp <- names(which(zpdirection[zpnum == 1]))
   deczp <- names(which(!zpdirection[zpnum == 1]))
   multipoint <- names(zpnum)[zpnum > 1]
-  m1 <- names(which(fit[multipoint, 1] > 0))
-  m2 <- names(which(fit[multipoint, 1] < 0))
+  m1 <- names(which(fit[multipoint, 1] > 0)) ## decrease and then increase
+  m2 <- names(which(fit[multipoint, 1] < 0)) ## increase and then decrease
   
   geneorder <- NULL
   
@@ -50,16 +51,11 @@ mySTIP <- function(fit, gl) {
   plotdata$Pseudotime <- match(plotdata$Pseudotime,colnames(fit))
   gl <- gl[order(match(gl, levels(plotdata$Gene)))]
   p1 <-
-    ggplot(plotdata, aes(Pseudotime, Gene, fill = Expression)) + geom_tile() + theme_classic() + scale_fill_gradient2(low =
-                                                                                                                        "blue",
-                                                                                                                      high = "red",
-                                                                                                                      midpoint = 0) + theme(
-                                                                                                                        axis.title.y = element_blank(),
-                                                                                                                        axis.ticks.y = element_blank(),
-                                                                                                                        axis.text.y = element_blank(),
-                                                                                                                        axis.line.y = element_blank(),
-                                                                                                                        plot.margin = margin(2, 0, 2, 0)
-                                                                                                                      ) + scale_x_continuous(expand = c(0.001, 0.001))
+    ggplot(plotdata, aes(Pseudotime, Gene, fill = Expression)) + 
+    geom_tile() + 
+    theme_classic() + 
+    scale_fill_gradient2(low ="blue", high = "firebrick", midpoint = 0) + 
+    theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(),axis.text.y = element_blank(), axis.line.y = element_blank(), plot.margin = margin(2, 0, 2, 0), axis.title.x = element_text(color = 'black')) + scale_x_continuous(expand = c(0.001, 0.001))
   
   yax <- rep("A", length(gene))
   if (length(gl) < length(gene)) {
@@ -103,7 +99,7 @@ mySTIP <- function(fit, gl) {
                             axis.ticks = element_line(color = "white"),
                             plot.margin = margin(2, 0, 2, 2)
                           ) + scale_x_continuous(expand = c(0, 0))
-  gridExtra::grid.arrange(p2, p1, nrow = 1, layout_matrix = cbind(1, 2, 2, 2))
+  gridExtra::grid.arrange(p2, p1, nrow = 1, layout_matrix = cbind(1, 1,1, 2, 2, 2,2,2,2,2))
 }
 
 
