@@ -92,53 +92,56 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     }
   }
   print('fitting model ...')
-  ## meanDiff pvalues: Model 2 vs. model 1
-  if (ncores == 1){
-    fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff'))
-  } else {
-    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'meanDiff')}, mc.cores = ncores)
-  }
-  permuiter <- sum(!sapply(fit,is.null)) -1
-  fit <- fit[!sapply(fit,is.null)]
-  orifit <- fit[[1]]
-  knotnum <- orifit$knotnum
-  orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
-  print('meandiff: performing permutation test ...')
-  perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
-  print('meanDiff: calculationg p-values ...')
-  pval <- sapply(1:nrow(perll), function(i) {
-    z <- perll[i,]
-    den <- density(z,bw='SJ')$bw
-    mean(pnorm(orill[i], z, sd=den,lower.tail = F))
-  })
-  fdr <- p.adjust(pval,method='fdr')
-  names(pval) <- names(fdr) <- row.names(perll)
-  foldchange <- orill - rowMeans(perll)
-  res <- data.frame(meanDiff.fdr = fdr, meanDiff.fc = foldchange, meanDiff.pvalue = pval, stringsAsFactors = FALSE)
-  
-  ## trendDiff pvalues: Model 3 vs. model 2
-  if (ncores == 1){
-    fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'trendDiff'))
-  } else {
-    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff')}, mc.cores = ncores)
-  }
-  permuiter <- sum(!sapply(fit,is.null)) -1
-  fit <- fit[!sapply(fit,is.null)]
-  orifit <- fit[[1]]
-  knotnum <- orifit$knotnum
-  orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
-  print('trendDiff: performing permutation test ...')
-  perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
-  print('trendDiff: calculationg p-values ...')
-  pval <- sapply(1:nrow(perll), function(i) {
-    z <- perll[i,]
-    den <- density(z,bw='SJ')$bw
-    mean(pnorm(orill[i], z, sd=den,lower.tail = F))
-  })
-  fdr <- p.adjust(pval,method='fdr')
-  names(pval) <- names(fdr) <- row.names(perll)
-  foldchange <- orill - rowMeans(perll)
-  res <- cbind(res, trendDiff.fdr = fdr, trendDiff.fc = foldchange, trendDiff.pvalue = pval)
+  if (type == 'Variable'){
+    ## meanDiff pvalues: Model 2 vs. model 1
+    if (ncores == 1){
+      fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff'))
+    } else {
+      fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'meanDiff')}, mc.cores = ncores)
+    }
+    permuiter <- sum(!sapply(fit,is.null)) -1
+    fit <- fit[!sapply(fit,is.null)]
+    orifit <- fit[[1]]
+    knotnum <- orifit$knotnum
+    orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
+    print('meandiff: performing permutation test ...')
+    perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+    print('meanDiff: calculationg p-values ...')
+    pval <- sapply(1:nrow(perll), function(i) {
+      z <- perll[i,]
+      den <- density(z,bw='SJ')$bw
+      mean(pnorm(orill[i], z, sd=den,lower.tail = F))
+    })
+    fdr <- p.adjust(pval,method='fdr')
+    names(pval) <- names(fdr) <- row.names(perll)
+    foldchange <- orill - rowMeans(perll)
+    res <- data.frame(meanDiff.fdr = fdr, meanDiff.fc = foldchange, meanDiff.pvalue = pval, stringsAsFactors = FALSE)
+    
+    ## trendDiff pvalues: Model 3 vs. model 2
+    if (ncores == 1){
+      fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'trendDiff'))
+    } else {
+      fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff')}, mc.cores = ncores)
+    }
+    permuiter <- sum(!sapply(fit,is.null)) -1
+    fit <- fit[!sapply(fit,is.null)]
+    orifit <- fit[[1]]
+    knotnum <- orifit$knotnum
+    orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
+    print('trendDiff: performing permutation test ...')
+    perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+    print('trendDiff: calculationg p-values ...')
+    pval <- sapply(1:nrow(perll), function(i) {
+      z <- perll[i,]
+      den <- density(z,bw='SJ')$bw
+      mean(pnorm(orill[i], z, sd=den,lower.tail = F))
+    })
+    fdr <- p.adjust(pval,method='fdr')
+    names(pval) <- names(fdr) <- row.names(perll)
+    foldchange <- orill - rowMeans(perll)
+    res <- cbind(res, trendDiff.fdr = fdr, trendDiff.fc = foldchange, trendDiff.pvalue = pval)
+  } 
+    
 
   ## overall (both) pvalues: Model 3 vs. model 2
   if (ncores == 1){
@@ -162,7 +165,12 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   fdr <- p.adjust(pval,method='fdr')
   names(pval) <- names(fdr) <- row.names(perll)
   foldchange <- orill - rowMeans(perll)
-  res <- cbind(res, both.fdr = fdr, both.fc = foldchange, both.pvalue = pval)
+  if (type == 'Variable'){
+    res <- cbind(res, both.fdr = fdr, both.fc = foldchange, both.pvalue = pval)
+  } else if (type == 'Time'){
+    res <- data.frame(fdr = fdr, fc = foldchange, pvalue = pval, stringsAsFactors = FALSE)
+  }
+    
   #---------------------------------
   # use beta2 to get mean difference
   # --------------------------------
@@ -209,6 +217,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
   } 
 }
+
 
 
 
