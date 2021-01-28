@@ -1,15 +1,16 @@
-plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
+  ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
   library(gridExtra)
   library(RColorBrewer)
   library(ggplot2)
-  fit <- Res$populationFit
+  fit <- testobj$populationFit
   fit.bak = fit
-  clu <- Res$cluster
+  clu <- testobj$cluster
   
   fit.scale <- do.call(cbind, fit)
-  fit.scale <- fit.scale[names(Res$cluster), ]
+  fit.scale <- fit.scale[names(testobj$cluster), ]
   fit.scale <- scalematrix(fit.scale)
   str(fit.scale)
   colnames(fit.scale) <- seq(1, ncol(fit.scale))
@@ -21,12 +22,12 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ## ------------------------
   ## plot original expression 
   ## ------------------------
-  cellanno <- Res$cellanno
-  expr = Res$expr.ori
-  expr <- expr[, names(Res$pseudotime)]
+  cellanno <- testobj$cellanno
+  expr = testobj$expr.ori
+  expr <- expr[, names(testobj$pseudotime)]
   expr.scale <-
-    cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(Res$design[Res$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
-          expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(Res$design[Res$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
+    cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
+          expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
   
   ## plot ------------------------
   expr.scale[expr.scale > quantile(as.vector(expr.scale), 0.98)] <-
@@ -40,7 +41,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ### annotate rows and columns
   colann <- data.frame(
       # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
-      pseudotime = Res$pseudotime[colnames(expr.scale)],
+      pseudotime = testobj$pseudotime[colnames(expr.scale)],
       expression = 'Original',
       stringsAsFactors = F)
   rownames(colann) = colnames(expr.scale)
@@ -119,5 +120,6 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   return(g)
 }  
   
+
 
 
