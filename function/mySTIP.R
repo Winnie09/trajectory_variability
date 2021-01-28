@@ -1,4 +1,4 @@
-mySTIP <- function(fit, gl, maxChangePoint = 5) {
+mySTIP <- function(fit, gl) {
   ## fit: gene by cell matrix. colnames: pseudotime of the cells. rownames: gene names.
   ## gl: a vector of genes (should be within the rownames) to be highlighted by texts.
   dn <- dimnames(fit)
@@ -6,14 +6,20 @@ mySTIP <- function(fit, gl, maxChangePoint = 5) {
   dimnames(fit) <- dn
   gene <- row.names(fit)
   gl <- intersect(gl,gene)
-  
   zpdirection <- fit[, ncol(fit)/20] < fit[, ncol(fit)/20*19] ## direction (low to high; or high to low)
-  
   zp <- apply(fit, 1, function(sf) {
-    setdiff(names(which(sapply(1:(length(sf) - 1), function(i)
-      sf[i] * sf[i + 1] < 0))),colnames(fit)[c(1:(ncol(fit)/20),(ncol(fit)/20*19):ncol(fit))])
+    ## for GBM myeloid 
+    # setdiff(names(which(sapply(1:(length(sf) - 1), function(i)
+    #   sf[i] * sf[i + 1] < 0))),colnames(fit)[c(1:(ncol(fit)/20),(ncol(fit)/20*changePointCut):ncol(fit))])
+    names(which(sapply(1:(length(sf) - 1), function(i)
+      sf[i] * sf[i + 1] < 0)))
   }) ## change point positions
-  zp <- sapply(zp, function(i) i[1:min(2,length(i))])
+  zp <- sapply(zp, function(i) {
+    if (length(i) > 2) {
+      i[1:min(2,length(i))]
+    } else {
+      i
+  }})
   zpnum <- sapply(zp, length)
   inczp <- names(which(zpdirection[zpnum == 1]))
   deczp <- names(which(!zpdirection[zpnum == 1]))
@@ -31,9 +37,12 @@ mySTIP <- function(fit, gl, maxChangePoint = 5) {
     geneorder <-
       c(geneorder, names(sort(tmp, decreasing = F)))
   }
-  geneorder <-
-    c(geneorder, names(sort(sapply(zp[m2], function(i)
-      match(i[1],colnames(fit))))))
+  if (length(m2) > 0) {
+    geneorder <-
+      c(geneorder, names(sort(sapply(zp[m2], function(i)
+        match(i[1],colnames(fit))))))  
+  }
+  
   if (length(inczp) > 0) {
     tmp <- unlist(zp[inczp])
     n <- names(tmp)
@@ -41,9 +50,11 @@ mySTIP <- function(fit, gl, maxChangePoint = 5) {
     names(tmp) <- n
     geneorder <- c(geneorder, names(sort(tmp)))
   }
-  geneorder <-
-    c(geneorder, names(sort(sapply(zp[m1], function(i)
-      match(i[1],colnames(fit))))))
+  if (length(m1) > 0) {
+    geneorder <-
+      c(geneorder, names(sort(sapply(zp[m1], function(i)
+        match(i[1],colnames(fit))))))
+  }
   geneorder <- rev(geneorder)
   plotdata <- fit[geneorder,]
   plotdata <- melt(plotdata)
@@ -101,5 +112,6 @@ mySTIP <- function(fit, gl, maxChangePoint = 5) {
                           ) + scale_x_continuous(expand = c(0, 0))
   gridExtra::grid.arrange(p2, p1, nrow = 1, layout_matrix = cbind(1, 1,1, 2, 2, 2,2,2,2,2))
 }
+
 
 
