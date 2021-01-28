@@ -84,7 +84,7 @@
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
-      p <- p + scale_color_brewer(palette = palette) 
+      p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8, palette))(length(unique(ld$Sample))))
     }
       if (facet.sample){
           print(p + facet_wrap(~Sample, scales=a))
@@ -150,10 +150,11 @@
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
-      p <- p + scale_color_brewer(palette = palette) 
+      p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8, palette))(length(unique(ld$Sample))))
     }
     print(p)
   }
   
 }
+
 
