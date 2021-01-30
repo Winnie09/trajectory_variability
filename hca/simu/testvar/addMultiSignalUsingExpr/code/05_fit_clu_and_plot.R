@@ -22,9 +22,9 @@ for (dataType  in seq(1,4)){
   dir.create(rdir, recursive = TRUE, showWarnings = FALSE)
   dir.create(pdir, recursive = TRUE, showWarnings = FALSE)
   Res <- readRDS(paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/EM_NOT_centered/',dataType,'.rds'))
-  plotGenePopulation(Res, names(Res$fdr[Res$fdr < 0.05])[1], type = 'variable')
+  plotGenePopulation(Res, rownames(Res$statistics)[1], type = 'variable')
   
-  fit <- getPopulationFit(Res, gene = names(Res$fdr[Res$fdr < 0.05]), type = 'variable')
+  fit <- getPopulationFit(Res, gene = rownames(Res$statistics)[Res$statistics[,7]<0.05], type = 'variable') ## can't run through, double check
   saveRDS(fit, paste0(rdir, '/population_fit.rds')) ##########
   Res$populationFit <- fit
   
@@ -55,6 +55,7 @@ for (dataType  in seq(1,4)){
   ## ----------------
   ## confusion matrix
   ## ----------------
+  ### compare signal clusters and diff clusters
   fromgene = readRDS(paste0(ddir, '/fromgene/', dataType, '.rds'))
   selgene = readRDS(paste0(ddir, '/selgene/selgene.rds'))
   clu.true = clu.true[fromgene]
@@ -66,5 +67,23 @@ for (dataType  in seq(1,4)){
   pdf(paste0(pdir, '/confusionMatrix_hm.pdf'), width = 3.5, height = 3)
   print(pheatmap(tb))
   dev.off()
+  ## compare signal type and diff type
+  selgene.trend = readRDS(paste0(ddir, '/selgene/selgene1.rds'))
+  selgene.mean = readRDS(paste0(ddir, '/selgene/selgene2.rds'))
+  selgene.both = readRDS(paste0(ddir, '/selgene/selgene3.rds'))
+  signalType <- c(rep('trendOnly', length(selgene.trend)), rep('meanOnly', length(selgene.mean)), rep('both', length(selgene.both)), rep('null', nrow(Res$statistics)-length(selgene)))
+  names(signalType) <- c(selgene.trend, selgene.mean, selgene.both, setdiff(rownames(Res$statistics), selgene))
+  diffType <- getDiffType(Res)
+  
+  tb <- sapply(sort(unique(diffType)), function(i){
+    sapply(sort(unique(signalType)), function(j){
+      sum(diffType == i & signalType == j)
+    })
+  })
+  tb <- tb/rowSums(tb)
+  pdf(paste0(pdir, '/confusionMatrix_hm_signalType_diffType.pdf'), width = 3.5, height = 3)
+  print(pheatmap(tb, cluster_cols = FALSE, cluster_rows = FALSE))
+  dev.off()
 }
+
 
