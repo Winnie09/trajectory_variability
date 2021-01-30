@@ -12,7 +12,7 @@ expr <- expr[, cellanno[,1]]
 source('function/01_function.R')
 rdir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/'
 system.time({
-  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Variable', ncores = 8, demean = FALSE)
+  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Variable', ncores = 10, demean = FALSE)
 })
 saveRDS(res, paste0(rdir, 'numeric_4levels_res.rds'))
 

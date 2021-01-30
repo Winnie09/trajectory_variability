@@ -17,7 +17,7 @@ expr <- expr[rowMeans(expr>0.1)>0.01, ]
 str(expr)
 
 source('function/01_function.R')
-rdir <- 'covid/Su_2020_Cell/testvar/result/'
+rdir <- 'covid/Su_2020_Cell/testvar/useNotImp/result/'
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
 expr <- expr[,cellanno[,1]]
 agg <- vapply(unique(cellanno[,2]), function(i)

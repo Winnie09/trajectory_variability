@@ -17,7 +17,7 @@ expr <- expr[rowMeans(expr>0.1)>0.01, ]
 expr <- expr[, cellanno[,1]]
 
 source('function/01_function.R')
-rdir <- 'covid/Su_2020_Cell/testvar/result/'
+rdir <- 'covid/Su_2020_Cell/testvar/useNotImp/result/'
 system.time({
   res <- testpt.seed(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Variable', ncores = 4, demean = FALSE)
 })

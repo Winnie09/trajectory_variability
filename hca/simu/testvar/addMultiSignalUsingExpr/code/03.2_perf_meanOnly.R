@@ -14,29 +14,15 @@ str(rmgene)
 source('function/01_function.R')
 
 perflist <- list()
-# m = 'EM_centered'
-# af = list.files(paste0(ddir, m, '/'))
-# f = af[1]
-# df1 <- sapply(af, function(f){
-#   print(f)
-#   r = readRDS(paste0(ddir, m, '/', f))
-#   res = data.frame(adj.P.Val = r[['fdr']], foldchange = r[['foldchange']], stringsAsFactors = F)
-#   res = res[!rownames(res) %in% rmgene, ]
-#   res = res[order(res[,1], -res[,2]), ]
-#   
-#   c(sub('.rds','',f), 'trenddiff', AreaUnderSensFdr(SensFdr(selgene, res)))
-# })
-# perflist[['EM_centered']] = t(df1)
-
 m = 'EM_NOT_centered'
 af = list.files(paste0(ddir, m, '/'))
 df1.nc <- sapply(af, function(f){
   print(f)
   r = readRDS(paste0(ddir, m, '/', f))
-  res = data.frame(adj.P.Val = r[['fdr']], foldchange = r[['foldchange']], stringsAsFactors = F)
-  res = res[!rownames(res) %in% rmgene, ]
+  res = r$statistics
+  res = res[!rownames(res) %in% rmgene, 1:3]
+  colnames(res) <- c('fdr', 'fc', 'pval')
   res = res[order(res[,1], -res[,2]), ]
-  
   c(sub('.rds','',f), 'EM_NOT_centered', AreaUnderSensFdr(SensFdr(selgene, res)))
 })
 perflist[['EM_not_centered']] = t(df1.nc)
@@ -48,9 +34,9 @@ df2 <- sapply(af, function(f){
   res = readRDS(paste0(ddir, m, '/', f))
   res = res[!rownames(res) %in% rmgene, ]
   res = res[order(res[,5], -abs(res[,1])), ]
-  c(sub('.rds','',f), 'meandiff', AreaUnderSensFdr(SensFdr(selgene, res)))
+  c(sub('.rds','',f), 'limma_pb', AreaUnderSensFdr(SensFdr(selgene, res)))
 })
-perflist[['meandiff']] = t(df2)
+perflist[['limma_pb']] = t(df2)
 
 m = 'tscan'
 af = list.files(paste0(ddir, m, '/'))
@@ -69,6 +55,7 @@ colnames(perf) <- c('SignalStrength', 'Method', 'Fdr.Diff', 'AUC')
 perf <- as.data.frame(perf)
 saveRDS(perf, paste0(rdir,'perf_meanOnly.rds'))
 rm(list=ls())
+
 
 
 
