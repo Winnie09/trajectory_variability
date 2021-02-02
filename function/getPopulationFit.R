@@ -18,15 +18,16 @@ getPopulationFit <- function(testobj,
     design = design[, 1, drop = FALSE]
   } else {
     variable = colnames(design)[2]
-     design <- unique(design[, c('intercept', variable)])
+    design <- unique(design[, c('intercept', variable)])
     rownames(design) <- paste0(variable, '_', unique(design[, variable]))
   }
   
   fitlist <- lapply(gene, function(g){
-    beta <- lapply(testobj$parameter[g], function(i) {
-      i$beta
-    })
-    names(beta) <- g
+    # beta <- lapply(testobj$parameter[g], function(i) {
+    #   i$beta
+    # })
+    # names(beta) <- g
+    beta <- testobj$parameter[[g]]$beta
     x <- sapply(row.names(design), function(i) {
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
@@ -37,7 +38,7 @@ getPopulationFit <- function(testobj,
       knots = seq(min(pseudotime), max(pseudotime), length.out = knotnum[g] + 2)[2:(knotnum[g] + 1)]
       phi <- cbind(1, bs(pseudotime, knots = knots))
     }
-    if (exists('variable')) {
+    if (!exists('variable')) {
       if (ncol(phi) == ncol(x[[1]])){
          fit <- t(phi %*% t(x[[1]]) %*% beta)[1,]
        } else {
@@ -46,9 +47,9 @@ getPopulationFit <- function(testobj,
     } else {
       fit <- lapply(x, function(i) {
         if (ncol(phi) == nrow(i)){
-          phi %*% i %*% beta[[g]]
+          phi %*% i %*% beta
         } else {
-          phi %*% t(i) %*% beta[[g]]
+          phi %*% t(i) %*% beta
         }
       })
       names(fit) <- names(x)
@@ -69,9 +70,7 @@ getPopulationFit <- function(testobj,
     }))  
   }
   return(fitres)
-  
 }
-
 
 
 
