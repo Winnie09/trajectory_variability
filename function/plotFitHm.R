@@ -1,4 +1,4 @@
-plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE, colann = NULL, rowann = NULL){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -8,6 +8,10 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   fit <- testobj$populationFit
   fit.bak = fit
   clu <- testobj$cluster
+  if (DEGType %in% names(testobj)) 
+    DEGType <- testobj$DEGType
+  else 
+    DEGType <- getDEGType(testobj) 
   
   fit.scale <- do.call(cbind, fit)
   fit.scale <- fit.scale[names(testobj$cluster), ]
@@ -39,33 +43,39 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   fit.scale[fit.scale < quantile(as.vector(fit.scale), 0.02)] <-
     quantile(as.vector(fit.scale), 0.02)
   ### annotate rows and columns
-  colann <- data.frame(
-      # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
-      pseudotime = testobj$pseudotime[colnames(expr.scale)],
-      expression = 'Original',
-      stringsAsFactors = F)
-  rownames(colann) = colnames(expr.scale)
   
-  rowann = data.frame(
-    cluster = as.character(clu),
-    stringsAsFactors = F)
-  rownames(rowann) = names(clu)
-  rowann <- rowann[rownames(fit.scale), ,drop=F]
-  #### define colors
-  # col.sample = colorRampPalette(rev(brewer.pal(n = 8, name = "Set1")))(length(unique(colann$sample)))
-  # names(col.sample) = unique(colann$sample)
   
-  col.expression = brewer.pal(n = 8, name = "Pastel1")[1:2]
-  names(col.expression) = c('Original', 'Model Fitted')
-  col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$pseudotime)))
-  names(col.pseudotime) = unique(colann$pseudotime)
-  if (length(unique(clu)) < 8){
-    col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
-  } else {
-    col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
+  if (is.null(colann)){
+    colann <- data.frame(
+        # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
+        pseudotime = testobj$pseudotime[colnames(expr.scale)],
+        expression = 'Original',
+        stringsAsFactors = F)
+    rownames(colann) = colnames(expr.scale)
+    col.expression = brewer.pal(n = 8, name = "Pastel1")[1:2]
+    names(col.expression) = c('Original', 'Model Fitted')
+    col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$pseudotime)))
+    names(col.pseudotime) = unique(colann$pseudotime)
   }
-  names(col.clu) = unique(clu)
-  
+    
+  if (is.null(rowann)){
+    rowann = data.frame(
+      cluster = as.character(clu),
+      DEGType = as.character(DEGType[names(clu)]),
+      stringsAsFactors = F)
+    rownames(rowann) = names(clu)
+    rowann <- rowann[rownames(fit.scale), ,drop=F]
+    if (length(unique(clu)) < 8){
+      col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
+    } else {
+      col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
+    }
+    names(col.clu) = unique(clu)
+    col.DEGType = brewer.pal(8, 'Dark2')[1:length(unique(DEGType))]
+    names(col.DEGType) = unique(DEGType)
+    
+  }
+    
   #### save png
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
   plist <- list()
@@ -79,10 +89,10 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     annotation_col = colann,
     annotation_row = rowann,
     annotation_colors = list(
-      # sample = col.sample,
       pseudotime = col.pseudotime,
       expression = col.expression,
-      cluster = col.clu),
+      cluster = col.clu,
+      DEGType = col.DEGType),
     cellwidth = cellWidthTotal / ncol(expr.scale),
     cellheight = cellHeightTotal / nrow(expr.scale),
     border_color = NA, silent = TRUE)
@@ -107,7 +117,8 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     annotation_colors = list(
       expression = col.expression,
       pseudotime = col.pseudotime,
-      cluster = col.clu),
+      cluster = col.clu,
+      DEGType = col.DEGType),
       cellwidth = cellWidthTotal / ncol(fit.scale),
       cellheight = cellHeightTotal / nrow(fit.scale),
       border_color = NA, silent = TRUE)
@@ -120,6 +131,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   return(g)
 }  
   
+
 
 
 
