@@ -65,9 +65,7 @@ getPopulationFit <- function(testobj,
     })  
     names(fitres) <- names(fitlist[[1]])
   } else if (type == 'time'){
-    fitres <- t(sapply(fitlist, function(i){
-      i[[1]]
-    }))  
+    fitres <- t(do.call(cbind, fitlist))
   }
   return(fitres)
 }
