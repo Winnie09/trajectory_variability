@@ -11,25 +11,30 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   dir.create(pdir, recursive = T)
   Res <- readRDS(paste0(ddir, paste0('numeric_', comparison, '_res.rds')))
   
+  diffgene <- rownames(Res$statistics[Res$statistics[,7]<0.05, ])
+  
+  
   ## --------------
   ## population fit
   ## --------------
-  Res$populationFit <- getPopulationFit(Res, gene = names(Res$fdr[Res$fdr < 0.05]), type = 'variable')
+  Res$populationFit <- getPopulationFit(Res, gene = diffgene, type = 'variable')
   
   ## -----------
   ## clustering
   ## -----------
-  Res$covariateGroupDiff <- getCovariateGroupDiff(testobj = Res, gene = names(Res$fdr[Res$fdr < 0.05]))
-  Res$cluster <- clusterGene(Res, gene = names(Res$fdr[Res$fdr < 0.05]), type = 'variable', k=3)
+  Res$covariateGroupDiff <- getCovariateGroupDiff(testobj = Res, gene = diffgene)
+  Res$cluster <- clusterGene(Res, gene = diffgene, type = 'variable', k=3)
   
   ## --------------
   ## save diff gene
   ## --------------
-  allg <- names(Res$fdr[Res$fdr < 0.05])
-  res <- data.frame(gene = allg, pvalue = Res$pvalue[allg], fdr = Res$fdr[allg], foldchange = Res$foldchange[allg], cluster = Res$cluster[allg])
-  res <- res[order(res$fdr, abs(res$foldchange)), ]
+  DEGType <- getDEGType(Res)
+  Res$DEGType <- DEGType
+  res <- Res$statistics
+  res <- data.frame(res, DEGType = DEGType[rownames(res)], stringsAsFactors = F)
+  saveRDS(res, paste0(rdir, 'differential_genes.rds'))
   write.csv(res, paste0(rdir, 'differential_genes.csv'))
-  
+
   ## ----------------
   ## plotClusterDiff
   ## ----------------
@@ -41,9 +46,9 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   ## plotClusterMean
   ## ----------------
   pdf(paste0(pdir, '/cluster_mean.pdf'), width = 5, height = 3.5)
-  plotClusterMean(testobj=Res, cluster = Res$cluster)
+  plotClusterMean(testobj=Res, cluster = Res$cluster, type = 'variable')
   dev.off()
-  
+    
   ## -----------
   ## GO analysis
   ## -----------
@@ -82,7 +87,7 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   # --------------------------------------
   # compare original and fitted expression
   # --------------------------------------
-  png(paste0(pdir, 'fitHm.png'),width = 3000,height = 2500,res = 300)
+  png(paste0(pdir, 'fitHm.png'),width = 3500, height = 2500,res = 300)
   print(plotFitHm(Res))
   dev.off()
 
@@ -91,3 +96,4 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   dev.off()
 }
   
+

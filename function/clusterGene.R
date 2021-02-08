@@ -20,13 +20,12 @@ clusterGene <- function(testobj,
     } else{
       fit <- getCovariateGroupDiff(testobj = testobj, gene = gene)  
     }
-    
   }
   mat.scale <- scalematrix(fit)
   
   if (method == 'kmeans'){
-    set.seed(12345)
-    clu <- kmeans(mat.scale, k, iter.max = 1000)$cluster
+      set.seed(12345)
+      clu <- kmeans(mat.scale, k, iter.max = 1000)$cluster
   }
   return(clu)  
 }

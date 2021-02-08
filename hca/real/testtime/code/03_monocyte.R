@@ -13,7 +13,7 @@ pseudotime = readRDS(paste0(ddir, 'input_pseudotime.rds'))
 design = design[,1,drop=FALSE]
 
 system.time({
-  res <- testpt(expr=m, cellanno=cellanno, pseudotime=pseudotime, design=design, ncores=1, permuiter=3, type = 'Time', demean = FALSE)
+  res <- testpt(expr=m, cellanno=cellanno, pseudotime=pseudotime, design=design, ncores=4, type = 'Time', demean = FALSE)
 })
 saveRDS(res, paste0(rdir, 'testtime_res.rds'))
 

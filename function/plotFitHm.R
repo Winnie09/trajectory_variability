@@ -1,4 +1,4 @@
-plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE, colann = NULL, rowann = NULL){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE, colann = NULL, rowann = NULL, type = 'time'){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -8,10 +8,13 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   fit <- testobj$populationFit
   fit.bak = fit
   clu <- testobj$cluster
-  if (DEGType %in% names(testobj)) 
-    DEGType <- testobj$DEGType
-  else 
-    DEGType <- getDEGType(testobj) 
+  if (type == 'variable'){
+    if (DEGType %in% names(testobj)) 
+      DEGType <- testobj$DEGType
+    else 
+      DEGType <- getDEGType(testobj) 
+  }
+    
   
   fit.scale <- do.call(cbind, fit)
   fit.scale <- fit.scale[names(testobj$cluster), ]
@@ -59,10 +62,16 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   }
     
   if (is.null(rowann)){
-    rowann = data.frame(
+    if (type == 'time'){
+      rowann = data.frame(
+        cluster = as.character(clu),
+        DEGType = as.character(DEGType[names(clu)]),
+        stringsAsFactors = F)
+    } else if (type == 'variable'){
+      rowann = data.frame(
       cluster = as.character(clu),
-      DEGType = as.character(DEGType[names(clu)]),
       stringsAsFactors = F)
+    }
     rownames(rowann) = names(clu)
     rowann <- rowann[rownames(fit.scale), ,drop=F]
     if (length(unique(clu)) < 8){
@@ -71,9 +80,20 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
       col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
     }
     names(col.clu) = unique(clu)
-    col.DEGType = brewer.pal(8, 'Dark2')[1:length(unique(DEGType))]
-    names(col.DEGType) = unique(DEGType)
-    
+    if (type == 'time'){
+      col.DEGType = brewer.pal(8, 'Dark2')[1:length(unique(DEGType))]
+      names(col.DEGType) = unique(DEGType)
+      annotation_colors = list(
+      pseudotime = col.pseudotime,
+      expression = col.expression,
+      cluster = col.clu,
+      DEGType = col.DEGType)
+    } else if (type == 'variable'){
+      annotation_colors = list(
+      pseudotime = col.pseudotime,
+      expression = col.expression,
+      cluster = col.clu)
+    }
   }
     
   #### save png
@@ -88,11 +108,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     color = cpl,
     annotation_col = colann,
     annotation_row = rowann,
-    annotation_colors = list(
-      pseudotime = col.pseudotime,
-      expression = col.expression,
-      cluster = col.clu,
-      DEGType = col.DEGType),
+    annotation_colors = annotation_colors,
     cellwidth = cellWidthTotal / ncol(expr.scale),
     cellheight = cellHeightTotal / nrow(expr.scale),
     border_color = NA, silent = TRUE)
@@ -114,11 +130,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     color = cpl,
     annotation_col = colann2,
     annotation_row = rowann,
-    annotation_colors = list(
-      expression = col.expression,
-      pseudotime = col.pseudotime,
-      cluster = col.clu,
-      DEGType = col.DEGType),
+    annotation_colors = annotation_colors,
       cellwidth = cellWidthTotal / ncol(fit.scale),
       cellheight = cellHeightTotal / nrow(fit.scale),
       border_color = NA, silent = TRUE)
@@ -131,7 +143,6 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   return(g)
 }  
   
-
 
 
 
