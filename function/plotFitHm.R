@@ -1,4 +1,4 @@
-plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE, colann = NULL, rowann = NULL, type = 'time'){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'time', subsampleCell = TRUE, numSubsampleCell=1e3){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -6,10 +6,24 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   library(RColorBrewer)
   library(ggplot2)
   fit <- testobj$populationFit
+  if (subsampleCell){
+    if (type == 'time'){
+      id <- round(seq(1, ncol(fit), length.out = numSubsampleCell))
+      fit <- fit[, id]
+    } else if (type == 'variable'){
+        id <- round(seq(1, ncol(fit[[1]]), length.out = numSubsampleCell))
+      for (i in 1:length(fit)){
+        fit[[i]] <- fit[[i]][, id]
+      }
+    }
+    testobj$pseudotime <- testobj$pseudotime[id]
+    testobj$cellanno <- testobj$cellanno[id, ]
+    testobj$expr.ori <- testobj$expr.ori[, names(testobj$pseudotime)]
+  }
   fit.bak = fit
   clu <- testobj$cluster
   if (type == 'variable'){
-    if (DEGType %in% names(testobj)) 
+    if ('DEGType' %in% names(testobj)) 
       DEGType <- testobj$DEGType
     else 
       DEGType <- getDEGType(testobj) 
@@ -19,8 +33,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   fit.scale <- do.call(cbind, fit)
   fit.scale <- fit.scale[names(testobj$cluster), ]
   fit.scale <- scalematrix(fit.scale)
-  str(fit.scale)
-  colnames(fit.scale) <- seq(1, ncol(fit.scale))
+  colnames(fit.scale) <- paste0(rep(names(fit), each = ncol(fit.scale)/length(fit)), ';cell', seq(1, ncol(fit.scale)))
   
   res <- data.frame(clu = clu, 
                     cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))))
@@ -47,11 +60,11 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     quantile(as.vector(fit.scale), 0.02)
   ### annotate rows and columns
   
-  
   if (is.null(colann)){
     colann <- data.frame(
         # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
         pseudotime = testobj$pseudotime[colnames(expr.scale)],
+        group = as.character(testobj$design[cellanno[match(colnames(expr.scale), cellanno[,1]),2],2]),
         expression = 'Original',
         stringsAsFactors = F)
     rownames(colann) = colnames(expr.scale)
@@ -59,15 +72,17 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     names(col.expression) = c('Original', 'Model Fitted')
     col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$pseudotime)))
     names(col.pseudotime) = unique(colann$pseudotime)
+    col.group = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$group)))
+    names(col.group) = unique(colann$group)
   }
     
   if (is.null(rowann)){
-    if (type == 'time'){
+    if (type == 'variable'){
       rowann = data.frame(
         cluster = as.character(clu),
         DEGType = as.character(DEGType[names(clu)]),
         stringsAsFactors = F)
-    } else if (type == 'variable'){
+    } else if (type == 'time'){
       rowann = data.frame(
       cluster = as.character(clu),
       stringsAsFactors = F)
@@ -80,21 +95,27 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
       col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
     }
     names(col.clu) = unique(clu)
-    if (type == 'time'){
+  }
+  
+  if (is.null(colann)| is.null(annotation_colors)){
+    if (type == 'variable'){
       col.DEGType = brewer.pal(8, 'Dark2')[1:length(unique(DEGType))]
       names(col.DEGType) = unique(DEGType)
       annotation_colors = list(
       pseudotime = col.pseudotime,
+      group = col.group,
       expression = col.expression,
       cluster = col.clu,
       DEGType = col.DEGType)
-    } else if (type == 'variable'){
+    } else if (type == 'time'){
       annotation_colors = list(
       pseudotime = col.pseudotime,
       expression = col.expression,
       cluster = col.clu)
     }
   }
+    
+  
     
   #### save png
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
@@ -117,10 +138,12 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ## --------------------
   ## plot fitting values
   ## --------------------
-  colann2 <-data.frame(pseudotime = rep(seq(1, ncol(fit.scale)/length(fit)), length(fit)),
+  colann.fit <-data.frame(pseudotime = rep(seq(1, ncol(fit.scale)/length(fit)), length(fit)),
+               group = gsub('type_','',sub(';.*', '', colnames(fit.scale))), 
                expression = 'Model Fitted',
                stringsAsFactors = F)
-  rownames(colann2) = colnames(fit.scale)
+  rownames(colann.fit) = colnames(fit.scale)
+  
   p2 <- pheatmap(
     fit.scale,
     cluster_rows = F,
@@ -128,7 +151,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     show_rownames = showRowName,
     show_colnames = FALSE,
     color = cpl,
-    annotation_col = colann2,
+    annotation_col = colann.fit,
     annotation_row = rowann,
     annotation_colors = annotation_colors,
       cellwidth = cellWidthTotal / ncol(fit.scale),
@@ -138,9 +161,9 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
   
   # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
-  g <- grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1))
+  grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1))
   # dev.off()
-  return(g)
+  
 }  
   
 
