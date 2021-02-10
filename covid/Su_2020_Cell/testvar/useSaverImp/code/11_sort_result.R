@@ -1,18 +1,22 @@
+rm(list=ls())
 library(here)
 setwd(here())
+# setwd('/Users/wenpinhou/Dropbox/trajectory_variability')
 source('function/01_function.R')
 ddir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/'
 # for (comparison in c('HD_Se', 'HD_Mi','Mod_Se','HD_Mod', 'Se_Mi', 'Recovered_Deceased')){
-for (comparison in c('Se_Mi', 'Recovered_Deceased')){
+for (comparison in c('Mod_Mi', 'Se_Mi', 'Recovered_Deceased')){
   print(comparison)
   rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', comparison, '/')
   pdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/plot/', comparison, '/')
   dir.create(rdir, recursive = T)
   dir.create(pdir, recursive = T)
   Res <- readRDS(paste0(ddir, paste0('numeric_', comparison, '_res.rds')))
-  
+  print(names(Res))
+
+
   diffgene <- rownames(Res$statistics[Res$statistics[,7]<0.05, ])
-  
+  str(diffgene)
   
   ## --------------
   ## population fit
@@ -39,7 +43,7 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   ## plotClusterDiff
   ## ----------------
   pdf(paste0(pdir, '/cluster_diff.pdf'), width = 3, height = 2)
-  plotClusterDiff(testobj=Res, gene = names(Res$fdr[Res$fdr < 0.05]))
+  plotClusterDiff(testobj=Res, gene = diffgene)
   dev.off()
   
   ## ---------------
@@ -68,9 +72,11 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   print(plotClusterMeanAndDiff(Res, cluster = Res$cluster))
   dev.off()
   
+  res <- res[names(Res$cluster), ]
+  res <- cbind(res, cluster = Res$cluster)
   for (i in 1:max(Res$cluster)){
     print(i)
-    gene <- rownames(res[res$cluster == i, ])
+    gene <- rownames(res)[res$cluster == i]
     png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
     print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)]))
     dev.off()
@@ -78,7 +84,7 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
 
   for (i in 1:max(Res$cluster)) {
     print(i)
-    gene <- rownames(res[res$cluster == i,])
+    gene <- rownames(res)[res$cluster == i]
     png(paste0(pdir, 'diffgene_groupDiff_cluster', i, '.png'),width = 2500,height = 2500, res = 200)
     print(plotClusterDiff(testobj = Res, gene = gene[1:min(length(gene), 100)], each = TRUE, sep = ':.*'))
     dev.off()
@@ -87,12 +93,12 @@ for (comparison in c('Se_Mi', 'Recovered_Deceased')){
   # --------------------------------------
   # compare original and fitted expression
   # --------------------------------------
-  png(paste0(pdir, 'fitHm.png'),width = 3500, height = 2500,res = 300)
-  print(plotFitHm(Res))
+  png(paste0(pdir, 'fitHm.png'),width = 4500, height = 2500,res = 300)
+  print(plotFitHm(Res, type = 'variable',numSubsampleCell=1e3))
   dev.off()
 
   png(paste0(pdir, 'fitHm_rownames.png'),width = 11080,height = length(Res$cluster)*25,res = 200)
-  print(plotFitHm(Res, showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 8))
+  print(plotFitHm(Res, showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 8, type = 'variable'))
   dev.off()
 }
   
