@@ -3,7 +3,11 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05, k = 5,use.clusters = TRUE,type 
     ## type: "time" or "variable". Only useful when "cluster" in not in testobj.
     ## species: currently only work for "human". will include "mouse".
   if (version == 3) {
+    if (type == 'variable'){
       fdr <- testobj$statistics[, 'both.fdr']
+    } else if (type == 'time'){
+      fdr <- testobj$statistics[, 'fdr']
+    }
       if (sum(fdr < fdr.cutoff) == 0) {
         print('There is no differential genes! GoEnrich stopped.')
         break
@@ -145,7 +149,8 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05, k = 5,use.clusters = TRUE,type 
       }
       
     } else if (version == 1) {
-      fdr <- testobj$fdr
+      res =  testobj$statistics
+      fdr <- res$fdr
       if (sum(fdr < fdr.cutoff) == 0) {
         print('There is no differential genes! GoEnrich stopped.')
         break
