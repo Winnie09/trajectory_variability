@@ -27,14 +27,14 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
       DEGType <- testobj$DEGType
     else 
       DEGType <- getDEGType(testobj) 
+    fit.scale <- do.call(cbind, fit)
+    fit.scale <- fit.scale[names(testobj$cluster), ]
+    fit.scale <- scalematrix(fit.scale)
+    colnames(fit.scale) <- paste0(rep(names(fit), each = ncol(fit.scale)/length(fit)), ';cell', seq(1, ncol(fit.scale)))
+  } else {
+    fit.scale <- scalematrix(fit)
+    dimnames(fit.scale) <- dimnames(fit)
   }
-    
-  
-  fit.scale <- do.call(cbind, fit)
-  fit.scale <- fit.scale[names(testobj$cluster), ]
-  fit.scale <- scalematrix(fit.scale)
-  colnames(fit.scale) <- paste0(rep(names(fit), each = ncol(fit.scale)/length(fit)), ';cell', seq(1, ncol(fit.scale)))
-  
   res <- data.frame(clu = clu, 
                     cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))))
   fit.scale <- fit.scale[rownames(res)[order(res$clu, res$cor)], ]
@@ -45,10 +45,14 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   cellanno <- testobj$cellanno
   expr = testobj$expr.ori
   expr <- expr[, names(testobj$pseudotime)]
-  expr.scale <-
-    cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
-          expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
-  
+  expr.scale <- expr
+  if (type == 'variable'){
+    expr.scale <-
+      cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
+            expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
+  }
+    
+  # 
   ## plot ------------------------
   expr.scale[expr.scale > quantile(as.vector(expr.scale), 0.98)] <-
     quantile(as.vector(expr.scale), 0.98)
@@ -61,20 +65,29 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ### annotate rows and columns
   
   if (is.null(colann)){
-    colann <- data.frame(
-        # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
-        pseudotime = testobj$pseudotime[colnames(expr.scale)],
-        group = as.character(testobj$design[cellanno[match(colnames(expr.scale), cellanno[,1]),2],2]),
-        expression = 'Original',
-        stringsAsFactors = F)
+    if (type == 'variable'){
+      colann <- data.frame(
+          # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
+          pseudotime = testobj$pseudotime[colnames(expr.scale)],
+          group = as.character(testobj$design[cellanno[match(colnames(expr.scale), cellanno[,1]),2],2]),
+          expression = 'Original',
+          stringsAsFactors = F)
+   
+      col.group = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$group)))
+      names(col.group) = unique(colann$group)
+    } else if (type == 'time'){
+      colann <- data.frame(
+          # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
+          pseudotime = testobj$pseudotime[colnames(expr.scale)],
+          expression = 'Original',
+          stringsAsFactors = F)
+    }
+  }
     rownames(colann) = colnames(expr.scale)
     col.expression = brewer.pal(n = 8, name = "Pastel1")[1:2]
     names(col.expression) = c('Original', 'Model Fitted')
     col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$pseudotime)))
     names(col.pseudotime) = unique(colann$pseudotime)
-    col.group = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$group)))
-    names(col.group) = unique(colann$group)
-  }
     
   if (is.null(rowann)){
     if (type == 'variable'){
@@ -138,10 +151,17 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ## --------------------
   ## plot fitting values
   ## --------------------
-  colann.fit <-data.frame(pseudotime = rep(seq(1, ncol(fit.scale)/length(fit)), length(fit)),
-               group = gsub('type_','',sub(';.*', '', colnames(fit.scale))), 
-               expression = 'Model Fitted',
-               stringsAsFactors = F)
+  if (type == 'variable'){
+    colann.fit <-data.frame(pseudotime = rep(seq(1, ncol(fit.scale)/length(fit)), length(fit)),
+                 group = gsub('type_','',sub(';.*', '', colnames(fit.scale))), 
+                 expression = 'Model Fitted',
+                 stringsAsFactors = F)
+  } else if (type == 'time'){
+    colann.fit <-data.frame(pseudotime = seq(1, ncol(fit.scale)),
+                 expression = 'Model Fitted',
+                 stringsAsFactors = F)
+  }
+    
   rownames(colann.fit) = colnames(fit.scale)
   
   p2 <- pheatmap(
