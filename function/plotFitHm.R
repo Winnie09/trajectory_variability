@@ -45,13 +45,17 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   cellanno <- testobj$cellanno
   expr = testobj$expr.ori
   expr <- expr[, names(testobj$pseudotime)]
-  expr.scale <- expr
+  
+  
   if (type == 'variable'){
     expr.scale <-
       cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
             expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
+  } else if (type == 'time'){
+    expr.scale <- expr
   }
-    
+  expr.scale <- scalematrix(expr.scale)
+  expr.scale <- expr.scale[rownames(fit.scale), ]  
   # 
   ## plot ------------------------
   expr.scale[expr.scale > quantile(as.vector(expr.scale), 0.98)] <-
@@ -133,6 +137,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   #### save png
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
   plist <- list()
+  png(paste0(pdir,'/test.png'))
   p1 <- pheatmap(
     expr.scale,
     cluster_rows = F,
@@ -157,7 +162,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
                  expression = 'Model Fitted',
                  stringsAsFactors = F)
   } else if (type == 'time'){
-    colann.fit <-data.frame(pseudotime = seq(1, ncol(fit.scale)),
+    colann.fit <-data.frame(pseudotime = testobj$pseudotime[colnames(fit.scale)],
                  expression = 'Model Fitted',
                  stringsAsFactors = F)
   }
@@ -181,7 +186,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
   
   # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
-  grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1))
+  plot(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
   # dev.off()
   
 }  
