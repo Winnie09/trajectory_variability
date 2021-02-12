@@ -48,9 +48,10 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   
   
   if (type == 'variable'){
-    expr.scale <-
-      cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
-            expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design[testobj$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
+    tmp <- lapply(names(fit), function(i){
+      expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design)[testobj$design[, 2] == sub('.*_','', i)], 1]]
+    })
+    expr.scale <- do.call(cbind, tmp)
   } else if (type == 'time'){
     expr.scale <- expr
   }
@@ -131,13 +132,11 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
       cluster = col.clu)
     }
   }
-    
   
-    
   #### save png
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
   plist <- list()
-  png(paste0(pdir,'/test.png'))
+  
   p1 <- pheatmap(
     expr.scale,
     cluster_rows = F,
@@ -191,6 +190,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   
 }  
   
+
 
 
 
