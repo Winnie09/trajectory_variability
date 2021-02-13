@@ -27,6 +27,16 @@ clusterGene <- function(testobj,
       set.seed(12345)
       clu <- kmeans(mat.scale, k, iter.max = 1000)$cluster
   }
+  ## order clusters by genes' max expr position
+  v <- sapply(unique(clu), function(i) {
+    tmp <- fit[clu == i,]
+    mean(apply(tmp, 1, which.max))
+  })
+  names(v) <- unique(clu)
+  trans <- cbind(as.numeric(names(v)),rank(v))
+  n <- names(clu)
+  clu <- trans[match(clu,trans[,1]),2]
+  names(clu) <- n
   return(clu)  
 }
 
