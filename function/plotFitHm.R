@@ -46,7 +46,6 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   expr = testobj$expr.ori
   expr <- expr[, names(testobj$pseudotime)]
   
-  
   if (type == 'variable'){
     tmp <- lapply(names(fit), function(i){
       expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design)[testobj$design[, 2] == sub('.*_','', i)], 1]]
@@ -157,13 +156,16 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   ## --------------------
   if (type == 'variable'){
     colann.fit <-data.frame(pseudotime = rep(seq(1, ncol(fit.scale)/length(fit)), length(fit)),
-                 group = gsub('type_','',sub(';.*', '', colnames(fit.scale))), 
+                 group = gsub(sub('_.*', '_', names(fit)[1]),'',sub(';.*', '', colnames(fit.scale))), 
                  expression = 'Model Fitted',
                  stringsAsFactors = F)
   } else if (type == 'time'){
     colann.fit <-data.frame(pseudotime = testobj$pseudotime[colnames(fit.scale)],
                  expression = 'Model Fitted',
                  stringsAsFactors = F)
+    col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann.fit$pseudotime)))
+    names(col.pseudotime) = unique(colann.fit$pseudotime)
+    annotation_colors$pseudotime <- col.pseudotime
   }
     
   rownames(colann.fit) = colnames(fit.scale)
@@ -190,7 +192,6 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   
 }  
   
-
 
 
 
