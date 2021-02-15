@@ -32,8 +32,6 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = 'overall', test.position = test.position, model = model) 
     } else {
       if (type=='Time') {
-        print('testing Time ...')
-        print(paste0('iteration ', iter))
         perpsn <- sapply(rownames(design), function(s){
           tmpid <- cellanno[cellanno[,2] == s, 1]  # subset cells
           tmppsn <- pseudotime[names(pseudotime) %in% tmpid] # subset time
@@ -62,7 +60,6 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         # --- 20200926 --->>
       } else if (type=='Variable'){
         print('testing Variable ...')
-        print(paste0('iteration ', iter))
         dn <- paste0(as.vector(design),collapse = '_')
         perdn <- dn
         while(perdn==dn) {
@@ -217,6 +214,12 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
   } 
 }
+
+
+
+
+
+
 
 
 
