@@ -56,8 +56,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     bic <- sapply(0:maxknot,bicfunc)
   }
  
-  rm('sexpr')
- 
   knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
   names(knotnum) <- row.names(expr)
  
@@ -74,8 +72,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     # change here >>
     # --------------
     design = design[rownames(ori.design), ,drop=F]
-   
-    
     if (model == 1) {
       xs <- sapply(row.names(ori.design), function(i) {
         kronecker(diag(num.knot + 4), ori.design[i, 1, drop = F]) 
@@ -145,7 +141,8 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     # change here <<
     # --------------
     ## initialize tau
-    phi_xs <- sapply(names(xs),function(ss) phi[[ss]] %*% t(xs[[ss]]))
+    phi_xs <- lapply(names(xs),function(ss) phi[[ss]] %*% t(xs[[ss]]))
+    names(phi_xs) <- names(xs)
     phi_xs_rbind <- do.call(rbind,phi_xs)
     phi_xs_rbind <- phi_xs_rbind[colnames(expr),]
     beta <- sexpr %*% (phi_xs_rbind %*% chol2inv(chol(crossprod(phi_xs_rbind))))
@@ -276,6 +273,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   }
   list(parameter=para,knotnum=knotnum)
 }
+
 
 
 
