@@ -32,11 +32,12 @@ getPopulationFit <- function(testobj,
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
     
+    pt <- seq(1, max(pseudotime))
     if (knotnum[g] == 0) {
-      phi <- cbind(1, bs(pseudotime))
+      phi <- cbind(1, bs(pt))
     } else {
-      knots = seq(min(pseudotime), max(pseudotime), length.out = knotnum[g] + 2)[2:(knotnum[g] + 1)]
-      phi <- cbind(1, bs(pseudotime, knots = knots))
+      knots = seq(min(pt), max(pt), length.out = knotnum[g] + 2)[2:(knotnum[g] + 1)]
+      phi <- cbind(1, bs(pt, knots = knots))
     }
     if (!exists('variable')) {
       if (ncol(phi) == ncol(x[[1]])){
@@ -56,6 +57,7 @@ getPopulationFit <- function(testobj,
     }
     return(fit)
   })
+  
   names(fitlist) <- gene
   if (type == 'variable'){
     fitres <- lapply(names(fitlist[[1]]), function(i){
