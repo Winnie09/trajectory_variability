@@ -5,7 +5,7 @@ getCovariateGroupDiff <- function(testobj,
   ## variable: A character denoting the covariate for population fit. It should be one of the colnames in the design matrix.
   ## output: a gene by pseudotime matrix. Entires are group difference w.r.t the variable, i.e., the unit-covariate incremental difference.
   knotnum = testobj$knotnum[gene]
-  pseudotime = testobj$pseudotime
+  pseudotime = seq(1, max(testobj$pseudotime))
   beta <- lapply(testobj$parameter[gene], function(i) {
     i$beta
   })
@@ -30,3 +30,4 @@ getCovariateGroupDiff <- function(testobj,
   colnames(fit) <- gene
   return(t(fit))
 }
+
