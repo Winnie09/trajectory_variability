@@ -1,4 +1,3 @@
-# permuiter=3; EMmaxiter=3; EMitercutoff=1; verbose=F; ncores=detectCores(); type='Time'; test.pattern = 'overall'; test.position = 'all'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE) {
   set.seed(12345)
   library(splines)

@@ -268,7 +268,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
     return(list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all))
   }
   
-  table(apply(all,1,function(i) mean(diff(i) >= 0)))
+  # table(apply(all,1,function(i) mean(diff(i) >= 0)))
   
   if (ncores!=1) {
     allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
