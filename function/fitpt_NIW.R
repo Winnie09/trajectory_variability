@@ -1,3 +1,13 @@
+# expr <- expr
+# cellanno <- cellanno
+# pseudotime <- pseudotime
+# rm(list=setdiff(ls(), c('design', 'expr', 'cellanno', 'pseudotime')))
+# ori.design = design
+# test.pattern = 'overall'
+# test.position = 'all'
+# maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
+# test.pattern = 'overall'
+
 fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall', test.position = 'all',  maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=1, model = 3) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -59,9 +69,11 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   rm('sexpr')
   knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
   names(knotnum) <- row.names(expr)
- 
+ print(table(knotnum))
   
   sfit <- function(num.knot) {
+    print('knot')
+    print(num.knot)
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F] ## !!! double check, should be list len =S
     
@@ -136,6 +148,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       }
     }
    
+    #print(xs)
     # --------------
     # change here <<
     # --------------
@@ -260,6 +273,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       alpha[gidr] <- eta[gidr] * rowMeans(N)
       
       iter <- iter + 1
+      print(iter)
       llv <- all[,ncol(all)]
       llv[gidr] <- ll
       all <- cbind(all,llv)
