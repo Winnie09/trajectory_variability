@@ -12,6 +12,15 @@ pt <- readRDS(here('hca','simu','testtime','poolSampleSignal','data','null','pse
 saverlog <- saverlog[, pt[,1]]
 cnt <- cnt[, pt[,1]]
 
+### permute the sample-cell relationsihp 
+identical(colnames(saverlog), colnames(cnt))
+sn <- sub(':.*', '', colnames(cnt))
+cn <- sapply(1:ncol(cnt), function(i) sub(paste0(sn[i], ':'), '', colnames(cnt)[i]))
+# plot(saverlog[grep('XIST', rownames(cnt)),], col = as.factor(sn %in% c(paste0('BM', c(1,2,5,6)))))
+# plot(saverlog[grep('XIST', rownames(cnt)),], col = as.factor(sn))
+set.seed(12345)
+pt[,1] <- colnames(saverlog) <- colnames(cnt) <- paste0(sample(sn),':', cn)
+
 ### prepare count, imputed, selected genes
 savercnt <- 2^saverlog - 1
 rownames(savercnt) <- sapply(rownames(savercnt), function(i) sub('_','-',i))
@@ -53,6 +62,8 @@ tmp <- saverlog[othgene, ]
 xm <- bs(1:ncol(tmp))
 fstat <- t(sapply(rownames(tmp), function(i) { ## larger f, stronger signal
   summary(lm(tmp[i,pt1[,1]]~xm))$fstatistic
+  # summary(lm(tmp[i,pt1[,1]]~xm[pt1[,1] %in% colnames(tmp),]))$fstatistic
+  # summary(lm(tmp[i,pt1[,1]]~pt[which(pt1[,1] %in% pt[,1]),2]))$fstatistic
 }))
 
 tmp.fit <- get_spline_fit(trainData = tmp, trainX = seq(1, ncol(tmp)), fit.min = 1, fit.max = ncol(tmp), fit.num.points = 1000, num.base=10, remove.correlated=TRUE)
@@ -237,6 +248,4 @@ for (j in seq(1,4)) { # signal from 1 weakest to 4 strongest
     summary(lm(logmat[i,pt[pt[,1] %in% colnames(logmat),1]]~I(1:ncol(logmat))))$fstatistic[1]
   }))
 }
-
-
 
