@@ -1,3 +1,5 @@
+# permuiter=100; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=detectCores(); type='Variable'; test.pattern = 'overall'; test.position = 'all'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE
+
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE) {
   set.seed(12345)
   library(splines)
@@ -21,6 +23,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   } else {
     design = as.matrix(design)  
   }
+  
   fitfunc <- function(iter, diffType = 'both') {
     print(paste0('iter ', iter, '\n'))
     if (iter==1) {
@@ -111,8 +114,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     })
     fdr <- p.adjust(pval,method='fdr')
     names(pval) <- names(fdr) <- row.names(perll)
-    foldchange <- orill - rowMeans(perll)
-    res <- data.frame(meanDiff.fdr = fdr, meanDiff.fc = foldchange, meanDiff.pvalue = pval, stringsAsFactors = FALSE)
+    z.score <- orill - rowMeans(perll)
+    res <- data.frame(meanDiff.fdr = fdr, meanDiff.fc = z.score, meanDiff.pvalue = pval, stringsAsFactors = FALSE)
     
     ## trendDiff pvalues: Model 3 vs. model 2
     if (ncores == 1){
@@ -135,8 +138,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     })
     fdr <- p.adjust(pval,method='fdr')
     names(pval) <- names(fdr) <- row.names(perll)
-    foldchange <- orill - rowMeans(perll)
-    res <- cbind(res, trendDiff.fdr = fdr, trendDiff.fc = foldchange, trendDiff.pvalue = pval)
+    z.score <- orill - rowMeans(perll)
+    res <- cbind(res, trendDiff.fdr = fdr, trendDiff.fc = z.score, trendDiff.pvalue = pval)
   } 
     
 
@@ -144,7 +147,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   if (ncores == 1){
     fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'both'))
   } else {
-    fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'both')}, mc.cores = ncores)
+    fit2 <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'both')}, mc.cores = ncores)
   }
   permuiter <- sum(!sapply(fit,is.null)) -1
   fit <- fit[!sapply(fit,is.null)]
@@ -161,11 +164,11 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   })
   fdr <- p.adjust(pval,method='fdr')
   names(pval) <- names(fdr) <- row.names(perll)
-  foldchange <- orill - rowMeans(perll)
+  z.score <- orill - rowMeans(perll)/apply(perll,1,sd)
   if (type == 'Variable'){
-    res <- cbind(res, both.fdr = fdr, both.fc = foldchange, both.pvalue = pval)
+    res <- cbind(res, both.fdr = fdr, both.fc = z.score, both.pvalue = pval)
   } else if (type == 'Time'){
-    res <- data.frame(fdr = fdr, fc = foldchange, pvalue = pval, stringsAsFactors = FALSE)
+    res <- data.frame(fdr = fdr, fc = z.score, pvalue = pval, stringsAsFactors = FALSE)
   }
     
   pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
