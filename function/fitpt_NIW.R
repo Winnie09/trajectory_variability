@@ -43,7 +43,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   maxknot <- maxknot - 1
   
   #change 1
-  expr <- expr + matrix(rnorm(length(expr),0,sd=1e-2),nrow=nrow(expr))
+  #expr <- expr + matrix(rnorm(length(expr),0,sd=1e-2),nrow=nrow(expr))
   
   sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
   
@@ -285,7 +285,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
       Nlist[[iter]] <- N
       Jslist[[iter]] <- Jsolve
     }
-    # print(table(apply(all,1,function(i) mean(diff(i) >= 0))))  
+    print(table(apply(all,1,function(i) mean(diff(i) >= 0))))  
     return(list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all))
   }
   
@@ -307,8 +307,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, ori.design = design, test.
   }
   list(parameter=para,knotnum=knotnum)
 }
-
-
 
 
 
