@@ -180,7 +180,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     names(pval) <- names(fdr) <- row.names(perll)
     z.score <- (orill - rowMeans(perll))/apply(perll,1,sd)
     if (type == 'Variable' & !overall.only){
-      res <- cbind(res, both.fdr = fdr, both.fc = z.score, both.pvalue = pval)
+      res <- cbind(res, both.fdr = fdr, both.z = z.score, both.pvalue = pval)
     } else if (type == 'Time'){
       res <- data.frame(fdr = fdr, z = z.score, pvalue = pval, stringsAsFactors = FALSE)
     }
@@ -197,5 +197,6 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     } 
   }
 }
+
 
 
