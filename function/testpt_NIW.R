@@ -1,4 +1,4 @@
-# permuiter=100; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=detectCores(); type='Variable'; test.pattern = 'overall'; test.position = 'all'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T
+# permuiter=100; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=detectCores(); type='Variable'; test.pattern = 'overall'; test.position = 'all'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; test.method = 'EM'
 
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), type='Time', test.pattern = 'overall', test.position = 'all', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'EM') {
   set.seed(12345)
@@ -32,21 +32,18 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     paradiff <- sapply(res.overall$parameter,function(i) length(i$beta))-sapply(res1$parameter,function(i) length(i$beta))
     lldiff <- ll-ll2
     
-    pval <- pchisq(2*lldiff,df=paradiff,lower.tail = F)
-    fdr <- p.adjust(pval,method='fdr')
-    res <- data.frame(fdr = fdr, pvalue = pval, stringsAsFactors = FALSE)
+    # par(mfrow = c(1,2))
+    # hist(llr[1,])
+    # plot(dchisq(seq(0,40,length.out = 1000),df=paradiff[1])~seq(0,100,length.out = 1000))
+    
+    pval.chisq <- pchisq(2*lldiff,df=paradiff,lower.tail = F)
+    fdr.chisq <- p.adjust(pval.chisq, method='fdr')
+    res <- data.frame(fdr = fdr.chisq, pvalue = pval.chisq, stringsAsFactors = FALSE)
     return(list(statistics = res, ll.model3 = ll, ll.model1 = ll2))
   } else if (test.method == 'EM'){
     fitfunc <- function(iter, diffType = 'both') {
       print(paste0('iter ', iter, '\n'))
-      if (iter==1) {
-        if (diffType == 'both' | diffType == 'trendDiff') {
-          model = 3
-        } else if (diffType == 'meanDiff') {
-          model = 2
-        } 
-        fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = 'overall', test.position = test.position, model = model) 
-      } else {
+      
         if (type=='Time') {
           perpsn <- sapply(rownames(design), function(s){
             tmpid <- cellanno[cellanno[,2] == s, 1]  # subset cells
@@ -65,45 +62,68 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           percellanno <- cellanno[sampcell,,drop=F]
           perpsn <- perpsn[sampcell]
           colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
-          # << --- 20200926 
-          # fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position)
-          tryCatch(res <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position), warning = function(w){}, error = function(e) {})
-          if (exists('res')) {
-            return(res)
+          tryCatch(fitres.full <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = 'overall', test.position = test.position), warning = function(w){}, error = function(e) {})
+          tryCatch(fitres.null <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = test.pattern, test.position = test.position), warning = function(w){}, error = function(e) {})
+          if (exists('fitres.full') & exists('fitres.null')) {
+            return(list(fitres.full = fitres.full, fitres.null = fitres.null))
           } else {
             return(NULL)
           }
-          # --- 20200926 --->>
         } else if (type=='Variable'){
           print('testing Variable ...')
-          dn <- paste0(as.vector(design),collapse = '_')
-          perdn <- dn
-          while(perdn==dn) {
-            perid <- sample(1:nrow(design))
-            perdesign <- design[perid,,drop=F]
-            perdn <- paste0(as.vector(perdesign),collapse = '_')  
+          if (iter == 1){
+             fitres.full <- fitpt(expr, cellanno, pseudotime, design, ori.design = design, test.pattern = 'overall',  maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 3)
+    
+             fitres.null <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=F], ori.design = design[,1,drop=F], test.pattern = 'overall',  maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 3)
+             if (exists('fitres.full') & exists('fitres.null')) {
+                return(list(fitres.full = fitres.full, fitres.null = fitres.null))
+              } else {
+                return(NULL)
+              }
+          } else {
+            dn <- paste0(as.vector(design),collapse = '_')
+            perdn <- dn
+            while(perdn==dn) {
+              perid <- sample(1:nrow(design))
+              perdesign <- design[perid,,drop=F]
+              perdn <- paste0(as.vector(perdesign),collapse = '_')  
+            }
+            row.names(perdesign) <- row.names(design)
+            sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
+            perexpr <- expr[,sampcell,drop=F]
+            percellanno <- cellanno[sampcell,,drop=F]
+            psn <- pseudotime[colnames(expr)]
+            psn <- psn[sampcell]
+            colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
+            
+            if (diffType == 'both' | diffType == 'trendDiff') {
+              model = 3
+            } else if (diffType == 'meanDiff') {
+              model = 2
+            } 
+           
+            if (diffType == 'both'){
+              test.pattern = 'overall'
+              model = 3
+            } else if (diffType == 'meanDiff'){
+              test.pattern = 'intercept'
+              model = 2
+            } else if (diffType == 'trendDiff'){
+              test.pattern = 'slope'
+              model = 3
+            }
+             fitres.full <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, test.pattern = 'overall', test.position = test.position, model = model) 
+            fitres.null <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign[,1,drop=F], ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = model)  
+            if (exists('fitres.full') & exists('fitres.null')) {
+              return(list(fitres.full = fitres.full, fitres.null = fitres.null))
+            } else {
+              return(NULL)
+            }
           }
-          row.names(perdesign) <- row.names(design)
-          sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
-          perexpr <- expr[,sampcell,drop=F]
-          percellanno <- cellanno[sampcell,,drop=F]
-          psn <- pseudotime[colnames(expr)]
-          psn <- psn[sampcell]
-          colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
-          if (diffType == 'both'){
-            test.pattern = 'overall'
-            model = 3
-          } else if (diffType == 'meanDiff'){
-            test.pattern = 'intercept'
-            model = 2
-          } else if (diffType == 'trendDiff'){
-            test.pattern = 'slope'
-            model = 3
-          }
-          fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=perdesign, ori.design = design, test.pattern = test.pattern, test.position = test.position, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = model)  
+            
         }
       }
-    }
+    
     print('fitting model ...')
     if (type == 'Variable' & !overall.only){
       ## meanDiff pvalues: Model 2 vs. model 1
@@ -155,7 +175,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res <- cbind(res, trendDiff.fdr = fdr, trendDiff.z = z.score, trendDiff.pvalue = pval)
     }
     
-    ## overall (both) pvalues: Model 3 vs. model 2
+    ## overall (both) pvalues: Model 3 vs. model 1
     if (ncores == 1){
       fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'both'))
     } else {
@@ -163,38 +183,40 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     }
     permuiter <- sum(!sapply(fit,is.null)) -1
     fit <- fit[!sapply(fit,is.null)]
-    orifit <- fit[[1]]
-    knotnum <- orifit$knotnum
-    orill <- sapply(orifit$parameter,function(i) unname(i$ll),USE.NAMES = F)[row.names(expr)]
-    print('performing permutation test ...')
-    perll <- sapply(2:(permuiter+1),function(i) sapply(fit[[i]]$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
-    
-    print('calculationg p-values ...')
-    pval <- sapply(1:nrow(perll), function(i) {
-      z <- perll[i,]
+    knotnum <- fit[[1]]$fitres.full$knotnum
+    ## change here -------->
+    ll.m3 <- sapply(1:(permuiter+1),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+    ll.m1 <- sapply(1:(permuiter+1),function(i) sapply(fit[[i]]$fitres.null$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
+    llr <- ll.m3 - ll.m1
+    pval <- sapply(1:nrow(llr), function(i) {
+      z <- llr[i,2:ncol(llr)]
       den <- density(z)$bw
-      mean(pnorm(orill[i], z, sd=den,lower.tail = F))
+      mean(pnorm(llr[i,1], z, sd=den,lower.tail = F))
     })
-  
     fdr <- p.adjust(pval,method='fdr')
     names(pval) <- names(fdr) <- row.names(perll)
-    z.score <- (orill - rowMeans(perll))/apply(perll,1,sd)
-    if (type == 'Variable' & !overall.only){
-      res <- cbind(res, both.fdr = fdr, both.z = z.score, both.pvalue = pval)
-    } else if (type == 'Time'){
-      res <- data.frame(fdr = fdr, z = z.score, pvalue = pval, stringsAsFactors = FALSE)
-    }
-      
-    pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
-    if (return.all.data){
-      if (demean){
-        return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
-      } else {
-        return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr))
-      } 
-    } else {
-      return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
-    } 
+    z.score <- (llr[,1] - rowMeans(llr[,2:(permuiter+1)]))/apply(llr[,2:(permuiter+1)],1,sd)
+    res.overall <- data.frame(fdr = fdr, z = z.score, pvalue = pval, stringsAsFactors = FALSE)
+    parameter <- fit[[1]]$fitres.full$parameter
+    return(list(statistics = res.overall, parameter=parameter, llr=llr, knotnum = knotnum))
+
+    # if (type == 'Variable' & !overall.only){
+    #   res <- cbind(res, both.fdr = fdr, both.z = z.score, both.pvalue = pval)
+    # } else if (type == 'Time'){
+    #   res <- data.frame(fdr = fdr, z = z.score, pvalue = pval, stringsAsFactors = FALSE)
+    # }
+    
+  
+    # pred <- predict_fitting(expr = expr,knotnum = knotnum, design = design, cellanno = cellanno, pseudotime = pseudotime[colnames(expr)])
+    # if (return.all.data){
+    #   if (demean){
+    #     return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori))
+    #   } else {
+    #     return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum,  pseudotime = pseudotime[colnames(expr)], predict.values = pred[,colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr))
+    #   } 
+    # } else {
+      # return(list(statistics = res, parameter=orifit$parameter, orill=orill, perll = perll, knotnum = knotnum, predict.values = pred[,colnames(expr)]))
+    # } 
   }
 }
 
