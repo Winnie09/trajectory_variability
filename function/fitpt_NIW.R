@@ -266,7 +266,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
                         ll=allres[[i]][[5]][j,ncol(allres[[i]][[5]])])
     }
   }
-  list(parameter=para,knotnum=knotnum)
+  list(parameter=para[rownames(expr)],knotnum=knotnum[rownames(expr)])
 }
 
 
