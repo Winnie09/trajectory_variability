@@ -131,7 +131,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     }
     
     print('fitting model ...')
-    ## overall (overall) pvalues: Model 3 vs. model 1
+    print('overall (overall) pvalues: Model 3 vs. model 1 ...')
     if (ncores == 1){
       fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall'))
     } else {
@@ -154,7 +154,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     res.overall <- data.frame(fdr.overall = fdr.overall, z.overall = z.score, pvalue.overall = pval.overall, stringsAsFactors = FALSE)
     
     if (test.type == 'Variable' & !overall.only){
-      ## meanDiff pvalues: Model 2 vs. model 1
+      print('meanDiff pvalues: Model 2 vs. model 1...')
       if (ncores == 1){
         fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05]))
       } else {
@@ -164,6 +164,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
       ll.null <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.null$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
       llr <- ll.full - ll.null
+      llr <- llr[complete.cases(llr), ]
       if (sum(fdr.overall<0.05) == 1){
         z <- llr[2:length(llr)]
         den <- density(z)$bw
@@ -177,12 +178,12 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           mean(pnorm(llr[i,1], z, sd=den,lower.tail = F))
         })
         fdr <- p.adjust(pval,method='fdr')
-        names(pval) <- names(fdr) <- row.names(perll)
+        names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
       res.meanDiff <- data.frame(fdr.meanDiff = fdr, z.meanDiff = z.score, pvalue.meanDiff = pval, stringsAsFactors = FALSE)
       
-      ## trendDiff pvalues: Model 3 vs. model 2
+      print('trendDiff pvalues: Model 3 vs. model 2...')
       if (ncores == 1){
         fit <- lapply(1:(permuiter+1), function(i) fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05]))
       } else {
@@ -192,6 +193,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
       ll.null <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.null$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
       llr <- ll.full - ll.null
+      llr <- llr[complete.cases(llr), ]
       if (sum(fdr.overall<0.05) == 1){
         z <- llr[2:length(llr)]
         den <- density(z)$bw
@@ -205,7 +207,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           mean(pnorm(llr[i,1], z, sd=den,lower.tail = F))
         })
         fdr <- p.adjust(pval,method='fdr')
-        names(pval) <- names(fdr) <- row.names(perll)
+        names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
       res.trendDiff <- data.frame(fdr.trendDiff = fdr, z.trendDiff = z.score, pvalue.trendDiff = pval, stringsAsFactors = FALSE)
