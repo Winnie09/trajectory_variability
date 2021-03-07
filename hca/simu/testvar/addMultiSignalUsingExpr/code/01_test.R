@@ -13,7 +13,7 @@ suppressMessages(library(splines))
 suppressMessages(library(limma))
 suppressMessages(library(RColorBrewer))
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
-pseudotime <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/data/null/pseudotime_pm.rds')
+pseudotime <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/data/null/pseudotime_pm_df.rds')
 dir.create(paste0(rdir, method), showWarnings = FALSE, recursive = TRUE)
 
 ### two group along pseudotime
@@ -64,7 +64,9 @@ if (method == 'EM_NOT_centered'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=10, type = 'Variable', demean = FALSE)
+  system.time({
+    testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, ncores=48, test.type = 'Variable', demean = FALSE, overall.only = F, test.method = 'EM')
+  })
   saveRDS(testres, fn)  
 }
 
@@ -122,9 +124,6 @@ warnings()
 # pseudotime: numeric vector (1,2,3,4....) with names same as colnames(expr)
 # branch: 0,1 vector indicating whether each cell is from group 1 or 2, can get from as.numeric(sub(':.*','',colnames(expr)) %in% paste0('BM',c(1,2,5,6)))
 # cell_coords: the pca you sent me, only use the first 4 (if correct) dimensions
-
-
-
 
 
 
