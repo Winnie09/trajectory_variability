@@ -30,12 +30,13 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       pval.chisq.constantTest <- pchisq(2*(ll1-ll0),df=paradiff10,lower.tail = F)
       fdr.chisq.constantTest <- p.adjust(pval.chisq.constantTest, method='fdr')
       res <- data.frame(fdr.chisq.constantTest = fdr.chisq.constantTest, pval.chisq.constantTest = pval.chisq.constantTest, stringsAsFactors = FALSE)
-      return(list(statistics = res, ll0 = ll0, ll1 = ll1))  ## function return
+      return(list(statistics = res, ll0 = ll0, ll1 = ll1, parameter = res1$parameter))  ## function return
     } else if (test.type == 'Variable'){
       res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 2, knotnum = res1[[2]])## save 13%
       ll2 <- sapply(res2$parameter,function(i) i$ll)
       res3 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 3, knotnum = res1[[2]])
       ll3 <- sapply(res3$parameter,function(i) i$ll)
+      
       paradiff31 <- sapply(res3$parameter,function(i) length(i$beta))-sapply(res1$parameter,function(i) length(i$beta))
       paradiff32 <- sapply(res3$parameter,function(i) length(i$beta))-sapply(res2$parameter,function(i) length(i$beta))
       paradiff21 <- sapply(res2$parameter,function(i) length(i$beta))-sapply(res1$parameter,function(i) length(i$beta))
@@ -49,7 +50,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
                         fdr.chisq.trendDiff = fdr.chisq.trendDiff, pval.chisq.trendDiff = pval.chisq.trendDiff, 
                         fdr.chisq.meanDiff = fdr.chisq.meanDiff, pval.chisq.meanDiff = pval.chisq.meanDiff,
                         stringsAsFactors = FALSE)
-      return(list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3))  ## function return
+      return(list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3, parameter = res3$parameter))  ## function return
     }
       
   } else if (test.method == 'EM'){
