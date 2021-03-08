@@ -1,4 +1,4 @@
-fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr)) {
+fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type = 'Time') {
       ## this function serves the function testpt().
       ## return(list(fitres.full = fitres.full, fitres.null = fitres.null))
       expr <- expr[gene, ,drop=FALSE]
@@ -25,8 +25,8 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr)) {
             percellanno <- cellanno[sampcell,,drop=F]
             perpsn <- perpsn[sampcell]
             colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
-            tryCatch(fitres.full <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = 1), warning = function(w){}, error = function(e) {})
-            tryCatch(fitres.null <- fitpt.m0(expr=perexpr, cellanno=percellanno, pseudotime=psn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1), warning = function(w){}, error = function(e) {})
+            tryCatch(fitres.full <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = 1), warning = function(w){}, error = function(e) {})
+            tryCatch(fitres.null <- fitpt.m0(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1), warning = function(w){}, error = function(e) {})
             if (exists('fitres.full') & exists('fitres.null')) {
               return(list(fitres.full = fitres.full, fitres.null = fitres.null))
             } else {
