@@ -3,7 +3,7 @@
 # test.position = 'all'
 # maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
 # test.pattern = 'overall'
-fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=1, model = 3) {
+fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=1, model = 3, knotnum = NULL) {
   # set.seed(12345)
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -13,7 +13,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   ## pseudotime: a numeric vecotor of pseudotime, the names are ordered cell names
   ## design: design: sample by feature design matrix. rownames are sample names. first column is 1, second column is the group partition, currently only one variable.
   ## cellanno: dataframe, first column is cell names, second column is sample names.
-  ## test.pattern: c('slope', 'intercept', 'overall).
   pseudotime <- pseudotime[colnames(expr)]
   cellanno <- cellanno[match(colnames(expr),cellanno[,1]),]
   sname <- sapply(row.names(design),function(i) cellanno[cellanno[,2]==i,1],simplify = F)
@@ -39,48 +38,49 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       is.positive.definite(crossprod(phi[sname[[ss]],,drop=F]))
     })) == 1
   }
-  
   maxknot <- maxknot - 1
-  
   sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
   
-  bicfunc <- function(num.knot) {
-    phi <- philist[[as.character(num.knot)]]
-    ll <- sapply(names(sname), function(ss) {
-      phiss <- phi[sname[[ss]],,drop=F]
-      dif2 <- sexpr[[ss]] - sexpr[[ss]] %*% (phiss %*% chol2inv(chol(crossprod(phiss)))) %*% t(phiss)
-      dif2 <- rowSums(dif2 * dif2)
-      s2 <- dif2/(length(sname[[ss]])-ncol(phi))
-      log(2*pi*s2)*nrow(phiss) + dif2/s2
-    })
-    if (is.vector(ll)){
-      sum(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*sum(!is.na(ll)))
+  ## automatically select knotnum for each gene
+  if (is.null(knotnum)){
+    bicfunc <- function(num.knot) {
+      phi <- philist[[as.character(num.knot)]]
+      ll <- sapply(names(sname), function(ss) {
+        phiss <- phi[sname[[ss]],,drop=F]
+        dif2 <- sexpr[[ss]] - sexpr[[ss]] %*% (phiss %*% chol2inv(chol(crossprod(phiss)))) %*% t(phiss)
+        dif2 <- rowSums(dif2 * dif2)
+        s2 <- dif2/(length(sname[[ss]])-ncol(phi))
+        log(2*pi*s2)*nrow(phiss) + dif2/s2
+      })
+      if (is.vector(ll)){
+        sum(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*sum(!is.na(ll)))
+      } else {
+        rowSums(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*rowSums(!is.na(ll)))
+      }    
+    }
+    
+    if (ncores!=1) {
+      bic <- mclapply(0:maxknot,bicfunc,mc.cores=ncores)
+      bic <- do.call(cbind,bic)
     } else {
-      rowSums(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*rowSums(!is.na(ll)))
+      bic <- sapply(0:maxknot,bicfunc)
+    }
+    
+    rm('sexpr')
+    if (is.vector(bic)){
+      knotnum <- c(0:maxknot)[which.min(bic)]
+    } else {
+      knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
     }
       
-  }
-  
-  if (ncores!=1) {
-    bic <- mclapply(0:maxknot,bicfunc,mc.cores=ncores)
-    bic <- do.call(cbind,bic)
+    names(knotnum) <- rownames(expr)
   } else {
-    bic <- sapply(0:maxknot,bicfunc)
+    knotnum <- knotnum[rownames(expr)]
   }
-  
-  rm('sexpr')
-  if (is.vector(bic)){
-    knotnum <- c(0:maxknot)[which.min(bic)]
-  } else {
-    knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
-  }
-    
-  names(knotnum) <- row.names(expr)
   
   sfit <- function(num.knot) {
     gid <- names(which(knotnum==num.knot))
     sexpr <- expr[gid,,drop=F] ## !!! double check, should be list len =S
-    
     phi <- philist[[as.character(num.knot)]]
     phicrossprod <- apply(phi,1,tcrossprod)
     phicrossprod <- sapply(names(sname),function(ss) phicrossprod[,sname[[ss]]],simplify = F)
@@ -108,9 +108,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       }, simplify = F)
     }
     
-    # --------------
-    # change here <<
-    # --------------
     as <- names(phi)
     nb <- ncol(phi[[1]])
     cn <- sapply(as,function(s) nrow(phi[[s]]))
@@ -147,7 +144,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       indfit[[s]] - B %*% xs[[s]]
     },simplify = F)
     
-    
     if (model==0) {
       omega <- matrix(sapply(rownames(sexpr),function(g) {
         m <- sapply(diffindfit,function(i) i[g,,drop=F])
@@ -160,7 +156,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
         tcrossprod(m)/(ncol(m)-1) + diag(nrow(m)) * 0.01
       }))
     }
-    
     
     iter <- 0
     gidr <- rownames(sexpr)
@@ -206,7 +201,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
         t(rowsum(t(t(sapply(Jsolve[[s]],as.vector))*t(K[[s]])[,rep(1:nb,nb),drop=FALSE]),rep(1:nb,each=nb)))
       },simplify = F)
       
-      ## -------------->
       B1 <- Reduce('+', lapply(as, function(s){
         tcrossprod(N[,s],as.vector(phiXTphiX[[s]]))
       }))
@@ -221,7 +215,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       }))
       
       ## M -step: 
-      #change 2
       omega[gidr,] <- Reduce('+',sapply(as,function(s) {
         t(sapply(Jsolve[[s]],as.vector)) + N[,s]*JK[[s]][,rep(1:nb,nb)] * JK[[s]][,rep(1:nb,each=nb)]
       },simplify=F))/length(as)
