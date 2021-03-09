@@ -17,7 +17,7 @@ pseudotime <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variabil
 dir.create(paste0(rdir, method), showWarnings = FALSE, recursive = TRUE)
 
 ### two group along pseudotime
-if (method == 'chisq'){
+if (method == 'EM_chisq'){
   print(method)
   ### prepare data
   expr <- readRDS(paste0(ddir, 'saver/', signal, '.rds'))
@@ -30,7 +30,7 @@ if (method == 'chisq'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=10, type = 'Variable', demean = FALSE, test.method = 'chisq')
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=10, test.type = 'Variable', demean = FALSE, overall.only = F, test.method = 'chisq')
   saveRDS(testres, fn)  
 }
 
@@ -47,11 +47,11 @@ if (method == 'EM_centered'){
   pt <- pseudotime[, 2]
   names(pt) <- pseudotime[, 1]
   ### run test
-  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=6, type = 'Variable', demean = TRUE)
+  testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design,ncores=6, test.type = 'Variable', demean = TRUE)
   saveRDS(testres, fn)  
 }
 
-if (method == 'EM_NOT_centered'){
+if (method == 'EM_pm'){
   print(method)
   ### prepare data
   expr <- readRDS(paste0(ddir, 'saver/', signal, '.rds'))
@@ -65,7 +65,7 @@ if (method == 'EM_NOT_centered'){
   names(pt) <- pseudotime[, 1]
   ### run test
   system.time({
-    testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, ncores=48, test.type = 'Variable', demean = FALSE, overall.only = F, test.method = 'EM')
+    testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, ncores=48, test.type = 'Variable', demean = FALSE, overall.only = F, test.method = 'permutation')
   })
   saveRDS(testres, fn)  
 }
@@ -124,6 +124,7 @@ warnings()
 # pseudotime: numeric vector (1,2,3,4....) with names same as colnames(expr)
 # branch: 0,1 vector indicating whether each cell is from group 1 or 2, can get from as.numeric(sub(':.*','',colnames(expr)) %in% paste0('BM',c(1,2,5,6)))
 # cell_coords: the pca you sent me, only use the first 4 (if correct) dimensions
+
 
 
 
