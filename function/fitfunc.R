@@ -1,12 +1,13 @@
-fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type = 'Time') {
+fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type = 'Time',EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=1) {
       ## this function serves the function testpt().
       ## return(list(fitres.full = fitres.full, fitres.null = fitres.null))
+      ## ncores = 1 or otherwise meaningless since the upper function is running in parallel
       expr <- expr[gene, ,drop=FALSE]
       print(paste0('iter ', iter, '\n'))
         if (test.type=='Time') {
           if (iter == 1){
-            fitres.full <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model=1)
-            fitres.null <- fitpt.m0(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1)
+            fitres.full <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model=1)
+            fitres.null <- fitpt.m0(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores)
             return(list(fitres.full = fitres.full, fitres.null = fitres.null))
           } else {
             perpsn <- sapply(rownames(design), function(s){
