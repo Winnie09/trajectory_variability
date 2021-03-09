@@ -14,7 +14,7 @@ str(rmgene)
 source('function/01_function.R')
 
 perflist <- list()
-m = 'EM_NOT_centered'
+m = 'EM_pm'
 af = list.files(paste0(ddir, m, '/'))
 df1.nc <- sapply(af, function(f){
   print(f)
@@ -28,7 +28,7 @@ df1.nc <- sapply(af, function(f){
 perflist[['EM_pm']] = t(df1.nc)
 
 
-m = 'chisq'
+m = 'EM_chisq'
 af = list.files(paste0(ddir, m, '/'))
 df1 <- sapply(af, function(f){
   print(f)
