@@ -76,7 +76,7 @@ if (method == 'EM_pm'){
   design = matrix(rep(1,8), nrow=8)
   dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept'))
   cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
-  res <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design = design, test.type = 'Time',ncores = 48, permuiter=1000, test.method = 'permutation')
+  res <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design = design, test.type = 'Time',ncores = 48, permuiter=100, test.method = 'permutation')
 }
 
 
