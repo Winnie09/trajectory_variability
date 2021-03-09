@@ -13,11 +13,23 @@ af = list.files(paste0(ddir, m, '/'))
 df1.nc <- sapply(af, function(f){
   print(f)
   r = readRDS(paste0(ddir, m, '/', f))
-  res = data.frame(adj.P.Val = r[['fdr']], foldchange = r[['foldchange']], stringsAsFactors = F)
-  res = res[order(res[,1], -res[,2]), ]
-  c(sub('.rds','',f), 'EM_NOT_centered', AreaUnderSensFdr(SensFdr(selgene, res)))
+  res = data.frame(adj.P.Val = r$statistics[,1], zscore = r$statistics[,2], stringsAsFactors = F)
+  res = res[order(res[,1], res[,2]), ]
+  c(sub('.rds','',f), 'EM_pm', AreaUnderSensFdr(SensFdr(selgene, res)))
 })
-perflist[['EM_not_centered']] = t(df1.nc)
+perflist[['EM_pm']] = t(df1.nc)
+
+m = 'chisq'
+af = list.files(paste0(ddir, m, '/'))
+df1 <- sapply(af, function(f){
+  print(f)
+  r = readRDS(paste0(ddir, m, '/', f))
+  res = r$statistics
+  colnames(res)[1:2] <- c('fdr', 'pval')
+  res = res[order(res[,1], res[,2]), ]
+  c(sub('.rds','',f), 'EM_chisq', AreaUnderSensFdr(SensFdr(selgene, res)))
+})
+perflist[['EM_chisq']] = t(df1)
 
 m = 'meandiff'
 af = list.files(paste0(ddir, m, '/'))
@@ -25,9 +37,9 @@ df2 <- sapply(af, function(f){
   print(f)
   res = readRDS(paste0(ddir, m, '/', f))
   res = res[order(res[,5], -abs(res[,1])), ]
-  c(sub('.rds','',f), 'meandiff', AreaUnderSensFdr(SensFdr(selgene, res)))
+  c(sub('.rds','',f), 'limma', AreaUnderSensFdr(SensFdr(selgene, res)))
 })
-perflist[['meandiff']] = t(df2)
+perflist[['limma']] = t(df2)
 
 m = 'tscan'
 af = list.files(paste0(ddir, m, '/'))
@@ -43,10 +55,10 @@ saveRDS(perflist, paste0(rdir,'perflist.rds'))
 perf <- do.call(rbind, perflist)
 colnames(perf) <- c('SignalStrength', 'Method', 'Fdr.Diff', 'AUC')
 perf <- as.data.frame(perf)
+perf[,1] <- as.numeric(as.character(perf[,1]))
+perf[,3] <- as.numeric(as.character(perf[,3]))
+perf[,4] <- as.numeric(as.character(perf[,4]))
 saveRDS(perf, paste0(rdir,'perf.rds'))
 rm(list=ls())
-
-
-
 
 
