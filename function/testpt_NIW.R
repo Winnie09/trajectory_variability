@@ -1,5 +1,5 @@
 # permuiter=100; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=detectCores(); test.type='Time'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; test.method = 'EM'
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'EM') {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation') {
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
   set.seed(12345)
@@ -53,7 +53,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       return(list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3, parameter = res3$parameter))  ## function return
     }
       
-  } else if (test.method == 'EM'){
+  } else if (test.method == 'permutation'){
     print('fitting model: overall: CovariateTest (Model 3 vs.1) or ConstantTest (Model 1) ...')
     if (ncores == 1){
       fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type))} else {
@@ -145,8 +145,6 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
                 parameter=parameter, 
                 llr.overall = llr.overall,
                 knotnum = knotnum))
-    
-    
     
   }
 }
