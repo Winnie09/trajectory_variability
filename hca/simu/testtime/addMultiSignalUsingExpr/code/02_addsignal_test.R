@@ -15,14 +15,14 @@ library(here)
 here()
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/myfunc/01_function.R')
 source(here('function/01_function.R'))
-ddir <- here('hca/data/simu/testtime/addMultiSignalUsingExpr/')
-rdir <- here('hca/simu/testtime/result/addsignal/')
+ddir <- here('hca/simu/testtime/addMultiSignalUsingExpr/data/')
+rdir <- here('hca/simu/testtime/addMultiSignalUsingExpr/result/addsignal/')
 dir.create(paste0(rdir,method), recursive = T, showWarnings = F)
 
 # ------------
 # prepare data
 # ------------
-pt <- readRDS(here('hca/data/simu/testtime/poolSampleSignal/null/pseudotime.rds'))
+pt <- readRDS(here('hca/simu/testtime/poolSampleSignal/data/null/pseudotime.rds'))
 pseudotime <- pt[,2]
 names(pseudotime) <- pt[,1]
 
@@ -68,25 +68,26 @@ if (grepl('tradeSeq', method)){
   
 }
 
-if (method == 'EM_centered'){
+
+if (method == 'EM_pm'){
   expr <- readRDS(paste0(ddir, 'saver/', dataType, '.rds'))
   expr <- log2(expr + 1)
   expr <- expr[rowMeans(expr > 0.1) > 0.1, ]
   design = matrix(rep(1,8), nrow=8)
   dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept'))
   cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
-  res <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=10, permuiter=100, type = 'Time', demean = TRUE, return.all.data = TRUE)
+  res <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design = design, test.type = 'Time',ncores = 48, permuiter=1000, test.method = 'permutation')
 }
 
 
-if (method == 'EM_NOT_centered'){
+if (method == 'EM_chisq'){
   expr <- readRDS(paste0(ddir, 'saver/', dataType, '.rds'))
   expr <- log2(expr + 1)
   expr <- expr[rowMeans(expr > 0.1) > 0.1, ]
   design = matrix(rep(1,8), nrow=8)
   dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept'))
   cellanno = data.frame(cell=colnames(expr), sample = sub(':.*','', colnames(expr)), stringsAsFactors = FALSE)
-  res <- testpt(expr=expr,cellanno=cellanno,pseudotime=pseudotime,design=design,ncores=10, permuiter=100, type = 'Time', demean = FALSE, return.all.data = TRUE)
+  res <- testpt(expr = expr, cellanno = cellanno, pseudotime = pseudotime, design = design, test.type = 'Time',ncores = 48, permuiter=1000, test.method = 'chisq')
 }
 
 
@@ -111,7 +112,6 @@ if (method == 'monocle3'){
 }
 
 saveRDS(res, paste0(rdir, method,'/', dataType,'.rds'))  
-
 
 
 
