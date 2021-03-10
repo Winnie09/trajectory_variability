@@ -15,10 +15,11 @@ expr <- expr[rowMeans(expr>0.1)>0.01, ]
 expr <- expr[, cellanno[,1]]
 
 source('function/01_function.R')
-rdir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/'
+rdir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/HD_Mi/'
+dir.create(rdir, recursive = T, showWarnings = F)
 system.time({
-  res <- testpt.seed(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Variable', ncores = 4, demean = FALSE)
+  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, test.type='Variable', ncores = 10, demean = FALSE, test.method = 'chisq')
 })
-saveRDS(res, paste0(rdir, 'numeric_HD_Mi_res.rds'))
+saveRDS(res, paste0(rdir, 'numeric_res.rds'))
 
 
