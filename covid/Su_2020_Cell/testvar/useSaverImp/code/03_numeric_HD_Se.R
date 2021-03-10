@@ -1,3 +1,6 @@
+m <- as.character(commandArgs(trailingOnly = T)[[1]])
+print(m)
+
 library(here)
 setwd(here())
 expr <- readRDS('covid/Su_2020_Cell/data/saver_log2norm_sub.rds')
@@ -17,9 +20,11 @@ expr <- expr[rowMeans(expr>0.1)>0.01, ]
 expr <- expr[, cellanno[,1]]
 
 source('function/01_function.R')
-rdir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/'
+rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', m, '/HD_Se/')
+dir.create(rdir, recursive = T, showWarnings = F)
 system.time({
-  res <- testpt.seed(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, type='Variable', ncores = 4, demean = FALSE)
+  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, test.type='Variable', ncores = 48, demean = FALSE, test.method = ifelse(m == 'EM_pm', 'permutation', 'chisq'))
 })
 saveRDS(res, paste0(rdir, 'numeric_HD_Se_res.rds'))
+
 
