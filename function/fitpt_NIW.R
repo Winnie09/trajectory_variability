@@ -222,7 +222,8 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       eta[gidr] <- sapply(gidr,function(g) {
         meanN <- mean(N[g,])
         meanA <- mean(A[g,])
-        uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
+        # uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
+        optim(eta[g],fn = function(eta) {(digamma(eta * meanN)-log(eta)+meanA)^2},gr = function(eta) {2*(digamma(eta * meanN)-log(eta)+meanA)*(trigamma(eta*meanN)*meanN-1/eta)},lower = 1e-10,method = 'L-BFGS-B')$par
       })
       alpha[gidr] <- eta[gidr] * rowMeans(N)
       
