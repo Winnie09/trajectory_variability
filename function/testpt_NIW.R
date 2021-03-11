@@ -1,7 +1,10 @@
 # permuiter=100; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=detectCores(); test.type='Time'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; test.method = 'EM'
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation') {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1) {
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
+  ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
+  
+  if (test.method == 'permutation') ncores.fit = 1
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
@@ -21,7 +24,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   design = as.matrix(design)
   
   if (test.method == 'chisq'){
-    res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 1)##save 13%
+    res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=ncores.fit, model = 1)##save 13%
     ll1 <- sapply(res1$parameter,function(i) i$ll)
     if (test.type == 'Time'){
       res0 <- fitpt.m0(expr, cellanno, pseudotime, design[,1,drop=FALSE]) ##  
@@ -29,16 +32,16 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       paradiff10 <- sapply(res1[[1]], function(i) length(unlist(i[1:4]))) - sapply(res0[[1]], function(i) length(unlist(i[1:4])))
       pval.chisq.constantTest <- pchisq(2*(ll1-ll0),df=paradiff10,lower.tail = F)
       fdr.chisq.constantTest <- p.adjust(pval.chisq.constantTest, method='fdr')
-      res <- data.frame(fdr.chisq.constantTest = fdr.chisq.constantTest, 
-                        pval.chisq.constantTest = pval.chisq.constantTest, 
+      res <- data.frame(fdr.chisq.overall = fdr.chisq.constantTest, 
+                        pval.chisq.overall = pval.chisq.constantTest, 
                         llr = ll1-ll0,
                         df.diff= paradiff10,
                         stringsAsFactors = FALSE)
       reslist = list(statistics = res,  parameter = res1$parameter, knotnum = res1$knotnum)  ## function return
     } else if (test.type == 'Variable'){
-      res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 2, knotnum = res1[[2]])## save 13%
+      res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=ncores.fit, model = 2, knotnum = res1[[2]])## save 13%
       ll2 <- sapply(res2$parameter,function(i) i$ll)
-      res3 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 3, knotnum = res1[[2]])
+      res3 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=ncores.fit, model = 3, knotnum = res1[[2]])
       ll3 <- sapply(res3$parameter,function(i) i$ll)
       
       paradiff31 <- sapply(res3$parameter,function(i) length(i$beta))-sapply(res1$parameter,function(i) length(i$beta))
