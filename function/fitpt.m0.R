@@ -3,7 +3,7 @@
 # test.position = 'all'
 # maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
 # test.pattern = 'overall'
-fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=1) {
+fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=1000, EMitercutoff=0.01, verbose=F) {
   # set.seed(12345)
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
