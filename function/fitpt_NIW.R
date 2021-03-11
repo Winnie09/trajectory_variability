@@ -4,7 +4,7 @@
 # maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
 # test.pattern = 'overall'
 fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.01, verbose=F, ncores=1, model = 3, knotnum = NULL) {
-  # set.seed(12345)
+  set.seed(12345)
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
