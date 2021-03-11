@@ -29,8 +29,12 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       paradiff10 <- sapply(res1[[1]], function(i) length(unlist(i[1:4]))) - sapply(res0[[1]], function(i) length(unlist(i[1:4])))
       pval.chisq.constantTest <- pchisq(2*(ll1-ll0),df=paradiff10,lower.tail = F)
       fdr.chisq.constantTest <- p.adjust(pval.chisq.constantTest, method='fdr')
-      res <- data.frame(fdr.chisq.constantTest = fdr.chisq.constantTest, pval.chisq.constantTest = pval.chisq.constantTest, stringsAsFactors = FALSE)
-      return(list(statistics = res, ll0 = ll0, ll1 = ll1, parameter = res1$parameter))  ## function return
+      res <- data.frame(fdr.chisq.constantTest = fdr.chisq.constantTest, 
+                        pval.chisq.constantTest = pval.chisq.constantTest, 
+                        llr = ll1-ll0,
+                        df.diff= paradiff10,
+                        stringsAsFactors = FALSE)
+      reslist = list(statistics = res,  parameter = res1$parameter, knotnum = res1$knotnum)  ## function return
     } else if (test.type == 'Variable'){
       res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=1, model = 2, knotnum = res1[[2]])## save 13%
       ll2 <- sapply(res2$parameter,function(i) i$ll)
@@ -46,11 +50,14 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       fdr.chisq.trendDiff <- p.adjust(pval.chisq.trendDiff, method='fdr')
       pval.chisq.meanDiff <- pchisq(2*(ll2-ll1),df=paradiff21,lower.tail = F)
       fdr.chisq.meanDiff <- p.adjust(pval.chisq.meanDiff, method='fdr')
-      res <- data.frame(fdr.chisq.overall = fdr.chisq.overall, pval.chisq.overall = pval.chisq.overall,
-                        fdr.chisq.trendDiff = fdr.chisq.trendDiff, pval.chisq.trendDiff = pval.chisq.trendDiff, 
-                        fdr.chisq.meanDiff = fdr.chisq.meanDiff, pval.chisq.meanDiff = pval.chisq.meanDiff,
+      res <- data.frame(fdr.chisq.overall = fdr.chisq.overall, 
+                        pval.chisq.overall = pval.chisq.overall,
+                        fdr.chisq.trendDiff = fdr.chisq.trendDiff, 
+                        pval.chisq.trendDiff = pval.chisq.trendDiff, 
+                        fdr.chisq.meanDiff = fdr.chisq.meanDiff, 
+                        pval.chisq.meanDiff = pval.chisq.meanDiff,
                         stringsAsFactors = FALSE)
-      return(list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3, parameter = res3$parameter))  ## function return
+      reslist = list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3, parameter = res3$parameter, knotnum = res3$knotnum)  ## function return
     }
       
   } else if (test.method == 'permutation'){
@@ -73,7 +80,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     fdr.overall <- p.adjust(pval.overall,method='fdr')
     names(pval.overall) <- names(fdr.overall) <- row.names(llr.overall)
     z.score <- (llr.overall[,1] - rowMeans(llr.overall[,2:(ncol(llr.overall))]))/apply(llr.overall[,2:(ncol(llr.overall))],1,sd)
-    res.overall <- data.frame(fdr.overall = fdr.overall, z.overall = z.score, pvalue.overall = pval.overall, stringsAsFactors = FALSE)
+    res.overall <- data.frame(fdr.overall = fdr.overall, pval.overall = pval.overall, z.overall = z.score, stringsAsFactors = FALSE)
     
     if (test.type == 'Variable' & !overall.only){
       print('meanDiff pvalues: Model 2 vs. model 1...')
@@ -103,13 +110,13 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
-      res.meanDiff <- data.frame(fdr.meanDiff = fdr, z.meanDiff = z.score, pvalue.meanDiff = pval, stringsAsFactors = FALSE)
+      res.meanDiff <- data.frame(fdr.meanDiff = fdr, pval.meanDiff = pval, z.meanDiff = z.score, stringsAsFactors = FALSE)
       
       print('trendDiff pvalues: Model 3 vs. model 2...')
       if (ncores == 1){
         fit <- lapply(1:(permuiter+1), function(i) fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type))
       } else {
-        fit <- mclapply(1:(permuiter+1), function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type)}, mc.cores = ncores)
+        fit <- mclapply(1:(permuiter+1), function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type)}, mc.cores = ncores) ## return a list of (permuiter + 1) where the first is a list of fitres.full and fitres.null
       }
       fit <- fit[!sapply(fit,is.null)]
       ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
@@ -132,7 +139,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
-      res.trendDiff <- data.frame(fdr.trendDiff = fdr, z.trendDiff = z.score, pvalue.trendDiff = pval, stringsAsFactors = FALSE)
+      res.trendDiff <- data.frame(fdr.trendDiff = fdr,  pval.trendDiff = pval, z.trendDiff = z.score, stringsAsFactors = FALSE)
       res <- matrix(NA, nrow = nrow(res.overall), ncol = 9, 
                     dimnames = list(rownames(res.overall),c(colnames(res.overall), colnames(res.meanDiff), colnames(res.trendDiff))))
       res[rownames(res.overall), colnames(res.overall)] <- as.matrix(res.overall)
@@ -141,12 +148,22 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     } else if (test.type == 'Variable' & overall.only){
       res <- res.overall
     }
-    return(list(statistics = res, 
+    reslist <- list(statistics = res, 
                 parameter=parameter, 
                 llr.overall = llr.overall,
-                knotnum = knotnum))
+                knotnum = knotnum)           ## function return
     
   }
+  
+  if (return.all.data){
+    if (demean){
+      return(c(reslist, list(pseudotime = pseudotime[colnames(expr)],design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori, test.type = test.type, test.method = test.method)))
+    } else {
+      return(c(reslist, list(pseudotime = pseudotime[colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr, test.type = test.type, test.method = test.method)))
+    } 
+  } else {
+    return(c(reslist, list(test.type = test.type, test.method = test.method)))
+  } 
 }
 
 
