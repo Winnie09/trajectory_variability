@@ -19,9 +19,11 @@ expr <- expr[, cellanno[,1]]
 
 source('function/01_function.R')
 rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', m, '/Se_Mi/')
+dir.create(rdir, showWarnings = F, recursive = T)
 system.time({
-  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, test.type='Variable', ncores = 16, demean = FALSE, test.method = ifelse(m == 'EM_pm', 'permutation', 'chisq'))
+  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, test.type='Variable', ncores = 16, demean = FALSE, test.method = ifelse(m == 'EM_pm', 'permutation', 'chisq'), ncores.fit = 8)
 })
 saveRDS(res, paste0(rdir, 'numeric_res.rds'))
+
 
 
