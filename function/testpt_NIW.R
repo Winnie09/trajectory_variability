@@ -24,7 +24,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   design = as.matrix(design)
   
   if (test.method == 'chisq'){
-    res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=ncores.fit, model = 1)##save 13%
+    res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 1)##save 13%
     ll1 <- sapply(res1$parameter,function(i) i$ll)
     if (test.type == 'Time'){
       res0 <- fitpt.m0(expr, cellanno, pseudotime, design[,1,drop=FALSE]) ##  
@@ -39,9 +39,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
                         stringsAsFactors = FALSE)
       reslist = list(statistics = res,  parameter = res1$parameter, knotnum = res1$knotnum)  ## function return
     } else if (test.type == 'Variable'){
-      res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=ncores.fit, model = 2, knotnum = res1[[2]])## save 13%
+      res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 2, knotnum = res1[[2]])## save 13%
       ll2 <- sapply(res2$parameter,function(i) i$ll)
-      res3 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=1000, EMitercutoff=0.1, verbose=F, ncores=ncores.fit, model = 3, knotnum = res1[[2]])
+      res3 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 3, knotnum = res1[[2]])
       ll3 <- sapply(res3$parameter,function(i) i$ll)
       
       paradiff31 <- sapply(res3$parameter,function(i) length(i$beta))-sapply(res1$parameter,function(i) length(i$beta))
