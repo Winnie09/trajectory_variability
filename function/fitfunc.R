@@ -2,7 +2,6 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
   ## this function serves the function testpt().
   ## return(list(fitres.full = fitres.full, fitres.null = fitres.null))
   ## ncores = 1 or otherwise meaningless since the upper function is running in parallel
-  set.seed(12345)
   expr <- expr[gene, ,drop=FALSE]
   print(paste0('iter ', iter, '\n'))
   if (test.type=='Time') {
