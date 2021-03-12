@@ -55,10 +55,13 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       fdr.chisq.meanDiff <- p.adjust(pval.chisq.meanDiff, method='fdr')
       res <- data.frame(fdr.chisq.overall = fdr.chisq.overall, 
                         pval.chisq.overall = pval.chisq.overall,
+                        df.diff.overall = paradiff31,
                         fdr.chisq.trendDiff = fdr.chisq.trendDiff, 
                         pval.chisq.trendDiff = pval.chisq.trendDiff, 
+                        df.diff.trendDiff = paradiff32,
                         fdr.chisq.meanDiff = fdr.chisq.meanDiff, 
                         pval.chisq.meanDiff = pval.chisq.meanDiff,
+                        df.diff.meanDiff = paradiff21,
                         stringsAsFactors = FALSE)
       reslist = list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3, parameter = res3$parameter, knotnum = res3$knotnum)  ## function return
     }
