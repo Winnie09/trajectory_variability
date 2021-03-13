@@ -152,7 +152,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res[rownames(res.overall), colnames(res.overall)] <- as.matrix(res.overall)
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
       res[rownames(res.meanDiff), colnames(res.meanDiff)] <- as.matrix(res.meanDiff)
-    } else if (sum(fdr.overall < 0.05) == 0 & test.type == 'Variable' & overall.only){
+    } else if (sum(fdr.overall < 0.05) == 0 | (test.type == 'Variable' & overall.only)){
+      print('Not returning meanDiff and trendDiff: user required or no overall DEG.')
       res <- res.overall
     }
     reslist <- list(statistics = res, 
