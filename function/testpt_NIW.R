@@ -1,4 +1,4 @@
-# permuiter=100; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=detectCores(); test.type='Variable'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; test.method = 'permutation'
+# permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; ncores=detectCores(); test.type='Variable'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; test.method = 'permutation'
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1) {
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
@@ -69,8 +69,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   } else if (test.method == 'permutation'){
     print('fitting model: overall: CovariateTest (Model 3 vs.1) or ConstantTest (Model 1) ...')
     if (ncores == 1){
-      fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose))} else {
-      fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose)}, mc.cores = ncores)
+      fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))} else {
+      fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose,  expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
       }
     fit <- fit[!sapply(fit,is.null)]
     knotnum <- fit[[1]]$fitres.full$knotnum
@@ -87,13 +87,14 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     names(pval.overall) <- names(fdr.overall) <- row.names(llr.overall)
     z.score <- (llr.overall[,1] - rowMeans(llr.overall[,2:(ncol(llr.overall))]))/apply(llr.overall[,2:(ncol(llr.overall))],1,sd)
     res.overall <- data.frame(fdr.overall = fdr.overall, pval.overall = pval.overall, z.overall = z.score, stringsAsFactors = FALSE)
+    print(paste0('Number of overall DEG: ', sum(fdr.overall < 0.05) ))
     
-    if (test.type == 'Variable' & !overall.only){
+    if (sum(fdr.overall <0.05 ) > 0 & test.type == 'Variable' & !overall.only){
       print('meanDiff pvalues: Model 2 vs. model 1...')
       if (ncores == 1){
-        fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type,EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose))
+        fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))
       } else {
-        fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type,EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose)}, mc.cores = ncores)
+        fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type,EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
       }
       fit <- fit[!sapply(fit,is.null)]
       ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
@@ -120,9 +121,9 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       
       print('trendDiff pvalues: Model 3 vs. model 2...')
       if (ncores == 1){
-        fit <- lapply(1:(permuiter+1), function(i) fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose))
+        fit <- lapply(1:(permuiter+1), function(i) fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))
       } else {
-        fit <- mclapply(1:(permuiter+1), function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose)}, mc.cores = ncores) ## return a list of (permuiter + 1) where the first is a list of fitres.full and fitres.null
+        fit <- mclapply(1:(permuiter+1), function(i){set.seed(i); fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores) ## return a list of (permuiter + 1) where the first is a list of fitres.full and fitres.null
       }
       fit <- fit[!sapply(fit,is.null)]
       ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
@@ -151,7 +152,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res[rownames(res.overall), colnames(res.overall)] <- as.matrix(res.overall)
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
       res[rownames(res.meanDiff), colnames(res.meanDiff)] <- as.matrix(res.meanDiff)
-    } else if (test.type == 'Variable' & overall.only){
+    } else if (sum(fdr.overall < 0.05) == 0 & test.type == 'Variable' & overall.only){
       res <- res.overall
     }
     reslist <- list(statistics = res, 
