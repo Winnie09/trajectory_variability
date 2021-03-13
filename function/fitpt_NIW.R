@@ -152,84 +152,88 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
     iter <- 0
     gidr <- rownames(sexpr)
     all <- matrix(-Inf, nrow=nrow(sexpr),ncol=1,dimnames = list(rownames=gidr))
-    etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
-  while (iter < EMmaxiter && length(gidr) > 0) {
-    
-    oinv <- sapply(gidr,function(g) {
-      chol2inv(chol(matrix(omega[g,],nrow=nb)))
-    },simplify = F)
-    
-    omegadet <- sapply(gidr,function(g) {
-      log(det(matrix(omega[g,],nrow=nb)))/2
-    })
-    
-    sumA <- sumN <- ll <- rep(0,length(gidr))
-    names(sumA) <- names(sumN) <- names(ll) <- gidr
-    omegalist <- B1list <- B2list <- list()
-    for (s in as) {
-      sexpr_phibx <- sexpr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr,] %*% t(phiX[[s]])
+    #etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
+    while (iter < EMmaxiter && length(gidr) > 0) {
       
-      L <- rowSums(sexpr_phibx * sexpr_phibx)
-      
-      Jchol <- sapply(gidr,function(g) {
-        chol(phiphi[[s]] + oinv[[g]])
+      oinv <- sapply(gidr,function(g) {
+        chol2inv(chol(matrix(omega[g,],nrow=nb)))
       },simplify = F)
-
-      Jsolve <- sapply(gidr,function(g) {
+      
+      omegadet <- sapply(gidr,function(g) {
+        log(det(matrix(omega[g,],nrow=nb)))/2
+      })
+      
+      ll <- NULL
+      for (s in as) {
+        sexpr_phibx <- sexpr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr,] %*% t(phiX[[s]])
+        
+        L <- rowSums(sexpr_phibx * sexpr_phibx)
+        
+        Jchol <- sapply(gidr,function(g) {
+          chol(phiphi[[s]] + oinv[[g]])
+        },simplify = F)
+        
+        Jsolve <- sapply(gidr,function(g) {
           chol2inv(Jchol[[g]])
         })
+        
+        K <- tcrossprod(t(phi[[s]]),sexpr_phibx)
+        
+        L2eKJK <- 2*eta[gidr]+L-colSums(K[rep(1:nb,nb),,drop=FALSE] * K[rep(1:nb,each=nb),,drop=FALSE] * Jsolve)
+        A <- log(L2eKJK/2)-digamma(alpha[gidr]+cn[s]/2)
+        N <- (2*alpha[gidr]+cn[s])/L2eKJK
+        
+        JK <- t(rowsum((Jsolve*K[rep(1:nb,nb),,drop=FALSE]),rep(1:nb,each=nb)))
+        
+        logdv <- -2*colSums(log(sapply(Jchol,as.vector)[seq(1,nb*nb,nb+1),,drop=F]))
+        if (is.null(ll)) {
+          ll <- alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
+          B1 <- tcrossprod(N,as.vector(phiXTphiX[[s]]))
+          rownames(B1) <- gidr
+          B2 <- N * ((sexpr[ ,cellanno[,2]==s, drop=F][gidr,] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
+          omegalist <- t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
+          sumA <- A
+          sumN <- N
+        } else {
+          ll <- ll + alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
+          B1 <- B1 + tcrossprod(N,as.vector(phiXTphiX[[s]]))
+          B2 <- B2 + N * ((sexpr[ ,cellanno[,2]==s, drop=F][gidr,] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
+          omegalist <- omegalist + t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
+          sumA <- sumA + A
+          sumN <- sumN + N
+        }
+      }
       
-      K <- tcrossprod(t(phi[[s]]),sexpr_phibx)
+      np <- nrow(xs[[1]])
+      B[gidr,] <- t(sapply(gidr, function(g){  ## each column is a gene's all betas
+        chol2inv(chol(matrix(B1[g,],nrow=np))) %*% B2[g,]
+      }))
       
-      L2eKJK <- 2*eta[gidr]+L-colSums(K[rep(1:nb,nb),,drop=FALSE] * K[rep(1:nb,each=nb),,drop=FALSE] * Jsolve)
-      A <- log(L2eKJK/2)-digamma(alpha[gidr]+cn[s]/2)
-      N <- (2*alpha[gidr]+cn[s])/L2eKJK
+      omega[gidr,] <- omegalist/length(as)
       
-      JK <- t(rowsum((Jsolve*K[rep(1:nb,nb),,drop=FALSE]),rep(1:nb,each=nb)))
-    
-      logdv <- -2*colSums(log(sapply(Jchol,as.vector)[seq(1,nb*nb,nb+1),,drop=F]))
-      ll <- ll + alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
-      B1list[[s]] <- tcrossprod(N,as.vector(phiXTphiX[[s]]))
-      B2list[[s]] <- N * ((sexpr[ ,cellanno[,2]==s, drop=F][gidr,] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
-      omegalist[[s]] <- t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
-      sumA <- sumA + A
-      sumN <- sumN + N
+      rN <- sumN/length(as)
+      rA <- sumA/length(as)
+      eta[gidr] <- sapply(gidr,function(g) {
+        meanN <- rN[g]
+        meanA <- rA[g]
+        # uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
+        optim(eta[g],fn = function(eta) {(digamma(eta * meanN)-log(eta)+meanA)^2},gr = function(eta) {2*(digamma(eta * meanN)-log(eta)+meanA)*(trigamma(eta*meanN)*meanN-1/eta)},lower = 1e-10,method = 'L-BFGS-B')$par
+      })
+      alpha[gidr] <- eta[gidr] * rN
+      
+      iter <- iter + 1
+      
+      llv <- all[,ncol(all)]
+      llv[gidr] <- ll
+      all <- cbind(all,llv)
+      gidr <- names(which(all[,ncol(all)] - all[,ncol(all)-1] > EMitercutoff))
+      #etalist[[iter]] <- eta
+      #alphalist[[iter]] <-alpha
+      #omegalist[[iter]] <-omega
+      #Nlist[[iter]] <- N
+      #Jslist[[iter]] <- Jsolve
+      rm(list = c('L','Jsolve', 'K'))
     }
-    
-    B1 <- Reduce('+', B1list)
-    rownames(B1) <- gidr
-    B2 <- Reduce('+', B2list)
-    
-    np <- nrow(xs[[1]])
-    B[gidr,] <- t(sapply(gidr, function(g){  ## each column is a gene's all betas
-      chol2inv(chol(matrix(B1[g,],nrow=np))) %*% B2[g,]
-    }))
-    
-    omega[gidr,] <- Reduce('+',omegalist)/length(as)
-    
-    rN <- sumN/length(as)
-    rA <- sumA/length(as)
-    eta[gidr] <- sapply(gidr,function(g) {
-      meanN <- rN[g]
-      meanA <- rA[g]
-      # uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
-      optim(eta[g],fn = function(eta) {(digamma(eta * meanN)-log(eta)+meanA)^2},gr = function(eta) {2*(digamma(eta * meanN)-log(eta)+meanA)*(trigamma(eta*meanN)*meanN-1/eta)},lower = 1e-10,method = 'L-BFGS-B')$par
-    })
-    alpha[gidr] <- eta[gidr] * rN
-    
-    iter <- iter + 1
-    
-    llv <- all[,ncol(all)]
-    llv[gidr] <- ll
-    all <- cbind(all,llv)
-    gidr <- names(which(all[,ncol(all)] - all[,ncol(all)-1] > EMitercutoff))
-    etalist[[iter]] <- eta
-    alphalist[[iter]] <-alpha
-    omegalist[[iter]] <-omega
-    Nlist[[iter]] <- N
-    Jslist[[iter]] <- Jsolve
-    rm(list = c('L','Jsolve', 'K'))
-  }
     # print(table(apply(all,1,function(i) mean(diff(i) >= 0))))  
     return(list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all))
   }
@@ -252,6 +256,5 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   }
   list(parameter=para[rownames(expr)],knotnum=knotnum[rownames(expr)])
 }
-
 
 
