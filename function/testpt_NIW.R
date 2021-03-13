@@ -1,4 +1,5 @@
-# permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; ncores=detectCores(); test.type='Variable'; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; test.method = 'permutation'
+# ncores=detectCores(); test.type='Variable';test.method = 'permutation'
+# permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1) {
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
@@ -72,7 +73,11 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))} else {
       fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose,  expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
       }
+    print('The length of fit is ...')  ##
+    print(summary(sapply(fit,is.null))) ##
     fit <- fit[!sapply(fit,is.null)]
+    print('The length of fit after removing null is ...')  ##
+    print(summary(sapply(fit,is.null))) ##
     knotnum <- fit[[1]]$fitres.full$knotnum
     parameter <- fit[[1]]$fitres.full$parameter
     ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
@@ -152,8 +157,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res[rownames(res.overall), colnames(res.overall)] <- as.matrix(res.overall)
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
       res[rownames(res.meanDiff), colnames(res.meanDiff)] <- as.matrix(res.meanDiff)
-    } else if (sum(fdr.overall < 0.05) == 0 | (test.type == 'Variable' & overall.only)){
-      print('Not returning meanDiff and trendDiff: user required or no overall DEG.')
+    } else if (sum(fdr.overall < 0.05) == 0 | (test.type == 'Variable' & overall.only) | test.type == 'Time'){
+      print('Not returning meanDiff and trendDiff: constantTest, user required or no overall DEG.')
       res <- res.overall
     }
     reslist <- list(statistics = res, 
