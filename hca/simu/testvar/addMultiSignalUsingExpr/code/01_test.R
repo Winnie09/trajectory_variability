@@ -65,7 +65,7 @@ if (method == 'EM_pm'){
   names(pt) <- pseudotime[, 1]
   ### run test
   system.time({
-    testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, ncores=48, test.type = 'Variable', demean = FALSE, overall.only = F, test.method = 'permutation')
+    testres <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, ncores=20, test.type = 'Variable', demean = FALSE, overall.only = F, test.method = 'permutation')
   })
   saveRDS(testres, fn)  
 }
