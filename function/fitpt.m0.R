@@ -92,10 +92,10 @@ while (iter < EMmaxiter && length(gidr) > 0) {
   
   B1 <- rowSums(matrix(sapply(as, function(s){
     N[,s] * cn[s]
-  }), ncol = length(as), dimnames = list(gidr, as)))  ## length(gidr) * length(as)
-  B2 <- rowSums(matrix(sapply(as, function(s){   ## dim??
+  }), ncol = length(as), dimnames = list(gidr, as)))  ## length(gidr) * length(as) debug here !!!
+  B2 <- rowSums(matrix(sapply(as, function(s){   ## debug here !!!
     N[,s,drop=F] * colSums(t(expr[ ,cellanno[,2]==s, drop=F][gidr,,drop=F]) - rep(JK[[s]],each=cn[s]))
-  }), ncol = length(as), dimnames = list(gidr, as)))  ## vector of length(gidr)
+  }), ncol = length(as), dimnames = list(gidr, as)))  ## vector of length(gidr) debug here !!!
   B[gidr] <- B2/B1
  
   ## M -step:
