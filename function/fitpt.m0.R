@@ -3,7 +3,7 @@
 # test.position = 'all'
 # maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
 # test.pattern = 'overall'
-fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=1000, EMitercutoff=0.01, verbose=F) {
+fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercutoff=0.1, verbose=F) {
   # set.seed(12345)
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -49,6 +49,8 @@ gidr <- rownames(expr)
 all <- matrix(-Inf, nrow=nrow(expr),ncol=1,dimnames = list(rownames=gidr))
 etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
 while (iter < EMmaxiter && length(gidr) > 0) {
+  print(paste0('iter ', iter))
+  print(gidr)
   expr_phibx <- sapply(as,function(s) {
     expr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr]
   },simplify = F)
@@ -57,16 +59,16 @@ while (iter < EMmaxiter && length(gidr) > 0) {
     rowSums(expr_phibx[[s]] * expr_phibx[[s]])
   },simplify = F)
  
-  Jsolve <- sapply(as,function(s) {
+  Jsolve <- matrix(sapply(as,function(s) {
     1/(cn[s] + 1/omega[gidr])
-  })
+  }), nrow = length(gidr), dimnames = list(gidr, as))
  
   K <- sapply(as,function(s) {
     rowSums(expr_phibx[[s]])
   },simplify = F)
  
   JK <- sapply(as,function(s) {
-    Jsolve[,s] * K[[s]]
+    Jsolve[,s,drop=F] * K[[s]]  ## debug here !!
   },simplify = F)
  
   L2eKJK <- sapply(as,function(s) {
@@ -82,7 +84,7 @@ while (iter < EMmaxiter && length(gidr) > 0) {
   }),nrow=length(gidr),dimnames=list(gidr,as))
  
   ll <- rowSums(matrix(sapply(as,function(s) {
-    dv <- omega[gidr]/Jsolve[gidr,s]
+    dv <- omega[gidr]/Jsolve[gidr,s,drop=F]
     alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-log(dv)/2-(cn[s]/2+alpha[gidr])*log(L2eKJK[[s]])
   }),nrow=length(gidr),dimnames = list(rownames=gidr,colnames=as)))
  
@@ -97,7 +99,7 @@ while (iter < EMmaxiter && length(gidr) > 0) {
  
   ## M -step:
   omega[gidr] <- rowMeans(sapply(as,function(s) {
-    Jsolve[,s] + N[,s]*JK[[s]] * JK[[s]]
+    Jsolve[,s,drop=F] + N[,s]*JK[[s]] * JK[[s]]  ## debug here !!!
   }))
  
   eta[gidr] <- sapply(gidr,function(g) {
