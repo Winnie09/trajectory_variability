@@ -42,15 +42,12 @@ diffindfit <- sapply(as,function(s) {
 
 omega <- apply(diffindfit,1,var)
 
-print('start EM ......')
 iter <- 0
 EMitercutoff <- 0
 gidr <- rownames(expr)
 all <- matrix(-Inf, nrow=nrow(expr),ncol=1,dimnames = list(rownames=gidr))
 etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
 while (iter < EMmaxiter && length(gidr) > 0) {
-  print(paste0('iter ', iter))
-  print(gidr)
   expr_phibx <- sapply(as,function(s) {
     expr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr]
   },simplify = F)
@@ -123,7 +120,7 @@ while (iter < EMmaxiter && length(gidr) > 0) {
   rm(list = c('L','Jsolve', 'K'))
 }
   
-  print('list parameter ......')
+  
   allres  <- list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all)
   
   para <- list()
