@@ -48,6 +48,8 @@ gidr <- rownames(expr)
 all <- matrix(-Inf, nrow=nrow(expr),ncol=1,dimnames = list(rownames=gidr))
 etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
 while (iter < EMmaxiter && length(gidr) > 0) {
+  print(paste0('iter ', iter))
+  print(gidr)
   expr_phibx <- sapply(as,function(s) {
     expr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr]
   },simplify = F)
@@ -86,18 +88,20 @@ while (iter < EMmaxiter && length(gidr) > 0) {
   }),nrow=length(gidr),dimnames = list(rownames=gidr,colnames=as)))
  
   ## -------------->
-  B1 <- rowSums(sapply(as, function(s){
+  
+  
+  B1 <- rowSums(matrix(sapply(as, function(s){
     N[,s] * cn[s]
-  }))
-  B2 <- rowSums(sapply(as, function(s){
-    N[,s] * colSums(t(expr[ ,cellanno[,2]==s, drop=F][gidr,]) - rep(JK[[s]],each=cn[s]))
-  }))
+  }), ncol = length(as), dimnames = list(gidr, as)))  ## length(gidr) * length(as)
+  B2 <- rowSums(matrix(sapply(as, function(s){   ## dim??
+    N[,s,drop=F] * colSums(t(expr[ ,cellanno[,2]==s, drop=F][gidr,,drop=F]) - rep(JK[[s]],each=cn[s]))
+  }), ncol = length(as), dimnames = list(gidr, as)))  ## vector of length(gidr)
   B[gidr] <- B2/B1
  
   ## M -step:
-  omega[gidr] <- rowMeans(sapply(as,function(s) {
-    Jsolve[,s,drop=F] + N[,s]*JK[[s]] * JK[[s]]  ## debug here !!!
-  }))
+  omega[gidr] <- rowMeans(matrix(sapply(as,function(s) {
+    Jsolve[,s,drop=F] + N[,s,drop=F]*JK[[s]] * JK[[s]]  ## debug here !!!
+  }), ncol=length(as), dimnames = list(gidr, as)))
  
   eta[gidr] <- sapply(gidr,function(g) {
     meanN <- mean(N[g,])
