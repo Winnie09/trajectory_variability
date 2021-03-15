@@ -78,7 +78,9 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   }
   
   sfit <- function(num.knot) {
+    #print(paste0('num.knot = ', num.knot))
     gid <- names(which(knotnum==num.knot))
+    #print(gid)
     sexpr <- expr[gid,,drop=F] ## !!! double check, should be list len =S
     phi <- philist[[as.character(num.knot)]]
     phicrossprod <- apply(phi,1,tcrossprod)
@@ -165,7 +167,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       
       ll <- NULL
       for (s in as) {
-        sexpr_phibx <- sexpr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr,] %*% t(phiX[[s]])
+        sexpr_phibx <- sexpr[gidr, cellanno[,2]==s, drop=F]-B[gidr,] %*% t(phiX[[s]])
         
         L <- rowSums(sexpr_phibx * sexpr_phibx)
         
@@ -190,14 +192,14 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
           ll <- alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
           B1 <- tcrossprod(N,as.vector(phiXTphiX[[s]]))
           rownames(B1) <- gidr
-          B2 <- N * ((sexpr[ ,cellanno[,2]==s, drop=F][gidr,] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
+          B2 <- N * ((sexpr[ gidr,cellanno[,2]==s, drop=F] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
           omegalist <- t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
           sumA <- A
           sumN <- N
         } else {
           ll <- ll + alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
           B1 <- B1 + tcrossprod(N,as.vector(phiXTphiX[[s]]))
-          B2 <- B2 + N * ((sexpr[ ,cellanno[,2]==s, drop=F][gidr,] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
+          B2 <- B2 + N * ((sexpr[ gidr,cellanno[,2]==s, drop=F] - t(phi[[s]] %*% t(JK))) %*% phiX[[s]])
           omegalist <- omegalist + t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
           sumA <- sumA + A
           sumN <- sumN + N
@@ -256,5 +258,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   }
   list(parameter=para[rownames(expr)],knotnum=knotnum[rownames(expr)])
 }
+
 
 
