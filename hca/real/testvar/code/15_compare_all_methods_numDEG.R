@@ -38,13 +38,13 @@ numDEG <- sapply(c('lymph', 'erythroid', 'monocyte'), function(path){
     print(fn)
     if (file.exists(paste0(path, '/', fn))){
       res = readRDS(paste0(path, '/', fn))
-      s = res$statistics
-      sum(s[, grepl('adj', colnames(s))] < 0.05)
+      print(head(res))
+      print(summary(res[, grepl('adj.P.Val', colnames(res))]))
+      sum(res[, grepl('adj.P.Val', colnames(res))] < 0.05)
     } else {
       NA
-    }
-      
+    }  
   })
-  
 })
+
 
