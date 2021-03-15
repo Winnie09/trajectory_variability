@@ -4,25 +4,37 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
   ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
-  
   if (test.method == 'permutation') ncores.fit = 1
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
-  expr.ori <- expr[, names(pseudotime)]
+  expr <- expr[, names(pseudotime)]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
-  if (demean){
-    ## demean
-    expr.demean <- lapply(unique(cellanno[,2]), function(s){
-      tmp <- expr.ori[, cellanno[cellanno[,2] == s, 1]]
-      tmp2 <- tmp- rowMeans(tmp)
-    })
-    expr.demean <- do.call(cbind, expr.demean)
-    expr <- expr.demean[, colnames(expr.ori)]
-  } else {
-    expr <- expr.ori
-  }
   design = as.matrix(design)
+  
+  sdm <- sapply(unique(cellanno[,2]),function(us) {
+    tmp <- expr[,cellanno[,2]==us]
+    m <- rowMeans(tmp)
+    rowMeans(tmp*tmp)-m*m
+  })==0
+  gid <- which(rowSums(sdm) > 0)
+  if (length(gid) > 0) {
+    mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
+    colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
+    expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr)),nrow=length(gid))
+    rm('mask')  
+  }
+  # if (demean){
+  #   ## demean
+  #   expr.demean <- lapply(unique(cellanno[,2]), function(s){
+  #     tmp <- expr.ori[, cellanno[cellanno[,2] == s, 1]]
+  #     tmp2 <- tmp- rowMeans(tmp)
+  #   })
+  #   expr.demean <- do.call(cbind, expr.demean)
+  #   expr <- expr.demean[, colnames(expr.ori)]
+  # } else {
+  #   expr <- expr.ori
+  # }
   
   if (test.method == 'chisq'){
     res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 1)##save 13%
@@ -66,18 +78,21 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
                         stringsAsFactors = FALSE)
       reslist = list(statistics = res, ll1 = ll1, ll2 = ll2, ll3 = ll3, parameter = res3$parameter, knotnum = res3$knotnum)  ## function return
     }
-      
+    
   } else if (test.method == 'permutation'){
     print('fitting model: overall: CovariateTest (Model 3 vs.1) or ConstantTest (Model 1) ...')
     if (ncores == 1){
       fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))} else {
-      fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose,  expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
+        fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose,  expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
       }
     print('The length of fit is ...')  ##
+    print(sapply(fit, length))
     print(summary(sapply(fit,is.null))) ##
     fit <- fit[!sapply(fit,is.null)]
     print('The length of fit after removing null is ...')  ##
+    print(sapply(fit, length))
     print(summary(sapply(fit,is.null))) ##
+    # saveRDS(fit, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/debug/fitoverall.rds')
     knotnum <- fit[[1]]$fitres.full$knotnum
     parameter <- fit[[1]]$fitres.full$parameter
     ll.full <- sapply(1:(length(fit)),function(i) sapply(fit[[i]]$fitres.full$parameter,function(j) unname(j$ll),USE.NAMES = F)[row.names(expr)])
@@ -162,18 +177,18 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res <- res.overall
     }
     reslist <- list(statistics = res, 
-                parameter=parameter, 
-                llr.overall = llr.overall,
-                knotnum = knotnum)           ## function return
+                    parameter=parameter, 
+                    llr.overall = llr.overall,
+                    knotnum = knotnum)           ## function return
     
   }
-  
+  # if (demean){
+  #     return(c(reslist, list(pseudotime = pseudotime[colnames(expr)],design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori, test.type = test.type, test.method = test.method)))
+  #   } else {
+  #     return(c(reslist, list(pseudotime = pseudotime[colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr, test.type = test.type, test.method = test.method)))
+  #   }
   if (return.all.data){
-    if (demean){
-      return(c(reslist, list(pseudotime = pseudotime[colnames(expr)],design = design, cellanno = cellanno, expr.demean = expr, expr.ori = expr.ori, test.type = test.type, test.method = test.method)))
-    } else {
-      return(c(reslist, list(pseudotime = pseudotime[colnames(expr)], design = design, cellanno = cellanno, expr.ori = expr, test.type = test.type, test.method = test.method)))
-    } 
+    return(c(reslist, list(pseudotime = pseudotime[colnames(expr)], design = design, cellanno = cellanno, expr = expr, test.type = test.type, test.method = test.method)))
   } else {
     return(c(reslist, list(test.type = test.type, test.method = test.method)))
   } 
