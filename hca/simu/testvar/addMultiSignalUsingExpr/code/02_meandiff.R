@@ -2,14 +2,15 @@ setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca')
 rdir <- './simu/testvar/addMultiSignalUsingExpr/result/'
 ddir <- './simu/testvar/addMultiSignalUsingExpr/data/'
 method = 'meandiff'
+dir.create(paste0(rdir,method), showWarnings = F, recursive = T)
+suppressMessages(library(limma))
+source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
 
-for (signal in 1:4){
+for (signal in c(0.5, 1:4)){
   print(signal)
   fn <- paste0(rdir, method,'/', signal, '.rds')
   print(fn)
-  if (file.exists(fn)) break 
-  suppressMessages(library(limma))
-  source('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/function/01_function.R')
+  
   
   ### prepare data
   expr <- readRDS(paste0(ddir, 'saver/', signal, '.rds'))
@@ -27,4 +28,3 @@ for (signal in 1:4){
   saveRDS(res, fn)
 }
   
-
