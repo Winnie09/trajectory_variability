@@ -32,7 +32,7 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05, k = 5,use.clusters = TRUE, type
          list(diffgene = rownames(testobj$statistics)[fdr < fdr.cutoff]))
     
     resList <- lapply(diffgeneList, function(diffgene) {
-      allgene <- rownames(testobj$expr.ori)
+      allgene <- rownames(testobj$expr)
       if (!'topGO' %in% (.packages()))
         suppressMessages(library(topGO))
       gl <- sub(sep, '', diffgene)
