@@ -4,7 +4,7 @@ SensFdr <- function(TruePositive, Statistics){
   col.na <- which(colSums(is.na(Statistics)) == nrow(Statistics))
   if (length(col.na) > 0)
   Statistics <- Statistics[, -col.na, drop = FALSE]
-  fdrchar <- intersect(colnames(Statistics), c('adj.P.Val','adj.pvalue','fdr','FDR','Fdr','adj.p', 'adj.P','adj.Pval'))
+  fdrchar <- intersect(colnames(Statistics), c('adj.P.Val','adj.pvalue','fdr','FDR','Fdr','adj.p', 'adj.P','adj.Pval', 'fdr.overall'))
   fdrcol <- which(colnames(Statistics) == fdrchar)
   ## if not ordered by significance, then rank by significance
 
