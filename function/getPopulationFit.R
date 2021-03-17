@@ -1,5 +1,5 @@
 getPopulationFit <- function(testobj,
-                             gene,
+                             gene = NULL,
                              type = 'time'){
   library(splines)
   ## if type = 'time', then return population fit (a vector for a gene; or a gene by num.cell matrix) for constant test (test on time)
@@ -15,6 +15,7 @@ getPopulationFit <- function(testobj,
     design = cbind(intercept = 1, design)
   }
   colnames(design)[1] <- 'intercept'
+  if (is.null(gene)) gene <- rownames(testobj$statistics)
   if (type == 'TIME') {
     design = design[, 1, drop = FALSE]
   } else {
