@@ -9,12 +9,13 @@ getPopulationFit <- function(testobj,
   pseudotime = testobj$pseudotime
   knotnum = testobj$knotnum
   pseudotime = pseudotime[order(pseudotime)]
+  type <- toupper(type)
   if (sum(design[, 1]) != nrow(design)){
     print("The first column of design matrix should be all 1s (intercept)! Using the first column as the variable column ...")
     design = cbind(intercept = 1, design)
   }
   colnames(design)[1] <- 'intercept'
-  if (type == 'time') {
+  if (type == 'TIME') {
     design = design[, 1, drop = FALSE]
   } else {
     variable = colnames(design)[2]
@@ -59,14 +60,14 @@ getPopulationFit <- function(testobj,
   })
   
   names(fitlist) <- gene
-  if (type == 'variable'){
+  if (type == 'VARIABLE'){
     fitres <- lapply(names(fitlist[[1]]), function(i){
       tmp <- t(sapply(fitlist, function(j){
         j[[i]]
       }))
     })  
     names(fitres) <- names(fitlist[[1]])
-  } else if (type == 'time'){
+  } else if (type == 'TIME'){
     fitres <- t(do.call(cbind, fitlist))
   }
   return(fitres)
