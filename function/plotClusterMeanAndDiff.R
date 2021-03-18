@@ -28,7 +28,9 @@ plotClusterMeanAndDiff <- function(testobj,
   p1 <- ggplot(data = pd) + geom_line(aes(x = pseudotime, y = populationFitClusterMean, color = type), size = 1)+
     theme_classic() + 
     facet_wrap(~cluster, nrow = length(unique(pd$cluster)), scales = a)+
-    theme(legend.position = 'none') 
+    theme(legend.position = 'none')  +
+    ylab('Model-fitted expression patterns for groups')+
+    xlab('Pseudotime')
   if (length(unique(pd$type)) < 8){
     p1 <- p1 + scale_color_brewer(palette = 'Dark2')
   } else {
@@ -56,7 +58,8 @@ plotClusterMeanAndDiff <- function(testobj,
   pd2$cluster <- factor(pd2$cluster)
   p2<- ggplot(data = pd2) + geom_line(aes(x = pseudotime, y = covariateGroupDiff), size = 1)+
     theme_classic() +
-    facet_wrap(~cluster, nrow = length(unique(pd2$cluster)), scales = a)
+    facet_wrap(~cluster, nrow = length(unique(pd2$cluster)), scales = a)+
+    xlab('Pseudotime') + ylab('Group difference')
   if (length(unique(pd$cluster)) < 8){
     p2 <- p2 + scale_color_brewer(palette = 'Set1')
   } else {
