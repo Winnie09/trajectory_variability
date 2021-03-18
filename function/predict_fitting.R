@@ -75,6 +75,6 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
   pred <- pred[gene, colnames(expr), drop=FALSE]
   if ('populationFit' %in% names(Res))  populationFit = Res$populationFit else 
   populationFit <- getPopulationFit(testObj,gene, type = testObj$test.type)
-  return( pred + populationFit )
+  return( pred + populationFit[gene, , drop=F] )
 }
 
