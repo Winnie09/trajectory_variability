@@ -1,9 +1,10 @@
-plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2'){
+plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL){
   ## testptObj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
   ## expression: a character ('demean',or 'original') to define the expression values shown on the plots. if "demean"(default), show demeaned expression. if 'original", show original gene expression.
+  ## ncol: only functional when plotting multiple genes. Used to define the number of columns. 
   library(splines)
   library(ggplot2)
   library(gridExtra)
@@ -142,7 +143,7 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
       theme_classic() + 
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable) +
-      facet_wrap(~g, scales = a) 
+      facet_wrap(~g, scales = a, ncol = ncol) 
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
