@@ -33,15 +33,20 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     fit.scale <- fit.scale[names(testobj$cluster), ]
     fit.scale <- scalematrix(fit.scale)
     colnames(fit.scale) <- paste0(rep(names(fit), each = ncol(fit.scale)/length(fit)), ';cell', seq(1, ncol(fit.scale)))
+    res <- data.frame(clu = clu, 
+                      cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
+                      changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))),
+                      DEGType = DEGType[names(clu)])
+    res <- res[order(res$clu, res$DEGType, res$changepoint, res$cor), ]
   } else {
     fit.scale <- scalematrix(fit)
     dimnames(fit.scale) <- dimnames(fit)
+    res <- data.frame(clu = clu, 
+                      cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
+                      changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))))
+    res <- res[order(res$clu, res$changepoint, res$cor), ]
   }
-  res <- data.frame(clu = clu, 
-                    cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
-                    changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))),
-                    DEGType = DEGType[names(clu)])
-  res <- res[order(res$clu, res$DEGType, res$changepoint, res$cor), ]
+    
   fit.scale <- fit.scale[rownames(res), ]
   # colnames(fit.scale) <- paste0(colnames(fit.scale), '_', seq(1, ncol(fit.scale)))
   ## ------------------------
