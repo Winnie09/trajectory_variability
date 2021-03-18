@@ -6,7 +6,7 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05, k = 5,use.clusters = TRUE, type
   if (type == 'variable'){
     fdr <- testobj$statistics[, fdr.col.id]
   } else if (type == 'time'){
-    fdr <- testobj$statistics[, 'fdr']
+    fdr <- testobj$statistics[, 'fdr.overall']
   }
   if (sum(fdr < fdr.cutoff) == 0) {
     print('There is no differential genes! GoEnrich stopped.')

@@ -17,7 +17,7 @@ getDEGType <- function(testobj, cutoff = 0.05){
       }
     })
   } else if (testobj$test.type == 'Time' | testobj$test.type == 'time'){
-    print('work on it now!')
+    print('ConstantTimeTest does not lead to DEGType!')
   }
   return(diffType)
 }
