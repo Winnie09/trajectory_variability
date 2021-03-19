@@ -10,7 +10,7 @@ plotGenePopulation <- function(testobj,
     ## testobj: object returned from testpt(). 
     ## gene: a character vector of gene names. It can be of length 1 or > 1.
     ## variable: a character (within the column names in design matrix) to get population pattern. If variable == NA, then return testtime fit. Other wise return testvar fit with the variable.
-   if (!is.null(ncol)) nrow = NULL
+   if (!is.null(ncol)) nrow = NULL else nrow = round(sqrt(length(gene)))
   library(ggplot2)
   library(RColorBrewer)
   a <- if (free.scale) 'free' else 'fixed'
@@ -26,10 +26,14 @@ plotGenePopulation <- function(testobj,
       p <- ggplot2::ggplot(data= pd, aes(x = pseudotime, y = expression, color = 'red')) + 
               geom_point() +
               theme_classic() +
-              facet_wrap(~gene, nrow = nrow, scales = a, ncol = ncol)+
               xlab('Pseudotime') +
               ylab('Expression') +
               labs(color = '')
+      if (is.null(col)){
+        p <- p + facet_wrap(~gene, nrow = nrow, scales = a)
+      } else {
+        p <- p + facet_wrap(~gene, ncol = ncol, scales = a)
+      }
   } else {
       pd <- sapply(1:length(fit), function(i){
             tmp <- reshape2::melt(fit[[i]])
@@ -46,10 +50,14 @@ plotGenePopulation <- function(testobj,
       p <- ggplot(data= pd, aes(x = pseudotime, y = expression, group = type, color = type)) + 
               geom_point() +
               theme_classic() +
-              facet_wrap(~gene, nrow = nrow, scales = a, ncol = ncol)+
               xlab('Pseudotime') +
               ylab('Expression') +
               labs(color = '')
+      if (is.null(col)){
+        p <- p + facet_wrap(~gene, nrow = nrow, scales = a)
+      } else {
+        p <- p + facet_wrap(~gene, ncol = ncol, scales = a)
+      }
       if (length(unique(pd$type)) < 8)  {
         p <-  p + scale_color_brewer(palette = palette)
       } else {
