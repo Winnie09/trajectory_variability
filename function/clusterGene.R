@@ -21,7 +21,7 @@ clusterGene <- function(testobj,
       fit <- getCovariateGroupDiff(testobj = testobj, gene = gene)  
     }
   }
-  mat.scale <- scalematrix(fit)
+  mat.scale <- scalematrix(fit[gene, ,drop=F])
   
   if (method == 'kmeans'){
       set.seed(12345)
