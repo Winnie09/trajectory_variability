@@ -1,13 +1,19 @@
 getCovariateGroupDiff <- function(testobj,
-                               gene) {
+                                  gene, 
+                                  reverse = FALSE) {
   ## testobj: output object from testpt().
   ## gene: a character vector of genes.
-  ## variable: A character denoting the covariate for population fit. It should be one of the colnames in the design matrix.
-  ## output: a gene by pseudotime matrix. Entires are group difference w.r.t the variable, i.e., the unit-covariate incremental difference.
+  ## output: a gene by pseudotime matrix. Entries are group difference w.r.t the variable, i.e., the unit-covariate incremental difference.
+  ## reverse: logitcal. FALSE (default) when group 1 - group 0.  TRUE when group 0 - group 1. 
+  ## (deprecated) variable: A character denoting the covariate for population fit. It should be one of the colnames in the design matrix.
   knotnum = testobj$knotnum[gene]
   pseudotime = seq(1, max(testobj$pseudotime))
   beta <- lapply(testobj$parameter[gene], function(i) {
-    i$beta
+    if (reverse){
+      - i$beta  
+    } else {
+      i$beta
+    }
   })
   names(beta) <- gene
   philist <-
