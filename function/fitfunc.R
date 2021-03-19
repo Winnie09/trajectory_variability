@@ -29,8 +29,10 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
       tryCatch(fitres.full <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = 1), warning = function(w){}, error = function(e) {})
       tryCatch(fitres.null <- fitpt.m0(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose), warning = function(w){}, error = function(e) {})
       if (exists('fitres.full') & exists('fitres.null')) {
+        print(paste0('iter ', iter, ' success!'))
         return(list(fitres.full = fitres.full, fitres.null = fitres.null))
       } else {
+        print(paste0('iter ', iter, ' try again!'))
         return(NULL)
       }
     }
@@ -50,8 +52,10 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
       fitres.full <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = mod.full)
       fitres.null <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = mod.null, knotnum = fitres.full[[2]])
       if (exists('fitres.full') & exists('fitres.null')) {
+        print(paste0('iter ', iter, ' success!'))
         return(list(fitres.full = fitres.full, fitres.null = fitres.null))
       } else {
+        print(paste0('iter ', iter, ' try again!'))
         return(NULL)
       }
     } else {
@@ -69,6 +73,8 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
       psn <- pseudotime[colnames(expr)]
       psn <- psn[sampcell]
       colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
+      
+      
       fitres.full <- fitpt(perexpr, percellanno, psn, perdesign, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model = mod.full)
       fitres.null <- fitpt(perexpr, percellanno, psn, perdesign, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model = mod.null, knotnum = fitres.full[[2]])
       if (exists('fitres.full') & exists('fitres.null')) {
