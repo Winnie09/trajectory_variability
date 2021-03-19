@@ -2,11 +2,12 @@ plotClusterDiff <- function(testobj,
                             gene = names(testobj$cluster),
                             cluster = testobj[['cluster']],
                             each = FALSE,
-                            sep = ''){
+                            sep = '',
+                            reverse = F){
   if ('covariateGroupDiff' %in% names(testobj)){
     fit <- testobj$covariateGroupDiff[gene, ,drop=FALSE]
   } else {
-    fit <- getCovariateGroupDiff(testobj = testobj, gene = gene)
+    fit <- getCovariateGroupDiff(testobj = testobj, gene = gene, reverse = reverse)
   }
   colnames(fit) <- seq(1, ncol(fit))
   library(ggplot2)
@@ -39,4 +40,5 @@ if (each){
 }
    print(p)
 }
+
 
