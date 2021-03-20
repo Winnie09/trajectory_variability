@@ -13,8 +13,8 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
   pseudotime <- testptObj[['pseudotime']]
   cellanno <- testptObj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
-  if ('expr.ori' %in% names(Res)) expression <- testptObj[['expr.ori']] else expression <- testptObj[['expr']]
-  predict.values <- predict_fitting(Res, gene= gene, test.type = testptObj$test.type)
+  if ('expr.ori' %in% names(testptObj)) expression <- testptObj[['expr.ori']] else expression <- testptObj[['expr']]
+  predict.values <- predict_fitting(testptObj, gene= gene, test.type = testptObj$test.type)
   
   pseudotime = pseudotime[colnames(expression)]
   cellanno <- cellanno[match(colnames(expression), cellanno[,1]), ]

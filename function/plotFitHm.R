@@ -1,4 +1,4 @@
-plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 450, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'time', subsampleCell = TRUE, numSubsampleCell=1e3){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'time', subsampleCell = TRUE, numSubsampleCell=1e3){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -15,20 +15,22 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
       for (i in 1:length(fit)){
         fit[[i]] <- fit[[i]][, id]
       }
-      testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
-      rownames(testobj$cellanno) <- testobj$cellanno[,1]
-      testobj$cellanno <- testobj$cellanno[names(testobj$pseudotime), ]
-      testobj$expr.ori <- testobj$expr.ori[, names(testobj$pseudotime)]
     }
-  }
-  print('subsample done!')
+    testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
+    rownames(testobj$cellanno) <- testobj$cellanno[,1]
+    testobj$cellanno <- testobj$cellanno[names(testobj$pseudotime), ]
+    print('subsample done!')
+  } 
+    if ('expr.ori' %in% names(testobj)){
+      expr <- testobj$expr.ori[, names(testobj$pseudotime)]  
+    } else {
+      expr <- testobj$expr[, names(testobj$pseudotime)]
+    }
+
   fit.bak = fit
   clu <- testobj$cluster
   if (type == 'variable'){
-    if ('DEGType' %in% names(testobj)) 
-      DEGType <- testobj$DEGType
-    else 
-      DEGType <- getDEGType(testobj) 
+    if ('DEGType' %in% names(testobj)) DEGType <- testobj$DEGType else DEGType <- getDEGType(testobj) 
     fit.scale <- do.call(cbind, fit)
     fit.scale <- fit.scale[names(testobj$cluster), ]
     fit.scale <- scalematrix(fit.scale)
@@ -43,17 +45,17 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     dimnames(fit.scale) <- dimnames(fit)
     res <- data.frame(clu = clu, 
                       cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
-                      changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))))
+                      changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(round(ncol(fit.scale)*0.1), round(ncol(fit.scale)*0.9))]))))
     res <- res[order(res$clu, res$changepoint, res$cor), ]
   }
-    
+  
   fit.scale <- fit.scale[rownames(res), ]
   # colnames(fit.scale) <- paste0(colnames(fit.scale), '_', seq(1, ncol(fit.scale)))
   ## ------------------------
   ## plot original expression 
   ## ------------------------
   cellanno <- testobj$cellanno
-  expr = testobj$expr.ori
+  
   expr <- expr[, names(testobj$pseudotime)]
   
   if (type == 'variable'){
@@ -179,7 +181,6 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   }
   
   rownames(colann.fit) = colnames(fit.scale)
-  
   p2 <- pheatmap(
     fit.scale,
     cluster_rows = F,
@@ -195,11 +196,9 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     border_color = NA, silent = TRUE)
   plist[[3]] <- p2[[4]]
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
-  
   # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
-  plot(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
+  print(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
   # dev.off()
-  
 }  
 
 
