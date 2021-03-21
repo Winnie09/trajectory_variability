@@ -1,14 +1,17 @@
+rm(list=ls())
 library(here)
 library(ggplot2)
-setwd(here())
+# setwd(here())
+setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
 source('function/01_function.R')
 ddir <- rdir <- 'hca/real/testvar/result/EM_pm/'
 pdir <- 'hca/real/testvar/plot/EM_pm/'
 
 ## read in gold standard Sex difference genes (chrX, chrY)
-u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
-u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
-
+# u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
+# u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
+u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
+u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
 
 for (path in c('erythroid', 'lymph', 'monocyte')){
   ## read data
@@ -58,18 +61,18 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     geom_density(alpha=.2, fill="#FF6666") +
     geom_vline(xintercept = v1, color = 'red') +
     theme_classic()+
-    xlab('overlap proportion mean')+
-    ggtitle(paste0('chrX, p=', round(mean(v1_pm > v1),3)))
+    xlab('Overlap proportion mean')+ ylab('Density')+
+    ggtitle(paste0('chromosome X, p=', round(mean(v1_pm > v1),3)))
   
   p2 <- ggplot(data = pd, aes(x=chrY_pm)) + 
     geom_histogram(aes(y=..density..), colour="black", fill="white", stat = )+
     geom_density(alpha=.2, fill="lightblue") +
     geom_vline(xintercept = v2, color = 'darkblue') +
     theme_classic()+
-    xlab('overlap proportion mean')+
-    ggtitle(paste0('chrY, p=', round(mean(v2_pm >v2),3)))
+    xlab('Overlap proportion mean')+ ylab('Density') + 
+    ggtitle(paste0('chromosome Y, p=', round(mean(v2_pm >v2),3)))
   
-  pdf(paste0(pdir, path, '/gender/gender_hist_mean_of_overlap_proportion_PmReportedGeneOrder.pdf'), width = 7, height = 3)
+  pdf(paste0(pdir, path, '/gender/gender_hist_mean_of_overlap_proportion_PmReportedGeneOrder.pdf'), width = 5, height = 2.1)
   gridExtra::grid.arrange(p1,p2,nrow=1)
   dev.off()
   
@@ -119,7 +122,7 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
         geom_vline(xintercept = v1, color = 'red') +
         theme_classic()+
         xlab('overlap proportion mean')+
-        ggtitle(paste0('chrX, p=', round(mean(v1_pm > v1),3)))
+        ggtitle(paste0('chromosome X, p=', round(mean(v1_pm > v1),3)))
       
       p2 <- ggplot(data = pd, aes(x=chrY_pm)) + 
         geom_histogram(aes(y=..density..), colour="black", fill="white", stat = )+
@@ -127,8 +130,8 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
         geom_vline(xintercept = v2, color = 'darkblue') +
         theme_classic()+
         xlab('overlap proportion mean')+
-        ggtitle(paste0('chrY, p=', round(mean(v2_pm >v2),3)))
-      pdf(paste0(pdir, path, '/gender/gender_hist_mean_of_overlap_proportion_PmReportedGeneOrder_', i, '.pdf'), width = 7, height = 3)
+        ggtitle(paste0('chromosome Y, p=', round(mean(v2_pm >v2),3)))
+      pdf(paste0(pdir, path, '/gender/gender_hist_mean_of_overlap_proportion_PmReportedGeneOrder_', i, '.pdf'), width = 5, height = 2.6)
       gridExtra::grid.arrange(p1,p2,nrow=1)
       dev.off()
     }
@@ -142,3 +145,4 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
 # v2.lm <- cumsum(allg.lm %in% u2)/seq(1,length(allg.lm))  
 # saveRDS(mean(v1.lm), paste0('hca/real/testvar/result/limma/', path, '/gender_chrX_overlap.rds'))
 # saveRDS(mean(v2.lm), paste0('hca/real/testvar/result/limma/', path, '/gender_chrY_overlap.rds'))
+
