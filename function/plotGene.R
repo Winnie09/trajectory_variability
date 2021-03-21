@@ -18,7 +18,7 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
   
   pseudotime = pseudotime[colnames(expression)]
   cellanno <- cellanno[match(colnames(expression), cellanno[,1]), ]
-  predict.values <- predict.values[, colnames(expression),drop=F]
+  # predict.values <- predict.values[, colnames(expression),drop=F]
   knotnum <- testptObj$knotnum
   knotnum[knotnum==0] <- 1  ## in case the fitting of line would cause bugs
   design <- testptObj[['design']]
@@ -27,7 +27,7 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
   cellanno <- data.frame(Cell = as.character(cellanno[,1]), 
                          Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
   variable.d <- if(is.null(variable)) 1 else variable
-  if (!is.null(variable.text) & exists('variable.d')) {
+  if (!is.null(variable.text) & variable.d != 1) {
     design[,variable.d] <- ifelse(design[, variable.d] == 0, variable.text[1], variable.text[2])
   }
   a <- if (free.scale) 'free' else 'fixed'
@@ -39,11 +39,20 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
                      pseudotime = pseudotime[colnames(expression)])
     pd[, 'Variable'] <- as.factor(pd[ ,'Variable'])
     linedlist <- lapply(unique(cellanno[,2]), function(p){
-      tmpcell <- cellanno[cellanno[,2]==p,1]
-      tmpdf <- data.frame(expr=predict.values[gene,tmpcell], 
-                          Sample=p, 
-                          Variable = design[rownames(design) == p, variable.d], ##
-                          pseudotime=pseudotime[tmpcell])
+      # tmpcell <- cellanno[cellanno[,2]==p,1]
+      tmpcellid <- which(cellanno[,2]==p)
+      if (toupper(testptObj$test.type) == 'TIME'){  ##### add
+        tmpdf <- data.frame(expr=predict.values[gene,tmpcellid], 
+                            Sample=p, 
+                            Variable = design[rownames(design) == p, variable.d], ##
+                            pseudotime=pseudotime[tmpcellid])
+      } else {
+        tmpdf <- data.frame(
+          expr = predict.values[[which(as.numeric(sub('.*_', '', names(predict.values))) == design[p, variable.d])]][gene, tmpcellid],
+          Sample = p,
+          Variable = design[rownames(design) == p, variable.d], ##
+          pseudotime=pseudotime[tmpcellid])
+      }
     })
     ld <- do.call(rbind, linedlist)
     ld[, 'Variable'] <- as.factor(ld[ ,'Variable'])
@@ -96,15 +105,24 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
                        pseudotime = pseudotime[colnames(expression)],
                        Sample = cellanno[match(colnames(expression), cellanno[,1]),2], 
                        Variable = design[match(cellanno[,2], rownames(design)), variable.d],
-                       g = g)
+                       g = g, stringsAsFactors = F)
       pdlist[[g]] <- pd
       linedlist <- lapply(unique(testptObj$cellanno[,2]), function(p){
-        tmpcell <- cellanno[cellanno[,2]==p, 1]
-        tmpdf <- data.frame(expr=predict.values[g,tmpcell], 
-                            pseudotime=pseudotime[tmpcell], 
-                            Sample=p, 
-                            Variable = design[rownames(design) == p, variable.d],
-                            g=g)
+        tmpcellid <- which(cellanno[,2]==p) 
+        if (toupper(testptObj$test.type) == 'TIME'){  ##### add
+          tmpdf <- data.frame(expr=predict.values[g,tmpcellid], 
+                              pseudotime=pseudotime[tmpcellid],
+                              Sample=p, 
+                              Variable = design[rownames(design) == p, variable.d], 
+                              g = g, stringsAsFactors = F)
+        } else {
+          tmpdf <- data.frame(
+            expr = predict.values[[which(as.numeric(sub('.*_', '', names(predict.values))) == design[p, variable.d])]][g, tmpcellid],
+            pseudotime=pseudotime[tmpcellid],
+            Sample = p,
+            Variable = design[rownames(design) == p, variable.d], 
+            g = g, stringsAsFactors = F)
+        }
       })
       ld = do.call(rbind, linedlist)
       ldlist[[g]] <- ld
@@ -117,6 +135,11 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
     if (!is.na(sep)) {
       pd$g <- gsub(sep, '', pd$g)
       ld$g <- gsub(sep, '', ld$g)
+      pd$g <- factor(pd$g, levels = gsub(sep, '', gene))
+      ld$g <- factor(ld$g, levels = gsub(sep, '', gene))
+    } else {
+      pd$g <- factor(pd$g, levels = gene)
+      ld$g <- factor(ld$g, levels = gene)
     }
     if (is.null(variable)){
       if (plot.point){
