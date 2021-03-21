@@ -137,9 +137,6 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     names(col.clu) = unique(clu)
   }
   
-  
-  
-  
   if (is.null(colann)| is.null(annotation_colors)){
     if (type == 'variable'){
       col.DEGType = brewer.pal(8, 'Set3')[1:length(unique(res$DEGType))]
@@ -184,22 +181,21 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     annotation_colors = annotation_colors,
     cellwidth = cellWidthTotal / ncol(expr.scale),
     cellheight = cellHeightTotal / nrow(expr.scale),
-    border_color = 'white') ## , silent = TRUE
+    border_color = NA) ## , silent = TRUE
   plist[[1]] <- p1[[4]] 
   
   ## --------------------
   ## plot fitting values
   ## --------------------
   if (type == 'variable'){
-    colann.fit1 <-data.frame(pseudotime = testobj$pseudotime,
-                             group = 'NA', 
-                             expression = 'ModeledGroupDiff',
-                             stringsAsFactors = F)
-    colann.fit2 <-data.frame(pseudotime = rep(testobj$pseudotime, length(fit)),
+    colann.fit1 <-data.frame(pseudotime = rep(testobj$pseudotime, length(fit)),
                              group = gsub(sub('_.*', '_', names(fit)[1]),'',sub(';.*', '', colnames(fit.scale))), 
                              expression = 'ModelFitted',
                              stringsAsFactors = F)
-    
+    colann.fit2 <-data.frame(pseudotime = testobj$pseudotime,
+                             group = 'NA', 
+                             expression = 'ModeledGroupDiff',
+                             stringsAsFactors = F)
     colann.fit <- rbind(colann.fit1, colann.fit2)
     
   } else if (type == 'time'){
@@ -235,7 +231,7 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
   
   # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
-  plot(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
+  print(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
   # dev.off()
   
 }  
