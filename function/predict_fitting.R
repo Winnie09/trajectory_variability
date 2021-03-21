@@ -19,17 +19,17 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
   names(philist) <- as.character(sort(unique(knotnum)))
   as <- row.names(design)
   sname <- sapply(as,function(i) cellanno[cellanno[,2]==i,1],simplify = F)
-
+  
   pred <- lapply(unique(knotnum), function(num.knot){
     genesub <- names(knotnum)[knotnum == num.knot]
     B <- t(sapply(genesub, function(g){
-    testObj$parameter[[g]]$beta
-  }))
-  
+      testObj$parameter[[g]]$beta
+    }))
+    
     omega <- t(sapply(genesub, function(g){
-    testObj$parameter[[g]]$omega
-  }))
-  
+      testObj$parameter[[g]]$omega
+    }))
+    
     phi <- philist[[as.character(num.knot)]]
     phi <- sapply(as,function(ss) phi[sname[[ss]],],simplify = F)
     
@@ -73,8 +73,16 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
   })
   pred <- do.call(rbind, pred)
   pred <- pred[gene, colnames(expr), drop=FALSE]
-  if ('populationFit' %in% names(Res))  populationFit = Res$populationFit else 
-  populationFit <- getPopulationFit(testObj,gene, type = testObj$test.type)
-  return( pred + populationFit[gene, , drop=F] )
+  if ('populationFit' %in% names(testObj))  populationFit = testObj$populationFit else 
+    populationFit <- getPopulationFit(testObj,gene, type = testObj$test.type)
+  if (test.type == 'time' | test.type == 'Time'){
+    return( pred + populationFit[gene, , drop=F] )
+  } else {
+    l <- lapply(populationFit, function(i){
+      pred + i[gene, , drop=F] 
+    })
+    return(l)
+  }
+  
 }
 
