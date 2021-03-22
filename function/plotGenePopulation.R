@@ -7,7 +7,10 @@ plotGenePopulation <- function(testobj,
                                free.scale = TRUE,
                                palette = 'Dark2', 
                                ncol = NA,
-                               subSampleNumber = NA){
+                               subSampleNumber = NA,
+                               line.size = 1, 
+                               facet.grid = F,
+                               axis.text.blank = F){
   ## testobj: object returned from testpt(). 
   ## gene: a character vector of gene names. It can be of length 1 or > 1.
   ## variable: a character (within the column names in design matrix) to get population pattern. If variable == NA, then return testtime fit. Other wise return testvar fit with the variable.
@@ -32,9 +35,19 @@ plotGenePopulation <- function(testobj,
       ylab('Expression') +
       labs(color = '')
     if (is.na(ncol)){
-      p <- p + facet_wrap(~gene, nrow = nrow, scales = a)
+      if (facet.grid){
+        p <- p + facet.grid(~gene, nrow = nrow, scales = a)
+      } else {
+        p <- p + facet_wrap(~gene, nrow = nrow, scales = a)
+      }
+        
     } else {
-      p <- p + facet_wrap(~gene, ncol = ncol, scales = a)
+      if (facet.grid){
+        p <- p + facet_grid(~gene, ncol = ncol, scales = a)
+      } else {
+        p <- p + facet_wrap(~gene, ncol = ncol, scales = a)
+      }
+        
     }
   } else {
     if (is.na(gene)) gene <- rownames(fit[[1]])
@@ -63,11 +76,11 @@ plotGenePopulation <- function(testobj,
     pd$gene <- as.factor(pd$gene)
     
     p <- ggplot(data= pd, aes(x = pseudotime, y = expression, group = type, color = type)) + 
-      geom_line() +
+      geom_line(size = line.size) +
       theme_classic() +
       xlab('Pseudotime') +
       ylab('Expression') +
-      labs(color = '')
+      labs(color = '') 
     if (is.na(ncol)){
       p <- p + facet_wrap(~gene, nrow = nrow, scales = a)
     } else {
@@ -82,6 +95,11 @@ plotGenePopulation <- function(testobj,
   
   if (!is.na(ylim)[1]) p <- p + ylim(ylim)
   if (!is.na(xlim)[1]) p <- p + xlim(xlim)
+  if (axis.text.blank) {
+    p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
+  } else {
+    p <- p + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
+  }
   print(p)
 }
 
