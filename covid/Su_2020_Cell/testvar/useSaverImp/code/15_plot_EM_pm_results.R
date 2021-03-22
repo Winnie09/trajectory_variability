@@ -6,8 +6,8 @@ source('function/01_function.R')
 ddir <- 'covid/Su_2020_Cell/testvar/useSaverImp/result/'
 test.method = 'EM_pm'
 # for (comparison in c('HD_Se', 'HD_Mi','Mod_Se','HD_Mod', 'Se_Mi', 'Recovered_Deceased')){
-for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method))){
-# for (comparison in c('Se_Mi','Mod_Mi',  'Recovered_Deceased')){
+# for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method))){
+for (comparison in c('Se_Mi','Mod_Mi',  'Recovered_Deceased')){
   print(comparison)
   rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method, '/', comparison, '/')
   pdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/plot/', test.method, '/', comparison, '/')
@@ -41,18 +41,35 @@ for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/res
   sink()
   
   clu <- clusterGene(Res, gene = names(DEGType)[!DEGType %in% c('nonDEG', 'meanSig')], type = 'variable', k=5)
-  clu2 <- rep(6, sum(DEGType == 'meanSig'))
-  if (length(clu2) > 0) {
-    names(clu2) <- names(DEGType)[DEGType %in% c('meanSig')]
-    clu <- c(clu, clu2)
-  }
+  # clu2 <- rep(6, sum(DEGType == 'meanSig'))
+  # if (length(clu2) > 0) {
+  #   names(clu2) <- names(DEGType)[DEGType %in% c('meanSig')]
+  #   clu <- c(clu, clu2)
+  # }
+  design = Res$design
+  cellanno = Res$cellanno
+  meandiff <- sapply(c(0,1), function(i){
+    as <- rownames(design[design[,2]==i, ])
+    rowMeans(Res$expr.ori[names(DEGType)[DEGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1]])
+  })
+  
+  large0 <- rownames(meandiff)[meandiff[,1] >= meandiff[,2]]
+  large1 <- rownames(meandiff)[meandiff[,1] < meandiff[,2]]
+  
+  clu2 <- rep(6, length(large0))
+  names(clu2) <- large0
+  clu3 <- rep(7, length(large1))
+  names(clu3) <- large1
+  clu = c(clu, clu2, clu3)
   Res$cluster <- clu
+  saveRDS(Res, paste0(rdir, paste0('numeric_res_with_clu.rds')))
   ## --------------
   ## save diff gene
   ## --------------
   allg <- diffgene
   res <- data.frame(gene = allg, statistics[allg, ], cluster = Res$cluster[allg], stringsAsFactors = F)
   res <- res[order(res[, grep('^fdr.*overall$', colnames(res))]), ]
+  res <- cbind(res, DEGType = DEGType[rownames(res)])
   write.csv(res, paste0(pdir, 'differential_genes.csv'))
   
   ## ----------------
@@ -90,10 +107,9 @@ for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/res
   ## -----------------------
   ## plotClusterMeanAndDiff
   ## -----------------------
-  pdf(paste0(pdir, 'cluster_mean_and_diff.pdf'), width = 4, height = 5.5)
+  pdf(paste0(pdir, 'cluster_mean_and_diff.pdf'), width = 3.8, height = 7.5)
   print(plotClusterMeanAndDiff(Res, cluster = Res$cluster))
   dev.off()
-  
   
   # --------------------------------------
   # compare original and fitted expression
@@ -107,8 +123,8 @@ for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/res
   # dev.off()
   
   
-  png(paste0(pdir, 'DiffFitHm.png'),width = 4000,height = 2200,res = 300)
-  plotDiffFitHm(Res, type = 'variable')
+  png(paste0(pdir, 'DiffFitHm.png'),width = 4000,height = 2200,res = 200)
+  plotDiffFitHm(Res, type = 'variable', cellWidthTotal = 200, cellHeightTotal = 300)
   dev.off()
   
   # png(paste0(pdir, 'DiffFitHm_rownames.png'),width = 12000,height = 10000,res = 300)
@@ -118,42 +134,35 @@ for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/res
   ## ----------
   ## plot DEG 
   ## ----------
-  DEGType <- DEGType[diffgene]
-  id <- sort(sample(1:ncol(Res$populationFit[[1]]), ncol(Res$expr.ori)))
-  Res$populationFit[[1]] <- Res$populationFit[[1]][, id]
-  Res$populationFit[[2]] <- Res$populationFit[[2]][, id]
-  
-  # for (i in unique(DEGType)){  ## debug !!!!!
+  # DEGType <- DEGType[diffgene]
+  # id <- sort(sample(1:ncol(Res$populationFit[[1]]), ncol(Res$expr.ori)))
+  # Res$populationFit[[1]] <- Res$populationFit[[1]][, id]
+  # Res$populationFit[[2]] <- Res$populationFit[[2]][, id]
+  # 
+  # for (i in unique(DEGType)){  ## debug -- ok!!
   #   print(i)
   #   gene <- names(DEGType)[DEGType == i]
-  #   png(paste0(pdir, 'diffgene_sampleFit_', i, '.png'), width = 2500, height = 2500, res = 200)
-  #   print(plotGene(Res, gene = gene[1:min(length(gene), 100)], plot.point = T))
+  #   png(paste0(pdir, 'diffgene_sampleFit_', i, '.png'), width = 4000, height = 2500, res = 200)
+  #   print(plotGene(Res, gene = gene[1:min(length(gene), 25)], plot.point = T, point.size = 0.1, variable = 'type'))
   #   dev.off()
   # }
-  
-  for (i in unique(DEGType)){
-    print(i)
-    gene <- names(DEGType)[DEGType == i]
-    png(paste0(pdir, 'diffgene_groupFit_', i, '.png'), width = 2500, height = 2500, res = 200)
-    print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
-    dev.off()
-  } 
-  
-  for (i in 1:max(Res$cluster)){
-    print(i)
-    gene <- rownames(res)[res$cluster == i]
-    png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
-    print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
-    dev.off()
-  }
-  
+  # 
+  # for (i in unique(DEGType)){
+  #   print(i)
+  #   gene <- names(DEGType)[DEGType == i]
+  #   png(paste0(pdir, 'diffgene_groupFit_', i, '.png'), width = 2500, height = 2500, res = 200)
+  #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
+  #   dev.off()
+  # } 
+  # 
   # for (i in 1:max(Res$cluster)){
   #   print(i)
   #   gene <- rownames(res)[res$cluster == i]
-  #   png(paste0(pdir, 'diffgene_groupDiff_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
-  #   print(plotClusterDiff(testobj = Res, gene = gene[1:min(length(gene), 100)], each = TRUE, sep = ':.*'))
+  #   png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
+  #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
   #   dev.off()
   # }
+  
 }
 
 
