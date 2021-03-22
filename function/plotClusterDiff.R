@@ -31,7 +31,7 @@ if (each){
   colnames(pd) <- c('pseudotime', 'cluster', 'covariateGroupDiff')
   pd$cluster <- factor(pd$cluster)
   p <- ggplot(data = pd) + geom_line(aes(x = pseudotime, y = covariateGroupDiff, color = cluster))+
-    theme_classic()
+    theme_classic() + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
   if (length(unique(pd$cluster)) < 8){
     p <- p + scale_color_brewer(palette = 'Dark2')
   } else {
