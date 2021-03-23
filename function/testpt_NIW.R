@@ -1,4 +1,4 @@
-# ncores=detectCores(); test.type='Variable';test.method = 'permutation'
+# ncores=detectCores(); test.type='Time';test.method = 'permutation'
 # permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1) {
   ## test.type = c('Time', 'Variable')
@@ -17,11 +17,11 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     m <- rowMeans(tmp)
     rowMeans(tmp*tmp)-m*m
   })==0
-  gid <- which(rowSums(sdm) > 0)
-  if (length(gid) > 0) {
+  gid <- which(rowSums(sdm) > 0)  ## identify if any genes have sd=0 expression in any one of the samples
+  if (length(gid) > 0) { ## if yes, for those genes, add a white-noise with sd=1e-5 on the sample with sd=0.
     mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
     colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
-    expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr)),nrow=length(gid))
+    expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr),sd=1e-5),nrow=length(gid))
     rm('mask')  
   }
   # if (demean){
@@ -35,7 +35,6 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   # } else {
   #   expr <- expr.ori
   # }
-  
   if (test.method == 'chisq'){
     res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 1)##save 13%
     ll1 <- sapply(res1$parameter,function(i) i$ll)
