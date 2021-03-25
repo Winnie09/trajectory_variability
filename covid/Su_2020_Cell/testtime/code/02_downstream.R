@@ -76,11 +76,39 @@ png(paste0(pdir, 'fitHm_rownames.png'),width = 12000,height = 10000,res = 200)
 print(plotFitHm(Res, showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 10))
 dev.off()
 
+## plot example genes
+
+tb = read.csv('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testtime/plot/EM_pm/marked_DEG_red_chen.csv')
+str(tb)
+examplegene = tb[,1]
+examplegene = names(sort(Res$cluster[tb[,1]]))
+
+png(paste0(pdir, 'examplegene_sampleFit_all.png'), res = 200, width = 4000, height = 2000)
+plotGene(Res, examplegene, plot.point = T, point.size = 0.05, point.alpha = 0.5, line.size = 0.5, line.alpha = 0.8, axis.text.blank = F)
+dev.off()
+
+png(paste0(pdir, 'examplegene_populationFit_all.png'), res = 100, width = 1000, height = 1000)
+plotGenePopulation(Res, examplegene, facet.grid = T, axis.text.blank = T)
+dev.off()
 
 
+# gene <- c('TCF7', 'SELL', 'JUNB', 'NFKBIA', 'CD7', 'GZMA', 'CCL5', 'GZMB', 'GNLY')
+# png(paste0(pdir, 'examplegene_sampleFit.png'), res = 300, width = 4500, height = 1300)
+# plotGene(Res, gene, plot.point = T, point.size = 0.05, point.alpha = 0.5, line.size = 0.5, line.alpha = 0.8, axis.text.blank = F, free.scale = F)
+# dev.off()
+# 
+
+# png(paste0(pdir, 'examplegene_populationFit.png'), res = 300, width = 1300, height = 1000)
+# plotGenePopulation(Res, gene, axis.text.blank = F, free.scale = F, line.size = 2)
+# dev.off()
 
 
+gene <- c('TCF7', 'SELL', 'JUNB', 'CD7', 'GZMA', 'CCL5', 'GZMB', 'GNLY')
+png(paste0(pdir, 'examplegene_sampleFit.png'), res = 300, width = 4900, height = 900)
+plotGene(Res, gene, plot.point = T, point.size = 0.05, point.alpha = 0.5, line.size = 0.5, line.alpha = 0.8, axis.text.blank = F, free.scale = F, ncol = 4)
+dev.off()
 
-
-
+png(paste0(pdir, 'examplegene_populationFit.png'), res = 300, width = 2000, height = 800)
+plotGenePopulation(Res, gene, axis.text.blank = F, free.scale = F, line.size = 2, ncol = 4)
+dev.off()
 
