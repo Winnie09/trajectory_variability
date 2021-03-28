@@ -1,7 +1,8 @@
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/data/HCA/')
+# setwd('/Users/wenpinhou/Dropbox/trajectory_variability/hca/data/HCA/')
 library(Seurat)
 set.seed(12345)
-integrated <- readRDS('./proc/integrate/umap.rds')
+integrated <- readRDS('./proc/integrate/ser/umap.rds')
 resolution = 0.1
 d <- FindNeighbors(integrated, reduction='umap',dims=1:2)
 d <- FindClusters(d,resolution=resolution)
@@ -32,15 +33,20 @@ p1<- ggplot() + geom_point(data=pd1,aes(x=x,y=y,col=ct),alpha=0.5,size=0.2) +
   # geom_segment(data=ap,aes(x=x,y=y,xend=xend,yend=yend),size=1,color='brown') + 
   geom_text(data=clucenter,aes(x=x,y=y,label=cluster),size=7) + 
   guides(color = guide_legend(override.aes = list(size = 4,alpha=1)))+
-  theme_classic() + theme(legend.title = element_blank()) +
+  theme_classic() + theme(legend.title = element_blank(), 
+                          axis.title = element_text(size = 15),
+                          legend.key.size = unit(2,'pt')) +
   xlab('UMAP1') + ylab('UMAP2')
 p2<- ggplot() + geom_point(data=pd1,aes(x=x,y=y,col=clu),alpha=0.5,size=0.2) + 
   geom_text(data=clucenter,aes(x=x,y=y,label=cluster),size=7) + 
   guides(color = guide_legend(override.aes = list(size = 4,alpha=1)))+
-  theme_classic() + theme(legend.title = element_blank()) +
+  theme_classic() + theme(legend.title = element_blank(), 
+                          axis.title = element_text(size = 15),
+                          legend.key.size = unit(2,'pt')) +
   xlab('UMAP1') + ylab('UMAP2')
 ggsave('./plot/pseudotime.png',
        grid.arrange(p1,p2,nrow=1),
-       width=12,height=5,
+       width=10,height=4,
        dpi=200)
+
 
