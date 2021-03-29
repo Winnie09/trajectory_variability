@@ -16,7 +16,7 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
       for (i in 1:length(fit)){
         fit[[i]] <- fit[[i]][, id]
       }
-      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id]) ## add FitDiff.scale
+      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id, drop=F]) ## add FitDiff.scale
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
       testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
       rownames(testobj$cellanno) <- testobj$cellanno[,1]
