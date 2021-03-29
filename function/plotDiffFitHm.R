@@ -8,31 +8,47 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   fit <- testobj$populationFit
   
   if (subsampleCell){
-    if (type == 'time'){
+    if (toupper(type) == 'TIME'){
       id <- round(seq(1, ncol(fit), length.out = numSubsampleCell))
       fit <- fit[, id]
-    } else if (type == 'variable'){
+    } else if (toupper(type) == 'VARIABLE'){
       id <- round(seq(1, ncol(fit[[1]]), length.out = numSubsampleCell))
       for (i in 1:length(fit)){
         fit[[i]] <- fit[[i]][, id]
       }
-      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id, drop=F]) ## add FitDiff.scale
+      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id,drop=F]) ## add FitDiff.scale
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
       testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
-      rownames(testobj$cellanno) <- testobj$cellanno[,1]
-      testobj$cellanno <- testobj$cellanno[names(testobj$pseudotime), ]
-      testobj$expr.ori <- testobj$expr.ori[, names(testobj$pseudotime)]
+    
+        
+    }
+    print('subsample done!')
+  } else {
+    if (toupper(type) == 'VARIABLE'){
+      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff)
+      colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
       
     }
   }
-  print('subsample done!')
+  
   fit.bak = fit
   clu <- testobj$cluster
   if (type == 'variable'){
-    if ('DEGType' %in% names(testobj)) 
+    
+      rownames(testobj$cellanno) <- testobj$cellanno[,1]
+      testobj$cellanno <- testobj$cellanno[names(testobj$pseudotime), ]
+      if ('expr.ori' %in% names(testobj)){
+        testobj$expr <- testobj$expr.ori[, names(testobj$pseudotime)]
+      } else {
+        testobj$expr <- testobj$expr[, names(testobj$pseudotime)]
+      }
+    
+    if ('DEGType' %in% names(testobj)) {
       DEGType <- testobj$DEGType
-    else 
+    } else {
       DEGType <- getDEGType(testobj) 
+    }
+      
     fit.scale <- do.call(cbind, fit)
     fit.scale <- fit.scale[names(testobj$cluster), ]
     fit.scale <- scalematrix(fit.scale)
@@ -60,7 +76,7 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   ## plot original expression 
   ## ------------------------
   cellanno <- testobj$cellanno
-  expr = testobj$expr.ori
+  expr = testobj$expr
   expr <- expr[, names(testobj$pseudotime)]
   
   if (type == 'variable'){
@@ -181,18 +197,18 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     annotation_colors = annotation_colors,
     cellwidth = cellWidthTotal / ncol(expr.scale),
     cellheight = cellHeightTotal / nrow(expr.scale),
-    border_color = NA) ## , silent = TRUE
+    border_color = NA, silent = TRUE)
   plist[[1]] <- p1[[4]] 
   
   ## --------------------
   ## plot fitting values
   ## --------------------
   if (type == 'variable'){
-    colann.fit1 <-data.frame(pseudotime = rep(testobj$pseudotime, length(fit)),
+    colann.fit1 <-data.frame(pseudotime = rep(1:ncol(fit[[1]]), length(fit)),
                              group = gsub(sub('_.*', '_', names(fit)[1]),'',sub(';.*', '', colnames(fit.scale))), 
                              expression = 'ModelFitted',
                              stringsAsFactors = F)
-    colann.fit2 <-data.frame(pseudotime = testobj$pseudotime,
+    colann.fit2 <-data.frame(pseudotime = seq(1, ncol(FitDiff.scale)),
                              group = 'NA', 
                              expression = 'ModeledGroupDiff',
                              stringsAsFactors = F)
@@ -226,12 +242,12 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     annotation_colors = annotation_colors,
     cellwidth = cellWidthTotal*1.23 / ncol(fit.scale),
     cellheight = cellHeightTotal / nrow(fit.scale),
-    border_color = NA) ## , silent = TRUE
+    border_color = NA, silent = TRUE)
   plist[[3]] <- p2[[4]] 
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
   
   # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
-  print(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
+  grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1))
   # dev.off()
   
 }  
