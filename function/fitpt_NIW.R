@@ -19,10 +19,12 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   
   philist <- lapply(0:maxknotallowed,function(num.knot) {
     if (num.knot==0) {
-      phi <- cbind(1,bs(pseudotime))
+      # phi <- cbind(1,bs(pseudotime))
+      phi <- bs(pseudotime, intercept = TRUE)
     } else {
       knots = seq(min(pseudotime),max(pseudotime),length.out=num.knot+2)[2:(num.knot+1)]
-      phi <- cbind(1,bs(pseudotime,knots = knots))  
+      # phi <- cbind(1,bs(pseudotime,knots = knots))  
+      phi <- bs(pseudotime,knots = knots, intercept = TRUE)
     }
   })
   names(philist) <- as.character(0:maxknotallowed)
@@ -99,9 +101,15 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
         kronecker(diag(num.knot + 4), design[i, 1, drop = F])
       }, simplify = F)
     } else if (model == 2) {
-      xs <- sapply(row.names(design), function(i) {
-        tmp <- kronecker(diag(num.knot + 4), design[i, ])
+      # xs <- sapply(row.names(design), function(i) {
+      #   tmp <- kronecker(diag(num.knot + 4), design[i, ])
+      #   tmp <- tmp[-seq(4, nrow(tmp), 2), ]
+      # }, simplify = F)
+      xs <- sapply(row.names(design), function(i) {  ## change X
+        tmp <- kronecker(diag(num.knot + 4), c(1,1))
         tmp <- tmp[-seq(4, nrow(tmp), 2), ]
+        tmp[1,] <- design[i,2]
+        tmp
       }, simplify = F)
     } else if (model == 3) {
       xs <- sapply(row.names(design), function(i) {
@@ -258,6 +266,4 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   }
   list(parameter=para[rownames(expr)],knotnum=knotnum[rownames(expr)])
 }
-
-
 
