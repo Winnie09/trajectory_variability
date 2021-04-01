@@ -15,7 +15,6 @@ selgene3 <- readRDS(paste0(ddir, '/data/selgene/selgene3.rds'))
 
 for (dataType in seq(1, 4)) {
   print(dataType)
-  
   rdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/EM_pm/',dataType)
   pdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/plot/EM_pm/', dataType)
   dir.create(rdir, showWarnings = F, recursive = T)
@@ -36,41 +35,14 @@ for (dataType in seq(1, 4)) {
   Res$populationFit <- fit
   fit.bak = fit
   Res$covariateGroupDiff <- getCovariateGroupDiff(testobj = Res, gene = diffgene)
-  Res$cluster <- clusterGene(Res, gene = diffgene, type = 'variable', k=5)
+  
+  Res$cluster <- clusterGene(Res, gene = diffgene, type = 'variable', k=7)
   clu <- Res$cluster
   saveRDS(clu, paste0(pdir, '/cluster.rds')) ##########
   saveRDS(Res, paste0(pdir, '/Res_with_clu.rds'))
-  # fit = fit[,1:(ncol(fit.bak)/2)]
   
-  # allg <- rownames(res[res[,7] < 0.05, ])
-  # allg.p <- allg[1:min(length(allg), 25)]
-  # diffType <- getDiffType(Res)
-  # diffType <- diffType[allg]
-  # # pdf(
-  # #   paste0(pdir, '/diffgene_population_fit.pdf'),
-  # #   width = 10,
-  # #   height = 10
-  # # )
-  # # plotGenePopulation(Res, allg.p, type = 'variable')
-  # # dev.off()
-  # pdf(paste0(pdir, '/diffgene_by_sample.pdf'),
-  #     width = 10,
-  #     height = 10)
-  # plotGene(Res, allg.p)
-  # dev.off()
-  # pdf(paste0(pdir, '/diffgene_by_group.pdf'),
-  #     width = 10,
-  #     height = 10)
-  # plotGene(Res, allg.p, variable = 'group')
-  # dev.off()
-  # 
-  # 
-  # clu <- readRDS(paste0(rdir, '/cluster.rds'))
-  # str(clu)
-  # str(fit)
-  # 
-  DEGType <- getDEGType(Res)
-  DEGType <- DEGType[names(clu)]
+  DDGType <- getDDGType(Res)
+  DDGType <- DDGType[names(clu)]
   fit.scale <- do.call(cbind, fit)
   fit.scale <- fit.scale[names(clu), ]
   fit.scale <- scalematrix(fit.scale)
@@ -78,7 +50,7 @@ for (dataType in seq(1, 4)) {
   colnames(fit.scale) <- seq(1, ncol(fit.scale))
   
   res <- data.frame(clu = clu, 
-                    DEGType = DEGType[names(clu)],
+                    DDGType = DDGType[names(clu)],
                     cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))))
   res$signalType <- sapply(rownames(res), function(i) {
     if (i %in% selgene1){
@@ -96,52 +68,19 @@ for (dataType in seq(1, 4)) {
   str(meanres)
   meanDiffTest <- ifelse(meanres[rownames(fit.scale), 5] < 0.05, 'Diff', 'nonDiff')
   names(meanDiffTest) <- rownames(fit.scale)
-  ## ------------------------
-  ## plot original expression 
-  ## ------------------------
-  cellanno <- Res$cellanno
-  if ('expr.ori' %in% names(Res)){
-    expr = Res$expr.ori
-  } else {
-    expr = Res$expr
-  }
-    
-  expr <- expr[, names(Res$pseudotime)]
-  # expr.scale <-
-  #   cbind(scalematrix(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(Res$design[Res$design[, 2] == 0, ]), 1]]),
-  #         scalematrix(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(Res$design[Res$design[, 2] == 1, ]), 1]]))
-  expr.scale <-
-    cbind(expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(Res$design[Res$design[, 2] == sub('.*_','',names(fit)[1]), ]), 1]],
-          expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(Res$design[Res$design[, 2] == sub('.*_','',names(fit)[2]), ]), 1]])
-  
-  ## plot ------------------------
-  expr.scale[expr.scale > quantile(as.vector(expr.scale), 0.98)] <-
-    quantile(as.vector(expr.scale), 0.98)
-  expr.scale[expr.scale < quantile(as.vector(expr.scale), 0.08)] <-
-    quantile(as.vector(expr.scale), 0.02)
-  fit.scale[fit.scale > quantile(as.vector(fit.scale), 0.98)] <-
-    quantile(as.vector(fit.scale), 0.98)
-  fit.scale[fit.scale < quantile(as.vector(fit.scale), 0.02)] <-
-    quantile(as.vector(fit.scale), 0.02)
-  ### annotate rows and columns
-  colann <- data.frame(sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
-                       pseudotime = Res$pseudotime[colnames(expr.scale)],
-                       addsignal = ifelse(Res$design[cellanno[match(colnames(expr.scale), cellanno[, 1]), 2], 2] == 1, 'Yes', 'No'),
-                       stringsAsFactors = F)
-  rownames(colann) = colnames(expr.scale)
   
   rowann = data.frame(
     cluster = as.character(clu),
     signalType = sapply(names(clu), function(i){
       if (i %in% selgene1){
-        'trendOnly'
+        'trend only'
       } else if (i %in% selgene2){
-        'meanOnly'
+        'mean only'
       } else {
-        'trend &mean'
+        'both'
       }
     }),
-    DEGType = DEGType[names(clu)], 
+    DDGType = DDGType[names(clu)], 
     limmaPb = meanDiffTest[names(clu)],
     gs = sapply(names(clu), function(i)
       ifelse(i %in% selgene, 'Yes', 'No')),
@@ -149,101 +88,6 @@ for (dataType in seq(1, 4)) {
   )
   rownames(rowann) = names(clu)
   rowann <- rowann[rownames(fit.scale), ]
-  #### define colors
-  col.sample = colorRampPalette(rev(brewer.pal(n = 8, name = "Set1")))(length(unique(colann$sample)))
-  names(col.sample) = unique(colann$sample)
-  col.pseudotime = colorRampPalette(brewer.pal(n = 9, name = "YlGnBu"))(length(unique(colann$pseudotime)))
-  names(col.pseudotime) = unique(colann$pseudotime)
-  col.addsignal <-
-    brewer.pal(n = 8, name = "Pastel1")[1:length(unique(colann$addsignal))]
-  names(col.addsignal) <- sort(unique(colann$addsignal))
-  col.clu = colorRampPalette(brewer.pal(8, 'Set1'))(max(clu))
-  names(col.clu) = unique(clu)
-  col.DEGType = colorRampPalette(brewer.pal(8, 'Set1'))(length(unique(DEGType)))
-  names(col.DEGType) <- unique(DEGType)
-  col.signalType <-
-    brewer.pal(n = 8, name = "Pastel1")[1:length(unique(rowann$signalType))]
-  names(col.signalType) <- sort(unique(rowann$signalType))
-  col.gs <-
-    brewer.pal(n = 8, name = "Pastel1")[1:length(unique(rowann$gs))]
-  names(col.gs) <- sort(unique(rowann$gs))
-  col.meanDiffTest <-
-    brewer.pal(n = 8, name = "Pastel1")[1:length(unique(rowann$meanDiffTest))]
-  names(col.meanDiffTest) <- sort(unique(rowann$meanDiffTest))
-  #### save png
-  cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
-  png(
-    paste0(pdir, '/hm_kmeans_original_expression_scale.png'),
-    width = 2100,
-    height = 3200,
-    res = 300
-  )
-  pheatmap(
-    expr.scale,
-    cluster_rows = F,
-    cluster_cols = FALSE,
-    show_rownames = F,
-    show_colnames = FALSE,
-    color = cpl,
-    annotation_col = colann,
-    annotation_row = rowann,
-    annotation_colors = list(
-      sample = col.sample,
-      pseudotime = col.pseudotime,
-      addsignal = col.addsignal,
-      cluster = col.clu,
-      DEGType = col.DEGType,
-      gs = col.gs,
-      signalType = col.signalType,
-      meanDiffTest = col.meanDiffTest
-    ),
-    cellwidth = 250 / ncol(expr.scale),
-    cellheight = 450 / nrow(expr.scale),
-    border_color = NA
-  )
-  dev.off()
-  ## --------------------
-  ## plot fitting values
-  ## --------------------
-  colann <-
-    data.frame(pseudotime = rep(seq(1, ncol(fit.scale)/length(fit)), length(fit)),
-               addsignal = rep(c('Yes', 'No'), each = ncol(fit.scale) / length(fit)),
-               stringsAsFactors = F)
-  rownames(colann) = colnames(fit.scale)
-  
-  col.addsignal <-
-    brewer.pal(n = 8, name = "Pastel1")[1:length(unique(colann$addsignal))]
-  names(col.addsignal) <- unique(colann$addsignal)
-  
-  png(
-    paste0(pdir, '/hm_kmeans_population_fit_scale.png'),
-    width = 2100,
-    height = 3200,
-    res = 300
-  )
-  pheatmap(
-    fit.scale,
-    cluster_rows = F,
-    cluster_cols = FALSE,
-    show_rownames = FALSE,
-    show_colnames = FALSE,
-    color = cpl,
-    annotation_col = colann,
-    annotation_row = rowann,
-    annotation_colors = list(
-      pseudotime = col.pseudotime,
-      addsignal = col.addsignal,
-      cluster = col.clu,
-      DEGType = col.DEGType,
-      signalType = col.signalType,
-      gs = col.gs,
-      meanDiffTest = col.meanDiffTest
-    ),
-    cellwidth = 250 / ncol(fit.scale),
-    cellheight = 450 / nrow(fit.scale),
-    border_color = NA
-  )
-  dev.off()
   
   png(
     paste0(pdir, '/hm_kmeans_population_difffit_scale.png'),
@@ -254,7 +98,6 @@ for (dataType in seq(1, 4)) {
   )
   plotDiffFitHm(Res, type='variable', rowann = rowann)
   dev.off()
-  
 }
 
 
