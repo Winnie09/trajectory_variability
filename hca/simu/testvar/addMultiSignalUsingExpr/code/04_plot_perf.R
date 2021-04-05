@@ -105,41 +105,43 @@ pd <- readRDS('hca/simu/testvar/addMultiSignalUsingExpr/result/perf/perf_meanOnl
 pd[,2] <- as.character(pd[,2])
 pd1 <- pd[pd[,2]!='EM_chisq', ]
 
-pd1$comparison = 'meanOnly'
+pd1$comparison = 'mean only'
 pd <- readRDS('hca/simu/testvar/addMultiSignalUsingExpr/result/perf/perf_trendOnly.rds')
 pd[,2] <- as.character(pd[,2])
 pd2 <- pd[pd[,2]!='EM_chisq', ]
 
-pd2$comparison = 'trendOnly'
+pd2$comparison = 'trend only'
 pd <- readRDS('hca/simu/testvar/addMultiSignalUsingExpr/result/perf/perf_trendMean.rds')
 pd[,2] <- as.character(pd[,2])
 pd3 <- pd[pd[,2]!='EM_chisq', ]
 
-pd3$comparison = 'trendMean'
+pd3$comparison = 'trend & mean'
 pd <- rbind(pd0, pd1,pd2,pd3)
 pd <- pd[pd[,2]!='TSCAN', ]
-pd$comparison <- factor(pd$comparison, levels = c('overall', 'trendOnly', 'trendMean','meanOnly'))
+pd$comparison <- factor(pd$comparison, levels = c('overall', 'trend only', 'trend & mean','mean only'))
 pd[pd[,2] == 'EM_pm', 2] <- 'Lamian' ## method name
 
-pdf(paste0(pdir, 'compare_fdr_diff_all.pdf'),width=7,height=2.8)
+pdf(paste0(pdir, 'compare_fdr_diff_all.pdf'),width=5.5,height=2.8)
 ggplot(pd, aes(x = SignalStrength, y = Fdr.Diff, color=Method)) + 
   geom_point(size=3)  + 
   geom_line(size=1) + 
   theme_bw() + 
   xlim(c(0,4))+
-  ylab('FDR.diff(real~reported - 0.25*0.25/2)') +
+  ylab('FDR.difference') +
   scale_color_brewer(palette = 'Set1')  +
-  facet_wrap(~comparison, nrow =1)
+  facet_wrap(~comparison, nrow =1) +
+  theme(legend.position = 'bottom')
 dev.off()
 
-pdf(paste0(pdir, 'compare_auc_all.pdf'),width=7,height=2.8)
+pdf(paste0(pdir, 'compare_auc_all.pdf'),width=5.5,height=2.8)
 ggplot(pd, aes(x = SignalStrength, y = AUC, color=Method)) + 
   geom_point(size=3)  + 
   geom_line(size=1) + 
   theme_bw() + 
     xlim(c(0,4))+
-    ylab('Area under sensitivity-realFDR curve') +
+    ylab('AUC (sensitivity-realFDR)') +
   scale_color_brewer(palette = 'Set1')  +
-  facet_wrap(~comparison, nrow =1)
+  facet_wrap(~comparison, nrow =1)+
+    theme(legend.position = 'bottom')
 dev.off()
 
