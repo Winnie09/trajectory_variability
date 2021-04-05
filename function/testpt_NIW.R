@@ -8,7 +8,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   set.seed(12345)
   library(splines)
   cellanno = data.frame(Cell = as.character(cellanno[,1]), Sample = as.character(cellanno[,2]), stringsAsFactors = FALSE)
-  expr <- expr[, names(pseudotime)]
+  expr <- expr[, names(pseudotime), drop = FALSE]
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   design = as.matrix(design)
   
