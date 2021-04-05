@@ -1,4 +1,4 @@
-infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50){
+infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50, original = FALSE){
   ## ct: dataframe/matrix, first column is cell name, second column is cell type, third column is sample.
   library(igraph)
   alls <- ct[,3]
@@ -17,13 +17,15 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   # clu <- mykmeans(pr, number.cluster = number.cluster, maxclunum = 50, seed = i)$cluster
   clu <- mykmeans(pr, maxclunum = 50, number.cluster = number.cluster)$cluster
   table(clu)
-  pd = data.frame(x = pr[,1], y = pr[,2], clu = as.factor(clu[rownames(pr)]))
+  pd = data.frame(x = pr[,1], y = pr[,2], cluster = as.factor(clu[rownames(pr)]))
   mypalette = colorRampPalette(brewer.pal(9,'Set1'))
-  pdf(paste0(plotdir, 'cluster.pdf'), width = (0.7*max(clu)), height = (0.5*max(clu)))
-  print(ggplot(data = pd, aes(x = x, y = y, color = clu)) +
-    geom_scattermore()+
-    scale_color_manual(values = mypalette(max(clu)))+
-    theme_classic() + xlab(xlab) + ylab(ylab))
+  pdf(paste0(plotdir, 'cluster.pdf'), width = 3, height = 2.1)
+  print(ggplot(data = pd, aes(x = x, y = y, color = cluster)) +
+          geom_scattermore()+
+          scale_color_manual(values = mypalette(max(clu)))+
+          theme_classic() + 
+          theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
+          xlab(xlab) + ylab(ylab))
   dev.off()
   ## cell type composition in clusters
   pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
@@ -31,22 +33,25 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   tab <- tab/rowSums(tab)
   pd <- melt(tab)
   pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
-  pdf(paste0(plotdir, 'celltype_composition_for_cluster.pdf'), width = 9, height = 5)
+  colnames(pd)[3] <- 'proportion'
+  pdf(paste0(plotdir, 'celltype_composition_for_cluster.pdf'), width = 4, height = 2.8)
   print(ggplot(data = pd) +
-    geom_bar(aes(x = clu, y = value, fill = celltype), stat = 'identity', position = 'dodge') +
-    theme_classic() +
-    ylab('Celltype Proportion') +
-    scale_fill_manual(values = mypalette(length(unique(pd$celltype)))))
+          geom_tile(aes(x = clu, fill = proportion, y = celltype)) +
+          theme_classic() +
+          ylab('Celltype') +  xlab('Cluster')+
+          scale_fill_continuous(low = 'black', high = 'yellow'))
   dev.off()
+  
   ### mclust
   mcl <- exprmclust(t(pr),cluster=clu,reduce=F)
-  # mcl <- exprmclust(t(pr), reduce = F)
+  ######## >>>>>>>>>>>>>>>>>
+  if (original){
+    mcl$MSTtree <- mcl$MSTtree + edges('3','4') - edges('5','4') + edges('5','6')
+  }
+  ######## <<<<<<<<<<<<
   # pdf(paste0(plotdir, 'mcl.pdf'), width=(0.8*max(clu)),height=(0.6*max(clu)))
   # print(plotmclust(mcl, cell_point_size = 0.1, x.lab = xlab, y.lab = ylab))
   # dev.off()
-
-  # str(mcl)
-  # 
   # --------------------
   # construct pseudotime 
   # --------------------
@@ -71,12 +76,12 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   pd = data.frame(pc1 = pca[,1], pc2 = pca[,2], time = as.numeric(pt[rownames(pca)]))
   library(scattermore)
   library(RColorBrewer)
-  pdf(paste0(plotdir, 'pseudotime.pdf'), width = 5, height = 4.2)  
+  pdf(paste0(plotdir, 'pseudotime.pdf'), width = 3.1, height = 2.1)  
   print(ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
-    geom_scattermore() +
-    scale_color_gradient(low = 'yellow', high = 'blue')+
-    xlab(xlab) + ylab(ylab) +
-    theme_classic())
+          geom_scattermore() +
+          scale_color_gradient(low = 'yellow', high = 'blue')+
+          xlab(xlab) + ylab(ylab) +
+          theme_classic())
   dev.off()
   # ------------------------------------------------------------
   # get candidate branches to test reproducibility, 20200726 >>
@@ -87,9 +92,7 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   # -----------------------------------------------------
   # Evaluate robustness of tree branches using resampling
   # -----------------------------------------------------
-  
   # null distribution of Jaccard index, overlap coefficient
-  
   js.null <- lapply(seq(1, length(newbranch)), function(i) {
     b.ori <- unlist(sapply(newbranch[[i]], function(c) names(mcl$clusterid[mcl$clusterid == c])))
     tmp <- sapply(seq(1, 1e3), function(j){
@@ -125,7 +128,4 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   mcl$allsample <- alls
   return(mcl)
 }
-
-
-
 
