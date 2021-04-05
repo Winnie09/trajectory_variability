@@ -82,7 +82,9 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
       theme_classic() +
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
       xlab('Pseudotime') + ylab('Expression') + 
-      labs(color = variable)
+      labs(color = variable) +
+      theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm")) +
+      guides(colour = guide_legend(override.aes = list(size=2)))
     if (!is.na(sep)){
       p <- p + ggtitle(sub(sep,'',gene)) 
     } else {
@@ -168,7 +170,9 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
       theme_classic() + 
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable) +
-      facet_wrap(~g, scales = a, ncol = ncol) 
+      facet_wrap(~g, scales = a, ncol = ncol) +
+      theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
+      guides(colour = guide_legend(override.aes = list(size=2)))
     
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
