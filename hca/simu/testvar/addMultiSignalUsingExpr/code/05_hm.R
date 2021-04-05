@@ -13,11 +13,10 @@ selgene1 <- readRDS(paste0(ddir, '/data/selgene/selgene1.rds'))
 selgene2 <- readRDS(paste0(ddir, '/data/selgene/selgene2.rds'))
 selgene3 <- readRDS(paste0(ddir, '/data/selgene/selgene3.rds'))
 
-for (dataType in seq(1, 4)) {
+for (dataType in seq(4, 1)) {
   print(dataType)
-  rdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/EM_pm/',dataType)
   pdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/plot/EM_pm/', dataType)
-  dir.create(rdir, showWarnings = F, recursive = T)
+
   dir.create(pdir, showWarnings = F, recursive = T)
   Res <- readRDS(paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/EM_pm/',dataType,'.rds'))
   names(Res)
@@ -88,6 +87,7 @@ for (dataType in seq(1, 4)) {
   )
   rownames(rowann) = names(clu)
   rowann <- rowann[rownames(fit.scale), ]
+  saveRDS(rowann, paste0(pdir, '/rowann.rds'))
   
   png(
     paste0(pdir, '/hm_kmeans_population_difffit_scale.png'),
@@ -101,64 +101,50 @@ for (dataType in seq(1, 4)) {
 }
 
 
-str(res)
-id <- rownames(res[res$clu == 1 & res$signalType == 3, ])
-id <- id[10:30]
-id
-str(id)
-g.tmp <- rownames(expr.scale[rownames(expr.scale) %in% id, ],)
-str(g.tmp)
-g = g.tmp[6]
-g
-plotGene(Res,g)
-plotGenePopulation(Res, g, type = 'variable')
-
-str(rowann)
-id <- rownames(rowann)[which(rowann$gs == 'Yes' & rowann$meanDiffTest == 'nonDiff' & rowann$signalType == 'trenddiff only')]
-str(id)
-
-## plot trendonly signal & limman cannot identifieid genes
-png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_genes.png'), width = 3000, height = 3000, res = 200)
-plotGene(Res, id[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
-dev.off()
-png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_genes_population.png'), width = 3000, height = 3000, res = 200)
-plotGenePopulation(Res, id[1:100], type = 'variable', sep = ':.*')
-dev.off()
-
-## plot selected example genes
-allg <- c('CTDP1', 'CFDP1', 'NOL6', 'TMEM198B')
-allg <- sapply(allg, function(i){
-  rownames(fit.scale)[grepl(i, rownames(fit.scale))]
-})
-png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_example.png'), width = 800, height = 550, res = 200)
-plotGene(Res, allg, plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
-dev.off()
-png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_example_population.png'), width = 850, height = 500, res = 200)
-plotGenePopulation(Res, allg, type = 'variable', sep = ':.*')
-dev.off()
-
-## plot cluster mean and difference
-pdf(paste0(pdir, '/clusterMeanAndDiff.pdf'), width = 3, height = 6)
-plotClusterMeanAndDiff(Res, clu)
-dev.off()
-
-## plot diffType == unknown gene
-png(paste0(pdir, '/diffType_unknown_gene.png'), width = 5000, height = 5000, res = 200)
-plotGene(Res, names(diffType[diffType=='unknown'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
-dev.off()
-
-png(paste0(pdir, '/diffType_meanOnly_gene.png'), width = 5000, height = 5000, res = 200)
-plotGene(Res, names(diffType[diffType=='meanOnly'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
-dev.off()
-
-png(paste0(pdir, '/diffType_trendOnly_gene.png'), width = 5000, height = 5000, res = 200)
-plotGene(Res, names(diffType[diffType=='trendOnly'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
-dev.off()
-
-png(paste0(pdir, '/diffType_both_gene.png'), width = 5000, height = 5000, res = 200)
-plotGene(Res, names(diffType[diffType=='both'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
-dev.off()
-
-
-
+# ## plot trendonly signal & limman cannot identifieid genes
+# png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_genes.png'), width = 3000, height = 3000, res = 200)
+# plotGene(Res, id[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
+# dev.off()
+# png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_genes_population.png'), width = 3000, height = 3000, res = 200)
+# plotGenePopulation(Res, id[1:100], type = 'variable', sep = ':.*')
+# dev.off()
+# 
+# ## plot selected example genes
+# allg <- c('CTDP1', 'CFDP1', 'NOL6', 'TMEM198B')
+# allg <- sapply(allg, function(i){
+#   rownames(fit.scale)[grepl(i, rownames(fit.scale))]
+# })
+# png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_example.png'), width = 800, height = 550, res = 200)
+# plotGene(Res, allg, plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
+# dev.off()
+# png(paste0(pdir, '/meanDiffTest_notdiff_and_trenddiff_example_population.png'), width = 850, height = 500, res = 200)
+# plotGenePopulation(Res, allg, type = 'variable', sep = ':.*')
+# dev.off()
+# 
+# ## plot cluster mean and difference
+# pdf(paste0(pdir, '/clusterMeanAndDiff.pdf'), width = 3, height = 6)
+# plotClusterMeanAndDiff(Res, clu)
+# dev.off()
+# 
+# ## plot diffType == unknown gene
+# png(paste0(pdir, '/diffType_unknown_gene.png'), width = 5000, height = 5000, res = 200)
+# plotGene(Res, names(diffType[diffType=='unknown'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
+# dev.off()
+# 
+# png(paste0(pdir, '/diffType_meanOnly_gene.png'), width = 5000, height = 5000, res = 200)
+# plotGene(Res, names(diffType[diffType=='meanOnly'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
+# dev.off()
+# 
+# png(paste0(pdir, '/diffType_trendOnly_gene.png'), width = 5000, height = 5000, res = 200)
+# plotGene(Res, names(diffType[diffType=='trendOnly'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
+# dev.off()
+# 
+# png(paste0(pdir, '/diffType_both_gene.png'), width = 5000, height = 5000, res = 200)
+# plotGene(Res, names(diffType[diffType=='both'])[1:100], plot.point = T, variable = colnames(Res$design)[2], continuous = F, point.size = 0.1, point.alpha = 0.2, sep = ":.*")
+# dev.off()
+# 
+# 
+# 
+# 
+# 
 
