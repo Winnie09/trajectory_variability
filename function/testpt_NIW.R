@@ -1,6 +1,6 @@
 # ncores=detectCores(); test.type='Time';test.method = 'permutation'
 # permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE) {
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
   ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
@@ -12,17 +12,19 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   cellanno <- cellanno[match(names(pseudotime), cellanno[,1]), ]
   design = as.matrix(design)
   
-  sdm <- sapply(unique(cellanno[,2]),function(us) {
-    tmp <- expr[,cellanno[,2]==us, drop=FALSE]
-    m <- rowMeans(tmp)
-    rowMeans(tmp*tmp)-m*m
-  })==0
-  gid <- which(rowSums(sdm) > 0)  ## identify if any genes have sd=0 expression in any one of the samples
-  if (length(gid) > 0) { ## if yes, for those genes, add a white-noise with sd=1e-5 on the sample with sd=0.
-    mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
-    colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
-    expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr),sd=1e-5),nrow=length(gid))
-    rm('mask')  
+  if (fix.all.zero){
+    sdm <- sapply(unique(cellanno[,2]),function(us) {
+      tmp <- expr[,cellanno[,2]==us, drop=FALSE]
+      m <- rowMeans(tmp)
+      rowMeans(tmp*tmp)-m*m
+    })==0
+    gid <- which(rowSums(sdm) > 0)  ## identify if any genes have sd=0 expression in any one of the samples
+    if (length(gid) > 0) { ## if yes, for those genes, add a white-noise with sd=1e-5 on the sample with sd=0.
+      mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
+      colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
+      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr),sd=1e-5),nrow=length(gid))
+      rm('mask')  
+    } 
   }
   # if (demean){
   #   ## demean
