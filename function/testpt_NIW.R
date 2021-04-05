@@ -13,7 +13,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   design = as.matrix(design)
   
   sdm <- sapply(unique(cellanno[,2]),function(us) {
-    tmp <- expr[,cellanno[,2]==us]
+    tmp <- expr[,cellanno[,2]==us, drop=FALSE]
     m <- rowMeans(tmp)
     rowMeans(tmp*tmp)-m*m
   })==0
@@ -106,7 +106,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     names(pval.overall) <- names(fdr.overall) <- row.names(llr.overall)
     z.score <- (llr.overall[,1] - rowMeans(llr.overall[,2:(ncol(llr.overall))]))/apply(llr.overall[,2:(ncol(llr.overall))],1,sd)
     res.overall <- data.frame(fdr.overall = fdr.overall, pval.overall = pval.overall, z.overall = z.score, stringsAsFactors = FALSE)
-    print(paste0('Number of overall DEG: ', sum(fdr.overall < 0.05) ))
+    print(paste0('Number of overall DDG: ', sum(fdr.overall < 0.05) ))
     
     if (sum(fdr.overall <0.05 ) > 0 & test.type == 'Variable' & !overall.only){
       print('meanDiff pvalues: Model 2 vs. model 1...')
@@ -172,7 +172,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
       res[rownames(res.meanDiff), colnames(res.meanDiff)] <- as.matrix(res.meanDiff)
     } else if (sum(fdr.overall < 0.05) == 0 | (test.type == 'Variable' & overall.only) | test.type == 'Time'){
-      print('Not returning meanDiff and trendDiff: constantTest, user required or no overall DEG.')
+      print('Not returning meanDiff and trendDiff: constantTest, user required or no overall DDG.')
       res <- res.overall
     }
     reslist <- list(statistics = res, 
@@ -192,6 +192,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(c(reslist, list(test.type = test.type, test.method = test.method)))
   } 
 }
+
 
 
 
