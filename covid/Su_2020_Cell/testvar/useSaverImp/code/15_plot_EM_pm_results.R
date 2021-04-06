@@ -35,22 +35,23 @@ for (comparison in c('Se_Mi','Mod_Mi',  'Recovered_Deceased')){
     Res$covariateGroupDiff <- getCovariateGroupDiff(testobj = Res, gene = diffgene, reverse = F)
   }
   
-  DEGType <- getDEGType(Res)
-  sink(paste0(pdir, '/DEGType_table.txt'))
-  table(DEGType)
+  DDGType <- getDDGType(Res)
+  sink(paste0(pdir, '/DDGType_table.txt'))
+  table(DDGType)
   sink()
   
-  clu <- clusterGene(Res, gene = names(DEGType)[!DEGType %in% c('nonDEG', 'meanSig')], type = 'variable', k=5)
-  # clu2 <- rep(6, sum(DEGType == 'meanSig'))
+  clu <- clusterGene(Res, gene = names(DDGType)[!DDGType %in% c('nonDDG', 'meanSig')], type = 'variable', k=5)
+  table(clu)
+  # clu2 <- rep(6, sum(DDGType == 'meanSig'))
   # if (length(clu2) > 0) {
-  #   names(clu2) <- names(DEGType)[DEGType %in% c('meanSig')]
+  #   names(clu2) <- names(DDGType)[DDGType %in% c('meanSig')]
   #   clu <- c(clu, clu2)
   # }
   design = Res$design
   cellanno = Res$cellanno
   meandiff <- sapply(c(0,1), function(i){
     as <- rownames(design[design[,2]==i, ])
-    rowMeans(Res$expr.ori[names(DEGType)[DEGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1]])
+    rowMeans(Res$expr.ori[names(DDGType)[DDGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1]])
   })
   
   large0 <- rownames(meandiff)[meandiff[,1] >= meandiff[,2]]
@@ -69,7 +70,7 @@ for (comparison in c('Se_Mi','Mod_Mi',  'Recovered_Deceased')){
   allg <- diffgene
   res <- data.frame(gene = allg, statistics[allg, ], cluster = Res$cluster[allg], stringsAsFactors = F)
   res <- res[order(res[, grep('^fdr.*overall$', colnames(res))]), ]
-  res <- cbind(res, DEGType = DEGType[rownames(res)])
+  res <- cbind(res, DDGType = DDGType[rownames(res)])
   write.csv(res, paste0(pdir, 'differential_genes.csv'))
   
   ## ----------------
@@ -95,7 +96,7 @@ for (comparison in c('Se_Mi','Mod_Mi',  'Recovered_Deceased')){
   nn <- sapply(1:length(goRes), function(i){
     tmp <- goRes[[i]]
     tmp <- tmp[tmp[, 'FDR'] < 0.05, ]
-    write.csv(tmp, paste0(pdir, 'cluster', i, '_GO.csv'))
+    if (nrow(tmp) > 0) {write.csv(tmp, paste0(pdir, 'cluster', i, '_GO.csv'))}
     print(str(tmp))
     return(0)
   })
@@ -127,41 +128,41 @@ for (comparison in c('Se_Mi','Mod_Mi',  'Recovered_Deceased')){
   plotDiffFitHm(Res, type = 'variable', cellWidthTotal = 200, cellHeightTotal = 300)
   dev.off()
   
-  # png(paste0(pdir, 'DiffFitHm_rownames.png'),width = 12000,height = 10000,res = 300)
-  # print(plotDiffFitHm(Res, type='variable', showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 10))
-  # dev.off()
-  
+  png(paste0(pdir, 'DiffFitHm_rownames.png'),width = 12000,height = 10000,res = 300)
+  print(plotDiffFitHm(Res, type='variable', showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 10))
+  dev.off()
+
   ## ----------
-  ## plot DEG 
+  ## plot DDG
   ## ----------
-  # DEGType <- DEGType[diffgene]
-  # id <- sort(sample(1:ncol(Res$populationFit[[1]]), ncol(Res$expr.ori)))
-  # Res$populationFit[[1]] <- Res$populationFit[[1]][, id]
-  # Res$populationFit[[2]] <- Res$populationFit[[2]][, id]
-  # 
-  # for (i in unique(DEGType)){  ## debug -- ok!!
-  #   print(i)
-  #   gene <- names(DEGType)[DEGType == i]
-  #   png(paste0(pdir, 'diffgene_sampleFit_', i, '.png'), width = 4000, height = 2500, res = 200)
-  #   print(plotGene(Res, gene = gene[1:min(length(gene), 25)], plot.point = T, point.size = 0.1, variable = 'type'))
-  #   dev.off()
-  # }
-  # 
-  # for (i in unique(DEGType)){
-  #   print(i)
-  #   gene <- names(DEGType)[DEGType == i]
-  #   png(paste0(pdir, 'diffgene_groupFit_', i, '.png'), width = 2500, height = 2500, res = 200)
-  #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
-  #   dev.off()
-  # } 
-  # 
-  # for (i in 1:max(Res$cluster)){
-  #   print(i)
-  #   gene <- rownames(res)[res$cluster == i]
-  #   png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
-  #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
-  #   dev.off()
-  # }
+  DDGType <- DDGType[diffgene]
+  id <- sort(sample(1:ncol(Res$populationFit[[1]]), ncol(Res$expr.ori)))
+  Res$populationFit[[1]] <- Res$populationFit[[1]][, id]
+  Res$populationFit[[2]] <- Res$populationFit[[2]][, id]
+
+  for (i in unique(DDGType)){  ## debug -- ok!!
+    print(i)
+    gene <- names(DDGType)[DDGType == i]
+    png(paste0(pdir, 'diffgene_sampleFit_', i, '.png'), width = 4000, height = 2500, res = 200)
+    print(plotGene(Res, gene = gene[1:min(length(gene), 25)], plot.point = T, point.size = 0.1, variable = 'type'))
+    dev.off()
+  }
+
+  for (i in unique(DDGType)){
+    print(i)
+    gene <- names(DDGType)[DDGType == i]
+    png(paste0(pdir, 'diffgene_groupFit_', i, '.png'), width = 2500, height = 2500, res = 200)
+    print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
+    dev.off()
+  }
+
+  for (i in 1:max(Res$cluster)){
+    print(i)
+    gene <- rownames(res)[res$cluster == i]
+    png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
+    print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
+    dev.off()
+  }
   
 }
 

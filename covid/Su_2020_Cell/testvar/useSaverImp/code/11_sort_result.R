@@ -60,11 +60,15 @@ for (comparison in c('Mod_Mi', 'Se_Mi', 'Recovered_Deceased')){
   nn <- sapply(1:length(goRes), function(i){
     tmp <- goRes[[i]]
     tmp <- tmp[tmp[, 'FDR'] < 0.05, ]
-    write.csv(tmp, paste0(rdir, 'cluster', i, '_GO.csv'))
+    if (nrow(tmp)>0) {write.csv(tmp, paste0(rdir, 'cluster', i, '_GO.csv'))}
     print(str(tmp))
     return(0)
   })
   
+  pdf(paste0(pdir, 'hm_GO_term.pdf'), width = 7.2, height = 3.5)
+  print(plotGOEnrich(goRes))
+  dev.off()
+
   ## -----------------------
   ## plotClusterMeanAndDiff
   ## -----------------------
