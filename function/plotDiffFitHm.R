@@ -19,56 +19,50 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
       FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id,drop=F]) ## add FitDiff.scale
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
       testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
-    
-        
     }
     print('subsample done!')
   } else {
     if (toupper(type) == 'VARIABLE'){
       FitDiff.scale <- scalematrix(testobj$covariateGroupDiff)
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
-      
     }
   }
   
   fit.bak = fit
   clu <- testobj$cluster
   if (type == 'variable'){
-    
-      rownames(testobj$cellanno) <- testobj$cellanno[,1]
-      testobj$cellanno <- testobj$cellanno[names(testobj$pseudotime), ]
-      if ('expr.ori' %in% names(testobj)){
-        testobj$expr <- testobj$expr.ori[, names(testobj$pseudotime)]
-      } else {
-        testobj$expr <- testobj$expr[, names(testobj$pseudotime)]
-      }
-    
-    if ('DEGType' %in% names(testobj)) {
-      DEGType <- testobj$DEGType
+    rownames(testobj$cellanno) <- testobj$cellanno[,1]
+    testobj$cellanno <- testobj$cellanno[names(testobj$pseudotime), ]
+    if ('expr.ori' %in% names(testobj)){
+      testobj$expr <- testobj$expr.ori[, names(testobj$pseudotime)]
     } else {
-      DEGType <- getDEGType(testobj) 
+      testobj$expr <- testobj$expr[, names(testobj$pseudotime)]
     }
-      
+    
+    if ('DDGType' %in% names(testobj)) {
+      DDGType <- testobj$DDGType
+    } else {
+      DDGType <- getDDGType(testobj) 
+    }
+    
     fit.scale <- do.call(cbind, fit)
     fit.scale <- fit.scale[names(testobj$cluster), ]
     fit.scale <- scalematrix(fit.scale)
     colnames(fit.scale) <- paste0(rep(names(fit), each = ncol(fit.scale)/length(fit)), ';cell', seq(1, ncol(fit.scale)))
-    
   } else {
     fit.scale <- scalematrix(fit)
     dimnames(fit.scale) <- dimnames(fit)
-    
   }
   # res <- data.frame(clu = clu, 
   #                   cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
   #                   changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))),
-  #                   DEGType = DEGType[names(clu)])
+  #                   DDGType = DDGType[names(clu)])
   res <- data.frame(clu = clu, 
                     cor = sapply(names(clu), function(i) cor(FitDiff.scale[i, seq(1, ncol(FitDiff.scale))], seq(1, ncol(FitDiff.scale)))),
                     changepoint = sapply(names(clu), function(i) which.min(abs(FitDiff.scale[i, seq(1, ncol(FitDiff.scale))]))),
-                    DEGType = DEGType[names(clu)])
+                    DDGType = DDGType[names(clu)])
   
-  res <- res[order(res$clu, res$DEGType, res$changepoint, res$cor), ]
+  res <- res[order(res$clu, res$DDGType, res$changepoint, res$cor), ]
   fit.scale <- fit.scale[rownames(res), ]
   FitDiff.scale <- FitDiff.scale[rownames(res), ]
   # colnames(fit.scale) <- paste0(colnames(fit.scale), '_', seq(1, ncol(fit.scale)))
@@ -136,7 +130,7 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     if (type == 'variable'){
       rowann = data.frame(
         cluster = as.character(clu),
-        DEGType = as.character(DEGType[names(clu)]),
+        DDGType = as.character(DDGType[names(clu)]),
         stringsAsFactors = F)
     } else if (type == 'time'){
       rowann = data.frame(
@@ -144,25 +138,27 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
         stringsAsFactors = F)
     }
     rownames(rowann) = names(clu)
-    rowann <- rowann[rownames(fit.scale), ,drop=F]
-    if (length(unique(clu)) < 8){
-      col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
-    } else {
-      col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
-    }
-    names(col.clu) = unique(clu)
   }
+  rowann <- rowann[rownames(fit.scale), ,drop=F]
+  rowann[,'DDGType'] <- factor(as.character(rowann[,'DDGType']), levels = c('trendSig','meanSig','bothSig','nonDDG','other'))
+  
+  if (length(unique(clu)) < 8){
+    col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
+  } else {
+    col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
+  }
+  names(col.clu) = unique(clu)
   
   if (is.null(colann)| is.null(annotation_colors)){
     if (type == 'variable'){
-      col.DEGType = brewer.pal(8, 'Set3')[1:length(unique(res$DEGType))]
-      names(col.DEGType) = unique(res$DEGType)
+      col.DDGType = brewer.pal(8, 'Set3')[1:5]
+      names(col.DDGType) = c('trendSig','meanSig','bothSig','nonDDG','other')
       annotation_colors = list(
         pseudotime = col.pseudotime,
         group = col.group,
         expression = col.expression,
         cluster = col.clu,
-        DEGType = col.DEGType)
+        DDGType = col.DDGType)
     } else if (type == 'time'){
       annotation_colors = list(
         pseudotime = col.pseudotime,
@@ -172,14 +168,16 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
         limmaPb = col.limmaPb)
     }
   }
-  
-  
   col.gs <- c('pink', 'skyblue')
   names(col.gs) <- c('No', 'Yes')
   col.limmaPb <- c('pink', 'skyblue')
-  names(col.limmaPb) <- c('Diff', 'nonDiff')
+  names(col.limmaPb) <- c('nonDiff', 'Diff')
   annotation_colors[['gs']] <- col.gs
   annotation_colors[['limmaPb']] <- col.limmaPb
+  
+  col.signalType <- brewer.pal(8, 'Set3')[1:3]
+  names(col.signalType) <- c('trend only', 'mean only', 'both')
+  annotation_colors[['signalType']] <- col.signalType
   
   #### save png
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
