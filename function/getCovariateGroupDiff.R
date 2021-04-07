@@ -19,11 +19,13 @@ getCovariateGroupDiff <- function(testobj,
   philist <-
     lapply(min(knotnum):max(knotnum), function(num.knot) {
       if (num.knot == 0) {
-        phi <- cbind(1, bs(pseudotime))
+        # phi <- cbind(1, bs(pseudotime))
+        phi <- bs(pseudotime, intercept = TRUE)
       } else {
         knots = seq(min(pseudotime), max(pseudotime), length.out = num.knot + 2)[2:(num.knot +
                                                                                       1)]
-        phi <- cbind(1, bs(pseudotime, knots = knots))
+        # phi <- cbind(1, bs(pseudotime, knots = knots))
+        phi <- bs(pseudotime,knots = knots, intercept = TRUE)
       }
     })
   names(philist) <- as.character(min(knotnum):max(knotnum))

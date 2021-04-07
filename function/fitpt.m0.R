@@ -1,144 +1,242 @@
 # ori.design = design
 # test.pattern = 'overall'
 # test.position = 'all'
-# maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
+# maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1;
 # test.pattern = 'overall'
-fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercutoff=0.1, verbose=F) {
-  # set.seed(12345)
+fitpt.m0 <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=1, knotnum = NULL) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
   suppressMessages(library(matrixcalc))
-  ## This function is for model 0 (beta0 for intercept base only) fitting.
   ## expr: gene by cell matrix, entires and log-transformed expression
   ## pseudotime: a numeric vecotor of pseudotime, the names are ordered cell names
   ## design: design: sample by feature design matrix. rownames are sample names. first column is 1, second column is the group partition, currently only one variable.
   ## cellanno: dataframe, first column is cell names, second column is sample names.
-  ## test.pattern: c('slope', 'intercept', 'overall).
   pseudotime <- pseudotime[colnames(expr)]
   cellanno <- cellanno[match(colnames(expr),cellanno[,1]),]
-  sname <- sapply(unique(cellanno[,2]),function(i) cellanno[cellanno[,2]==i,1],simplify = F)
-  as <- names(sname)
-  cn <- sapply(sname,length)
+  sname <- sapply(row.names(design),function(i) cellanno[cellanno[,2]==i,1],simplify = F)
+  design = as.matrix(design)
   
-  ## initialize
-  B <- rowMeans(expr)
-  
-  indfit <- sapply(as,function(s) {
-    rowMeans(expr[, cellanno[,2]==s, drop=F])
-  },simplify = F)
-  
-  s2 <- matrix(sapply(as,function(s) {
-    tmp <- expr[, cellanno[,2]==s, drop=F]-indfit[[s]]
-    n <- ncol(tmp)
-    (rowMeans(tmp*tmp)-(rowMeans(tmp))^2)*(n)/(n-1)
-  }),nrow=nrow(expr),dimnames=list(rownames(expr),as))
-  alpha <- 1/apply(s2,1,var)*rowMeans(s2)^2+2
-  eta <- (alpha-1)*rowMeans(s2)
-  
-  diffindfit <- sapply(as,function(s) {
-    indfit[[s]] - B
+  philist <- lapply(0:maxknotallowed,function(num.knot) {
+    if (num.knot==0) {
+      phi <- cbind(1,bs(pseudotime))
+    } else {
+      knots = seq(min(pseudotime),max(pseudotime),length.out=num.knot+2)[2:(num.knot+1)]
+      phi <- cbind(1,bs(pseudotime,knots = knots))  
+    }
   })
+  names(philist) <- as.character(0:maxknotallowed)
   
-  omega <- apply(diffindfit,1,var)
+  maxknot <- 0
+  testpos <- 1
   
-  iter <- 0
-  EMitercutoff <- 0
-  gidr <- rownames(expr)
-  all <- matrix(-Inf, nrow=nrow(expr),ncol=1,dimnames = list(rownames=gidr))
-  etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
-  while (iter < EMmaxiter && length(gidr) > 0) {
-    print(paste0('iter ', iter))
-    print(gidr)
-    expr_phibx <- sapply(as,function(s) {
-      expr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr]
-    },simplify = F)
+  while (testpos & maxknot < maxknotallowed) {
+    maxknot <- maxknot + 1
+    phi <- philist[[as.character(maxknot)]]
+    testpos <- mean(sapply(names(sname), function(ss) {
+      is.positive.definite(crossprod(phi[sname[[ss]],,drop=F]))
+    })) == 1
+  }
+  maxknot <- maxknot - 1
+  sexpr <- sapply(names(sname),function(ss) expr[,sname[[ss]],drop=F],simplify = F)
+  
+  ## automatically select knotnum for each gene
+  if (is.null(knotnum)){
+    bicfunc <- function(num.knot) {
+      phi <- philist[[as.character(num.knot)]]
+      ll <- sapply(names(sname), function(ss) {
+        phiss <- phi[sname[[ss]],,drop=F]
+        dif2 <- sexpr[[ss]] - sexpr[[ss]] %*% (phiss %*% chol2inv(chol(crossprod(phiss)))) %*% t(phiss)
+        dif2 <- rowSums(dif2 * dif2)
+        s2 <- dif2/(length(sname[[ss]])-ncol(phi))
+        log(2*pi*s2)*nrow(phiss) + dif2/s2
+      })
+      if (is.vector(ll)){
+        sum(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*sum(!is.na(ll)))
+      } else {
+        rowSums(ll,na.rm=T) + log(nrow(phi))*((ncol(phi)+1)*rowSums(!is.na(ll)))
+      }    
+    }
     
-    L <- sapply(as,function(s) {
-      rowSums(expr_phibx[[s]] * expr_phibx[[s]])
-    },simplify = F)
+    if (ncores!=1) {
+      bic <- mclapply(0:maxknot,bicfunc,mc.cores=ncores)
+      bic <- do.call(cbind,bic)
+    } else {
+      bic <- sapply(0:maxknot,bicfunc)
+    }
     
-    Jsolve <- matrix(sapply(as,function(s) {
-      1/(cn[s] + 1/omega[gidr])
-    }), nrow = length(gidr), dimnames = list(gidr, as))
+    rm('sexpr')
+    if (is.vector(bic)){
+      knotnum <- c(0:maxknot)[which.min(bic)]
+    } else {
+      knotnum <- c(0:maxknot)[apply(bic,1,which.min)]
+    }
     
-    K <- sapply(as,function(s) {
-      rowSums(expr_phibx[[s]])
-    },simplify = F)
-    
-    JK <- sapply(as,function(s) {
-      Jsolve[,s,drop=F] * K[[s]]  ## debug here !!
-    },simplify = F)
-    
-    L2eKJK <- sapply(as,function(s) {
-      2*eta[gidr] + L[[s]] - K[[s]] * JK[[s]]
-    },simplify = F)
-    
-    A <- matrix(sapply(as,function(s) {
-      log(L2eKJK[[s]]/2)-digamma(alpha[gidr]+cn[s]/2)
-    }),nrow=length(gidr),dimnames=list(gidr,as))
-    
-    N <- matrix(sapply(as,function(s) {
-      (2*alpha[gidr]+cn[s])/L2eKJK[[s]]
-    }),nrow=length(gidr),dimnames=list(gidr,as))
-    
-    ll <- rowSums(matrix(sapply(as,function(s) {
-      dv <- omega[gidr]/Jsolve[gidr,s,drop=F]
-      alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-log(dv)/2-(cn[s]/2+alpha[gidr])*log(L2eKJK[[s]])
-    }),nrow=length(gidr),dimnames = list(rownames=gidr,colnames=as)))
-    
-    ## -------------->
-    
-    
-    B1 <- rowSums(matrix(sapply(as, function(s){
-      N[,s] * cn[s]
-    }), ncol = length(as), dimnames = list(gidr, as)))  ## length(gidr) * length(as) debug here !!!
-    B2 <- rowSums(matrix(sapply(as, function(s){   ## debug here !!!
-      N[,s,drop=F] * colSums(t(expr[ ,cellanno[,2]==s, drop=F][gidr,,drop=F]) - rep(JK[[s]],each=cn[s]))
-    }), ncol = length(as), dimnames = list(gidr, as)))  ## vector of length(gidr) debug here !!!
-    B[gidr] <- B2/B1
-    
-    ## M -step:
-    omega[gidr] <- rowMeans(matrix(sapply(as,function(s) {
-      Jsolve[,s,drop=F] + N[,s,drop=F]*JK[[s]] * JK[[s]]  ## debug here !!!
-    }), ncol=length(as), dimnames = list(gidr, as)))
-    
-    eta[gidr] <- sapply(gidr,function(g) {
-      meanN <- mean(N[g,])
-      meanA <- mean(A[g,])
-      uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
-    })
-    alpha[gidr] <- eta[gidr] * rowMeans(N)
-    
-    iter <- iter + 1
-    
-    llv <- all[,ncol(all)]
-    llv[gidr] <- ll
-    all <- cbind(all,llv)
-    gidr <- names(which(all[,ncol(all)] - all[,ncol(all)-1] > EMitercutoff))
-    etalist[[iter]] <- eta
-    alphalist[[iter]] <-alpha
-    omegalist[[iter]] <-omega
-    Nlist[[iter]] <- N
-    Jslist[[iter]] <- Jsolve
-    rm(list = c('L','Jsolve', 'K'))
+    names(knotnum) <- rownames(expr)
+  } else {
+    knotnum <- knotnum[rownames(expr)]
   }
   
+  sfit <- function(num.knot) {
+    #print(paste0('num.knot = ', num.knot))
+    gid <- names(which(knotnum==num.knot))
+    #print(gid)
+    sexpr <- expr[gid,,drop=F] ## !!! double check, should be list len =S
+    phi <- philist[[as.character(num.knot)]]
+    phicrossprod <- apply(phi,1,tcrossprod)
+    phicrossprod <- sapply(names(sname),function(ss) phicrossprod[,sname[[ss]]],simplify = F)
+    phi <- sapply(names(sname),function(ss) phi[sname[[ss]],],simplify = F)
+    
+    xs <- sapply(row.names(design), function(i) {
+      kronecker(diag(num.knot + 4), design[i, 1, drop = F])
+    }, simplify = F)
+    
+    as <- names(phi)
+    nb <- ncol(phi[[1]])
+    cn <- sapply(as,function(s) nrow(phi[[s]]))
+    
+    phiphi <- sapply(as,function(s) {
+      t(phi[[s]]) %*% phi[[s]]
+    },simplify = F)
+    phiX <- sapply(as, function(s){
+      phi[[s]] %*% t(xs[[s]])
+    },simplify = F)
+    
+    phiXTphiX <- sapply(as, function(s){
+      t(phiX[[s]]) %*% (phiX[[s]])
+    },simplify = F)
+    
+    ## initialize
+    
+    B <- rowMeans(matrix(sapply(as,function(s) rowMeans(sexpr[, cellanno[,2]==s, drop=F])),nrow=nrow(sexpr)))
+    names(B) <- rownames(sexpr)
+    
+    indfit <- sapply(as,function(s) {
+      sexpr[, cellanno[,2]==s, drop=F] %*% (phi[[s]] %*% chol2inv(chol(crossprod(phi[[s]]))))
+    },simplify = F)
+    
+    s2 <- matrix(sapply(as,function(s) {
+      tmp <- sexpr[, cellanno[,2]==s, drop=F]-indfit[[s]] %*% t(phi[[s]])
+      n <- ncol(tmp)
+      (rowMeans(tmp*tmp)-(rowMeans(tmp))^2)*(n)/(n-1)
+    }),nrow=length(gid),dimnames=list(gid,as))
+    alpha <- 1/apply(s2,1,var)*rowMeans(s2)^2+2
+    eta <- (alpha-1)*rowMeans(s2)
+    
+    diffindfit <- sapply(as,function(s) {
+      indfit[[s]] - B
+    },simplify = F)
+    
+    omega <- t(sapply(rownames(sexpr),function(g) {
+      m <- sapply(diffindfit,function(i) i[g,,drop=F])
+      m <- m-rowMeans(m)
+      tcrossprod(m)/(ncol(m)-1) + diag(nrow(m)) * 0.01
+    }))
+    
+    iter <- 0
+    gidr <- rownames(sexpr)
+    all <- matrix(-Inf, nrow=nrow(sexpr),ncol=1,dimnames = list(rownames=gidr))
+    #etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
+    while (iter < EMmaxiter && length(gidr) > 0) {
+      
+      oinv <- sapply(gidr,function(g) {
+        chol2inv(chol(matrix(omega[g,],nrow=nb)))
+      },simplify = F)
+      
+      omegadet <- sapply(gidr,function(g) {
+        log(det(matrix(omega[g,],nrow=nb)))/2
+      })
+      
+      ll <- NULL
+      for (s in as) {
+        sexpr_phibx <- sexpr[gidr, cellanno[,2]==s, drop=F]-B[gidr]
+        
+        L <- rowSums(sexpr_phibx * sexpr_phibx)
+        
+        Jchol <- sapply(gidr,function(g) {
+          chol(phiphi[[s]] + oinv[[g]])
+        },simplify = F)
+        
+        Jsolve <- sapply(gidr,function(g) {
+          chol2inv(Jchol[[g]])
+        })
+        
+        K <- tcrossprod(t(phi[[s]]),sexpr_phibx)
+        
+        L2eKJK <- 2*eta[gidr]+L-colSums(K[rep(1:nb,nb),,drop=FALSE] * K[rep(1:nb,each=nb),,drop=FALSE] * Jsolve)
+        A <- log(L2eKJK/2)-digamma(alpha[gidr]+cn[s]/2)
+        N <- (2*alpha[gidr]+cn[s])/L2eKJK
+        
+        JK <- t(rowsum((Jsolve*K[rep(1:nb,nb),,drop=FALSE]),rep(1:nb,each=nb)))
+        
+        logdv <- -2*colSums(log(sapply(Jchol,as.vector)[seq(1,nb*nb,nb+1),,drop=F]))
+        if (is.null(ll)) {
+          ll <- alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
+          B1 <- N * cn[s]
+          B2 <- N * rowSums(sexpr[ gidr,cellanno[,2]==s, drop=F] - t(phi[[s]] %*% t(JK)))
+          omegalist <- t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
+          sumA <- A
+          sumN <- N
+        } else {
+          ll <- ll + alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-omegadet+logdv/2-(cn[s]/2+alpha[gidr])*log(L2eKJK)
+          B1 <- B1 + N * cn[s]
+          B2 <- B2 + N * rowSums(sexpr[ gidr,cellanno[,2]==s, drop=F] - t(phi[[s]] %*% t(JK)))
+          omegalist <- omegalist + t(Jsolve) + N*JK[,rep(1:nb,nb)] * JK[,rep(1:nb,each=nb)]
+          sumA <- sumA + A
+          sumN <- sumN + N
+        }
+      }
+      
+      B[gidr] <- B2/B1
+      
+      omega[gidr,] <- omegalist/length(as)
+      
+      rN <- sumN/length(as)
+      rA <- sumA/length(as)
+      eta[gidr] <- sapply(gidr,function(g) {
+        meanN <- rN[g]
+        meanA <- rA[g]
+        # uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
+        optim(eta[g],fn = function(eta) {(digamma(eta * meanN)-log(eta)+meanA)^2},gr = function(eta) {2*(digamma(eta * meanN)-log(eta)+meanA)*(trigamma(eta*meanN)*meanN-1/eta)},lower = 1e-10,method = 'L-BFGS-B')$par
+      })
+      alpha[gidr] <- eta[gidr] * rN
+      
+      iter <- iter + 1
+      
+      llv <- all[,ncol(all)]
+      llv[gidr] <- ll
+      all <- cbind(all,llv)
+      gidr <- names(which(all[,ncol(all)] - all[,ncol(all)-1] > EMitercutoff))
+      #etalist[[iter]] <- eta
+      #alphalist[[iter]] <-alpha
+      #omegalist[[iter]] <-omega
+      #Nlist[[iter]] <- N
+      #Jslist[[iter]] <- Jsolve
+      rm(list = c('L','Jsolve', 'K'))
+    }
+    # print(table(apply(all,1,function(i) mean(diff(i) >= 0))))  
+    return(list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all))
+  }
   
-  allres  <- list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all)
+  if (ncores!=1) {
+    allres <- mclapply(unique(knotnum),sfit,mc.cores=ncores)
+  } else {
+    allres <- sapply(unique(knotnum),sfit, simplify = FALSE)
+  }
   
   para <- list()
-  
-  for (j in rownames(expr)) {
-    para[[j]] <- list(beta=allres[[1]][j],
-                      alpha=allres[[2]][j],
-                      eta=allres[[3]][j],
-                      omega=allres[[4]][j],
-                      ll=allres[[5]][j,ncol(allres[[5]])])
+  for (i in 1:length(allres)) {
+    for (j in names(allres[[i]][[1]])) {
+      para[[j]] <- list(beta=allres[[i]][[1]][j],
+                        alpha=allres[[i]][[2]][j],
+                        eta=allres[[i]][[3]][j],
+                        omega=allres[[i]][[4]][j,],
+                        ll=allres[[i]][[5]][j,ncol(allres[[i]][[5]])])
+    }
   }
-  
-  return(list(parameter=para))
+  list(parameter=para[rownames(expr)],knotnum=knotnum[rownames(expr)])
 }
+
 
 
 

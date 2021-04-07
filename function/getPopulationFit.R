@@ -36,10 +36,12 @@ getPopulationFit <- function(testobj,
     
     pt <- seq(1, max(pseudotime))
     if (knotnum[g] == 0) {
-      phi <- cbind(1, bs(pt))
+      # phi <- cbind(1, bs(pt))
+      phi <- bs(pt, intercept = TRUE)
     } else {
       knots = seq(min(pt), max(pt), length.out = knotnum[g] + 2)[2:(knotnum[g] + 1)]
-      phi <- cbind(1, bs(pt, knots = knots))
+      # phi <- cbind(1, bs(pt, knots = knots))
+      phi <- bs(pt,knots = knots, intercept = TRUE)
     }
     if (!exists('variable')) {
       if (ncol(phi) == ncol(x[[1]])){

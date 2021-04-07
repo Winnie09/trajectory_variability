@@ -1,4 +1,4 @@
-getDEGType <- function(testobj, cutoff = 0.05){
+getDDGType <- function(testobj, cutoff = 0.05){
   res <- testobj$statistics
   if (testobj$test.type == 'Variable' | testobj$test.type == 'variable'){
     diffType <- sapply(rownames(res), function(g){
@@ -13,11 +13,11 @@ getDEGType <- function(testobj, cutoff = 0.05){
           'other'
         }
       } else {
-        'nonDEG'
+        'nonDDG'
       }
     })
   } else if (testobj$test.type == 'Time' | testobj$test.type == 'time'){
-    print('ConstantTimeTest does not lead to DEGType!')
+    print('ConstantTimeTest does not lead to DDGType!')
   }
   return(diffType)
 }

@@ -9,7 +9,6 @@ plotGenePopulation <- function(testobj,
                                ncol = NA,
                                subSampleNumber = NA,
                                line.size = 1, 
-                               facet.grid = F,
                                axis.text.blank = F){
   ## testobj: object returned from testpt(). 
   ## gene: a character vector of gene names. It can be of length 1 or > 1.
@@ -27,27 +26,24 @@ plotGenePopulation <- function(testobj,
       tmp <- data.frame(gene = g2, expression = fit[g, ], pseudotime = testobj$pseudotime, stringsAsFactors = FALSE)
     }, simplify = F)
     pd <- do.call(rbind, pd)
-    pd$gene <- as.factor(pd$gene)
+    
+    if (!is.na(sep)) {
+      pd$gene <- factor(as.character(pd$gene), levels = sub(sep, '', gene))
+    } else {
+      pd$gene <- factor(as.character(pd$gene), levels = gene)
+    }
+    
+    
     p <- ggplot2::ggplot(data= pd, aes(x = pseudotime, y = expression, color = 'red')) + 
-      geom_line() +
+      geom_line(size = line.size) +
       theme_classic() +
       xlab('Pseudotime') +
       ylab('Expression') +
       labs(color = '')
     if (is.na(ncol)){
-      if (facet.grid){
-        p <- p + facet.grid(~gene, nrow = nrow, scales = a)
-      } else {
         p <- p + facet_wrap(~gene, nrow = nrow, scales = a)
-      }
-        
     } else {
-      if (facet.grid){
-        p <- p + facet_grid(~gene, ncol = ncol, scales = a)
-      } else {
         p <- p + facet_wrap(~gene, ncol = ncol, scales = a)
-      }
-        
     }
   } else {
     if (is.na(gene)) gene <- rownames(fit[[1]])
@@ -72,8 +68,15 @@ plotGenePopulation <- function(testobj,
                         stringsAsFactors = FALSE)
     }, simplify = FALSE)
     pd <- do.call(rbind, pd)
-    if (!is.na(sep)) pd$gene <- sub(sep, '', pd$gene)
-    pd$gene <- as.factor(pd$gene)
+    if (!is.na(sep)) {
+      pd$gene <- sub(sep, '', pd$gene)
+      pd$gene <- factor(as.character(pd$gene), levels = sub(sep, '', gene))
+    } else{
+      
+      pd$gene <- factor(as.character(pd$gene), levels = gene)
+    
+    }
+    
     
     p <- ggplot(data= pd, aes(x = pseudotime, y = expression, group = type, color = type)) + 
       geom_line(size = line.size) +
