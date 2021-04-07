@@ -93,6 +93,11 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     print('The length of fit after removing null is ...')  ##
     print(sapply(fit, length))
     print(summary(sapply(fit,is.null))) ##
+    if (length(fit[[1]]) > 1){
+      fit <- fit[sapply(fit,length) > 1]
+      print('The length of fit having both null and full model is ...')  ##
+      print(sapply(fit, length))
+    }
     # saveRDS(fit, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/debug/fitoverall.rds')
     knotnum <- fit[[1]]$fitres.full$knotnum
     parameter <- fit[[1]]$fitres.full$parameter
