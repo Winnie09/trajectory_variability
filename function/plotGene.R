@@ -1,11 +1,11 @@
-plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F){
+plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F, cellProp = FALSE, x.lab = 'Pseudotime', y.lab = 'Expression'){
   ## testobj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
   ## expression: a character ('demean',or 'original') to define the expression values shown on the plots. if "demean"(default), show demeaned expression. if 'original", show original gene expression.
   ## ncol: only functional when plotting multiple genes. Used to define the number of columns. 
-  
+  ## cellProp: if FALSE (default), plot gene expression. If TRUE, it is cell proportion.
   library(splines)
   library(ggplot2)
   library(gridExtra)
@@ -15,8 +15,26 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
   cellanno <- testobj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
   if ('expr.ori' %in% names(testobj)) expression <- testobj[['expr.ori']] else expression <- testobj[['expr']]
-  predict.values <- predict_fitting(testobj, gene= gene, test.type = testobj$test.type)
+  if (cellProp){
+    ptw <- cut(pseudotime,seq(min(pseudotime),max(pseudotime),length.out = 100),include.lowest = T)
+    ptdat <- table(ptw,cellanno[match(names(pseudotime),cellanno[,1]),2])
+    ptdat <- t(t(ptdat)/colSums(ptdat)) ## divided by rowsum (rowsum = 1). interval * samples. 
+    ptdat <- as.data.frame(ptdat)
+    colnames(ptdat) <- c('pt','s','prop')
+    ptdat[,1] <- match(ptdat[,1],levels(ptw))
+    
+    ptdat$cell <- paste0('cell',1:nrow(ptdat))
+    ptexpr <- t(ptdat[,c('prop','prop'),drop=F])
+    colnames(ptexpr) <- ptdat$cell
+    
+    ptpt <- ptdat$pt
+    names(ptpt) <- ptdat$cell
+    expr=ptexpr
+    cellanno=data.frame(cell=ptdat$cell,sample=ptdat$s)
+    pseudotime=ptpt
+  }
   
+  predict.values <- predict_fitting(testobj, gene= gene, test.type = testobj$test.type)
   pseudotime = pseudotime[colnames(expression)]
   cellanno <- cellanno[match(colnames(expression), cellanno[,1]), ]
   # predict.values <- predict.values[, colnames(expression),drop=F]
@@ -81,7 +99,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     p <- p + 
       theme_classic() +
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testobj$fdr[gene], format = "e", digits = 2))) +
-      xlab('Pseudotime') + ylab('Expression') + 
+      xlab(x.lab) + ylab(y.lab) + 
       labs(color = variable) +
       theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm")) +
       guides(colour = guide_legend(override.aes = list(size=2, alpha = 1)))
@@ -98,6 +116,11 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
       } else {
         p <- p + scale_color_manual(values = brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))])
       } 
+    }
+    if (axis.text.blank) {
+      p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
+    } else {
+      p <- p + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
     }
     if (facet.sample){
       print(p + facet_wrap(~Sample, scales=a))
@@ -172,7 +195,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     
     p <- p + 
       theme_classic() + 
-      xlab('Pseudotime') + ylab('Expression') + 
+      xlab(x.lab) + ylab(y.lab) + 
       labs(color = variable) +
       facet_wrap(~g, scales = a, ncol = ncol) +
       theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
