@@ -84,7 +84,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable) +
       theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm")) +
-      guides(colour = guide_legend(override.aes = list(size=2)))
+      guides(colour = guide_legend(override.aes = list(size=2, alpha = 1)))
     if (!is.na(sep)){
       p <- p + ggtitle(sub(sep,'',gene)) 
     } else {
@@ -172,14 +172,17 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
       labs(color = variable) +
       facet_wrap(~g, scales = a, ncol = ncol) +
       theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
-      guides(colour = guide_legend(override.aes = list(size=2)))
+      guides(colour = guide_legend(override.aes = list(size=2, alpha = 1)))
     
     if (continuous){
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
-      p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8, palette))(length(unique(ld$Sample))))
+      if (length(unique(ld[, 'Variable'])) > 8){
+        p <- p + scale_color_manual(values = colorRampPalette(rev(brewer.pal(8, palette)))(length(unique(ld[, 'Variable']))))  
+      } else {
+        p <- p + scale_color_manual(values = brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))])
+      } 
     }
-    
     if (axis.text.blank) {
       p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
     } else {
