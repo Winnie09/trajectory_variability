@@ -1,5 +1,5 @@
-plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F){
-  ## testptObj: the output of function testpt() which is a list containing fdr, etc..
+plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F){
+  ## testobj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
@@ -11,18 +11,18 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
   library(gridExtra)
   library(viridis)   
   library(RColorBrewer) ##
-  pseudotime <- testptObj[['pseudotime']]
-  cellanno <- testptObj[['cellanno']]
+  pseudotime <- testobj[['pseudotime']]
+  cellanno <- testobj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
-  if ('expr.ori' %in% names(testptObj)) expression <- testptObj[['expr.ori']] else expression <- testptObj[['expr']]
-  predict.values <- predict_fitting(testptObj, gene= gene, test.type = testptObj$test.type)
+  if ('expr.ori' %in% names(testobj)) expression <- testobj[['expr.ori']] else expression <- testobj[['expr']]
+  predict.values <- predict_fitting(testobj, gene= gene, test.type = testobj$test.type)
   
   pseudotime = pseudotime[colnames(expression)]
   cellanno <- cellanno[match(colnames(expression), cellanno[,1]), ]
   # predict.values <- predict.values[, colnames(expression),drop=F]
-  knotnum <- testptObj$knotnum
+  knotnum <- testobj$knotnum
   knotnum[knotnum==0] <- 1  ## in case the fitting of line would cause bugs
-  design <- testptObj[['design']]
+  design <- testobj[['design']]
   
   
   cellanno <- data.frame(Cell = as.character(cellanno[,1]), 
@@ -42,7 +42,7 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
     linedlist <- lapply(unique(cellanno[,2]), function(p){
       # tmpcell <- cellanno[cellanno[,2]==p,1]
       tmpcellid <- which(cellanno[,2]==p)
-      if (toupper(testptObj$test.type) == 'TIME'){  ##### add
+      if (toupper(testobj$test.type) == 'TIME'){  ##### add
         tmpdf <- data.frame(expr=predict.values[gene,tmpcellid], 
                             Sample=p, 
                             Variable = design[rownames(design) == p, variable.d], ##
@@ -80,7 +80,7 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
     }
     p <- p + 
       theme_classic() +
-      # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testptObj$fdr[gene], format = "e", digits = 2))) +
+      # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testobj$fdr[gene], format = "e", digits = 2))) +
       xlab('Pseudotime') + ylab('Expression') + 
       labs(color = variable) +
       theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm")) +
@@ -110,9 +110,9 @@ plotGene <- function(testptObj, gene, variable = NULL, variable.text = NULL, fre
                        Variable = design[match(cellanno[,2], rownames(design)), variable.d],
                        g = g, stringsAsFactors = F)
       pdlist[[g]] <- pd
-      linedlist <- lapply(unique(testptObj$cellanno[,2]), function(p){
+      linedlist <- lapply(unique(testobj$cellanno[,2]), function(p){
         tmpcellid <- which(cellanno[,2]==p) 
-        if (toupper(testptObj$test.type) == 'TIME'){  ##### add
+        if (toupper(testobj$test.type) == 'TIME'){  ##### add
           tmpdf <- data.frame(expr=predict.values[g,tmpcellid], 
                               pseudotime=pseudotime[tmpcellid],
                               Sample=p, 
