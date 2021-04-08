@@ -3,8 +3,8 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
   ## fitting
   if ('expr.ori' %in% names(testObj)) expr <- testObj$expr.ori else  expr <- testObj$expr
   knotnum = testObj$knotnum[gene]
-  design = testObj$design; 
-  cellanno = testObj$cellanno; 
+  design = testObj$design
+  cellanno = testObj$cellanno
   pseudotime = testObj$pseudotime[colnames(expr)]
   if (is.null(gene)) gene <- rownames(expr)
   philist <- lapply(sort(unique(knotnum)), function(num.knot) {
@@ -35,11 +35,11 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
     phi <- philist[[as.character(num.knot)]]
     phi <- sapply(as,function(ss) phi[sname[[ss]],],simplify = F)
     
-    if (test.type == 'time' | test.type == 'Time') {
+    if (toupper(test.type)  == 'TIME') {
       xs <- sapply(row.names(design), function(i) {
         kronecker(diag(num.knot + 4), design[i, 1, drop = F])
       }, simplify = F)
-    } else if (test.type == 'variable' | test.type == 'Variable') {
+    } else if (toupper(test.type) == 'VARIABLE') {
       xs <- sapply(row.names(design), function(i) {
         kronecker(diag(num.knot + 4), design[i, ])
       }, simplify = F)
@@ -77,11 +77,11 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
   pred <- pred[gene, colnames(expr), drop=FALSE]
   if ('populationFit' %in% names(testObj))  populationFit = testObj$populationFit else 
     populationFit <- getPopulationFit(testObj,gene, type = testObj$test.type)
-  if (test.type == 'time' | test.type == 'Time'){
+  if (toupper(test.type) == 'TIME'){
     return( pred + populationFit[gene, , drop=F] )
   } else {
     l <- lapply(populationFit, function(i){
-      pred + i[gene, , drop=F] 
+      pred + i[gene, pseudotime , drop=F] 
     })
     return(l)
   }
