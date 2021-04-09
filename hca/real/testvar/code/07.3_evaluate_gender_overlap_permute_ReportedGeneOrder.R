@@ -1,24 +1,24 @@
 rm(list=ls())
 library(here)
 library(ggplot2)
-# setwd(here())
-setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
+setwd(here())
+# setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
 source('function/01_function.R')
 ddir <- rdir <- 'hca/real/testvar/result/EM_pm/'
 pdir <- 'hca/real/testvar/plot/EM_pm/'
 
 ## read in gold standard Sex difference genes (chrX, chrY)
-# u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
-# u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
-u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
-u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
+u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
+u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
+# u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
+# u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
 
 for (path in c('erythroid', 'lymph', 'monocyte')){
   ## read data
   Res <- readRDS(paste0(ddir, path, '/gender/gender_res.rds'))
   res <- Res$statistics
-  ## identify DEGType 
-  DEGType <- getDEGType(Res)
+  ## identify DDGType 
+  DDGType <- getDDGType(Res)
   # ------------------
   #  Evaluation Gender 
   # ------------------
@@ -28,7 +28,7 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   diffgene = sub(':.*', '', rownames(res[res[,'fdr.overall'] < 0.05,]))
   str(diffgene)
   ### proportion with Sex gold standard
-  #### using all DEGs
+  #### using all DDGs
   v1 <- cumsum(allg %in% u1)/seq(1,length(allg))
   v1 <- mean(v1[seq(1,length(v1)) %% 10 == 0])
   v2 <- cumsum(allg %in% u2)/seq(1,length(allg))
@@ -76,11 +76,11 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   gridExtra::grid.arrange(p1,p2,nrow=1)
   dev.off()
   
-  #### using only one type of DEG: trendSig, meanSig, other, bothSig
+  #### using only one type of DDG: trendSig, meanSig, other, bothSig
   if (length(diffgene) > 0){
-    for (i in setdiff(unique(DEGType), 'nonDEG')){
+    for (i in setdiff(unique(DDGType), 'nonDDG')){
       print(i)
-      SigGene <- names(DEGType)[DEGType == i]
+      SigGene <- names(DDGType)[DDGType == i]
       if (i == 'meanSig'){
         allg <- sub(':.*','',intersect(rownames(res[order(res[,'fdr.meanDiff'], -res[,'z.meanDiff']), ]), SigGene))
       } else if (i == 'trendSig'){
@@ -145,4 +145,5 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
 # v2.lm <- cumsum(allg.lm %in% u2)/seq(1,length(allg.lm))  
 # saveRDS(mean(v1.lm), paste0('hca/real/testvar/result/limma/', path, '/gender_chrX_overlap.rds'))
 # saveRDS(mean(v2.lm), paste0('hca/real/testvar/result/limma/', path, '/gender_chrY_overlap.rds'))
+
 
