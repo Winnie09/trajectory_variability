@@ -1,12 +1,17 @@
-plotGOEnrich <- function(goRes, n = 5){
+plotGOEnrich <- function(goRes, n = 5, sortByFDR = TRUE){
   ## goRes: output from GOEnrich. A list of GO enrichment result. Length same as number of clusters.
   ## n: number of top GO terms shown for each cluster
-  d <- lapply(1:length(goRes), function(i){  
+  ## sortByFDR: if TRUE (default), sort GO terms by FDR first, and then negative FC. If FALSE,  soft by negative FC and then FDR. 
+  d <- lapply(names(goRes), function(i){  
     cbind(Cluster = i, goRes[[i]])
   })
   d <- do.call(rbind, d)    
-  d <- d[order(d$FDR,-d$FC),]
-  cd <- do.call(rbind,sapply(unique(d$Cluster),function(i) {
+  if (sortByFDR){
+    d <- d[order(d$FDR,-d$FC),]  
+  } else {
+    d <- d[order(-d$FC, d$FDR),]
+  }
+  cd <- do.call(rbind,sapply(sort(unique(d$Cluster)),function(i) {
     tmp <- d[d$Cluster==i,]
     tmp <- tmp[tmp$FDR < 0.05 & tmp$FC > 2,,drop=F]
     if (nrow(tmp) > 0) {
@@ -31,12 +36,11 @@ plotGOEnrich <- function(goRes, n = 5){
   pd <- melt(dmat)
   colnames(pd) <- c('Term','Cluster','enc')
   # pd$Term <- factor(as.character(pd$Term),levels=rownames(dmat)[hclust(dist(dmat))$order])
- pd$Term <- factor(as.character(pd$Term),levels=names(v[rev(order(v))]))
-   pd$enc <- ifelse(pd$enc,'Non-significant','Significant')
+  pd$Term <- factor(as.character(pd$Term),levels=names(v[rev(order(v))]))
+  pd$enc <- ifelse(pd$enc,'Non-significant','Significant')
   p <- ggplot(pd,aes(x=Cluster,y=Term,fill=enc)) + geom_tile() + theme_classic() + scale_fill_manual(values=c('darkblue', 'orange'))+
     theme(legend.position = 'right')+
     scale_y_discrete(position = "right")
   return(p)
-  
 }
-  
+
