@@ -24,7 +24,7 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05, k = 5,use.clusters = TRUE, type
             k = k
           )
       }
-      diffgeneList <- sapply(unique(clu), function(i) {
+      diffgeneList <- sapply(sort(unique(clu)), function(i) {  #########
         names(clu)[clu == i]
       })
     } else
@@ -74,6 +74,7 @@ GOEnrich <- function(testobj, fdr.cutoff = 0.05, k = 5,use.clusters = TRUE, type
       sigres <- data.frame(sigres, FC = fc)
       sigres <- sigres[order(sigres$FDR, -sigres$FC), ]
     })
+    names(resList) <- sort(unique(clu))
     return(resList)
   }
   
