@@ -1,4 +1,4 @@
-plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'time', subsampleCell = TRUE, numSubsampleCell=1e3){
+plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'time', subsampleCell = TRUE, numSubsampleCell=1e3, sep = NA){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -6,6 +6,13 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   library(RColorBrewer)
   library(ggplot2)
   fit <- testobj$populationFit
+  
+  if ('DDGType' %in% names(Res)) {
+    DDGType <- Res$DDGType
+  } else {
+    DDGType <- getDDGType(Res)
+  }
+  DDGType <- DDGType[rownames(testobj$covariateGroupDiff)]
   
   if (subsampleCell){
     if (toupper(type) == 'TIME'){
@@ -16,14 +23,28 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
       for (i in 1:length(fit)){
         fit[[i]] <- fit[[i]][, id]
       }
-      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id,drop=F]) ## add FitDiff.scale
+      if (sum(DDGType == 'meanSig') > 0){
+        meanid <- which(DDGType == 'meanSig')
+        FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,id,drop=F]) ## add FitDiff.scale
+        FitDiff.scale <- rbind(FitDiff.scale1, testobj$covariateGroupDiff[meanid,id,drop=F])
+        FitDiff.scale <- FitDiff.scale[rownames(testobj$covariateGroupDiff),, drop=F]
+      } else {
+        FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id,drop=F]) ## add FitDiff.scale  
+      }
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
       testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
     }
     print('subsample done!')
   } else {
     if (toupper(type) == 'VARIABLE'){
-      FitDiff.scale <- scalematrix(testobj$covariateGroupDiff)
+      if (sum(DDGType == 'meanSig') > 0){
+        meanid <- which(DDGType == 'meanSig')
+        FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,,drop=F]) ## add FitDiff.scale
+        FitDiff.scale <- rbind(FitDiff.scale1, testobj$covariateGroupDiff[meanid,,drop=F])
+        FitDiff.scale <- FitDiff.scale[rownames(testobj$covariateGroupDiff),, drop=F]
+      } else {
+        FitDiff.scale <- scalematrix(testobj$covariateGroupDiff)
+      }
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
     }
   }
@@ -183,6 +204,11 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
   plist <- list()
   
+  if (!is.na(sep)){
+    rownames(expr.scale) <-sub(sep, '', rownames(expr.scale))
+    rownames(rowann) <- sub(sep, ':.*', rownames(rowann))
+  }
+  
   p1 <- pheatmap(
     expr.scale,
     cluster_rows = F,
@@ -224,9 +250,12 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   # names(col.group) = unique(colann.fit$group)
   # annotation_colors$group <-   col.group
   
-  
   fit.scale <- cbind(fit.scale, FitDiff.scale)  ## cbind FitDiff !!!
   rownames(colann.fit) = colnames(fit.scale)
+  
+  if (!is.na(sep)){
+    rownames(fit.scale) <-sub(sep, '', rownames(fit.scale))  
+  }
   
   p2 <- pheatmap(
     fit.scale,
@@ -243,11 +272,9 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     border_color = NA, silent = TRUE)
   plist[[3]] <- p2[[4]] 
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
-  
   # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
   grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1))
   # dev.off()
-  
 }  
 
 
