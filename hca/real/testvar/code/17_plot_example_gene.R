@@ -50,8 +50,7 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     plotGene(Res, gene = gene, variable = 'gender', plot.point = T, sep = ':.*', palette = 'Set1', continuous = F, point.alpha = 0.1, point.size = 0.05, line.size = 0.3)
     dev.off()
   }
-    
-  
+   
   gene = rownames(res[(nrow(res)-20): (nrow(res)), ])
   pdf(paste0(pdir, path, '/gender/nonDDG_example.pdf'), width = 8, height = 8)
   plotGene(Res, gene = gene, variable = 'gender', plot.point = T, sep = ':.*', palette = 'Set1', continuous = F, point.alpha = 0.1, point.size = 0.05, line.size = 0.3)
@@ -64,8 +63,8 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
   
   } else if (path == 'monocyte'){
     gene = c("XIST:ENSG00000229807",'EIF1AX:ENSG00000173674', "DDX3Y:ENSG00000067048", "EIF1AY:ENSG00000198692", rownames(res)[grepl('UQCRC1', rownames(res))], "PXN-AS1:ENSG00000255857")
-    pdf(paste0(pdir, path, '/gender/gene_example.pdf'), width = 5, height = 3.2)
-    plotGene(Res, gene = gene, variable = 'gender', plot.point = T, sep = ':.*', continuous = F, point.alpha = 0.1, point.size = 0.05, line.size = 0.3, palette = 'Set1')
+    pdf(paste0(pdir, path, '/gender/gene_example.pdf'), width = 4.2, height = 5.2)
+    plotGene(Res, gene = gene, variable = 'gender', plot.point = T, sep = ':.*', continuous = F, point.alpha = 0.1, point.size = 0.05, line.size = 0.3, palette = 'Dark2', ncol = 2)
     dev.off()
   } 
 }
@@ -96,4 +95,5 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
 #              "bothSig"              "meanSig" 
 #    ZFY:ENSG00000067646  USP9Y:ENSG00000114374 
 #              "bothSig"              "bothSig" 
+
 
