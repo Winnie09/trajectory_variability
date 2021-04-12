@@ -13,8 +13,8 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     pdir <- paste0('hca/real/testvar/plot/EM_pm/', path, '/', variable, '/')
     Res <- readRDS(paste0('hca/real/testvar/result/EM_pm/', path, '/', variable, '/cell_proportion_test_', variable, '.rds'))
     
-    w = ifelse(variable == 'gender', 2, 1.8)
-    pdf(paste0(pdir, 'cellPropTest.pdf'), width = w, height = 1.3)
+    w = ifelse(variable == 'gender', 2.8, 2.5)
+    pdf(paste0(pdir, 'cellPropTest.pdf'), width = w, height = 2)
     plotGene(testobj = Res, gene='prop', variable = variable,cellProp = TRUE,  variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = F, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = ifelse(variable=='age',T,F), sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = T, y.lab = 'Cell density')
     dev.off()
     
