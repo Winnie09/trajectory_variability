@@ -12,7 +12,8 @@ plotGeneCellAndPopulation <- function(testobj,
                                line.alpha = 1, 
                                point.size = 0.2,
                                point.alpha = 0.2,
-                               axis.text.blank = F){
+                               axis.text.blank = F,
+                               dot.quantile = 1){
   ## testobj: object returned from testpt(). 
   ## gene: a character vector of gene names. It can be of length 1 or > 1.
   ## variable: a character (within the column names in design matrix) to get population pattern. If variable == NA, then return testtime fit. Other wise return testvar fit with the variable.
@@ -33,6 +34,7 @@ plotGeneCellAndPopulation <- function(testobj,
                      Sample = cellanno[match(colnames(expression), cellanno[,1]),2], 
                      Variable = design[match(cellanno[,2], rownames(design)), variable.d],
                      gene = g, stringsAsFactors = F)
+    pd[pd[,1] >= quantile(pd[,1], dot.quantile), 1] <- NA
     pdlist[[g]] <- pd
   }
   pd <- do.call(rbind, pdlist)
