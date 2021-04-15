@@ -37,6 +37,7 @@ for (path in c('erythroid','monocyte', 'lymph')){
   Res$cluster <- clusterGene(Res, gene = diffgene, type = 'time', k=5)
   saveRDS(Res$cluster, paste0(pdir, '/cluster.rds'))
   
+  saveRDS(Res, paste0(pdir, '/testtime_res_with_clu.rds'))
   ## --------------
   ## save diff gene
   ## --------------
@@ -88,9 +89,18 @@ for (path in c('erythroid','monocyte', 'lymph')){
   # ------------------------------------------------------
   # compare original and fitted expression: not tested yet
   # ------------------------------------------------------
-  png(paste0(pdir, '/fitHm.png'),width = 4000,height = 2200,res = 300)
+  if (path == 'lymph'){
+    png(paste0(pdir, '/fitHm.png'),width = 2000,height = 1300,res = 100)
+  } else if (path == 'monocyte'){
+    png(paste0(pdir, '/fitHm.png'),width = 4000,height = 2200,res = 200)
+  } else {
+    png(paste0(pdir, '/fitHm.png'),width = 4000,height = 2200,res = 350)
+  }
   plotFitHm(Res, type = 'time', cellHeightTotal = 250, cellWidthTotal=200, subsampleCell=FALSE )
   dev.off()
+  
+  
+  
   # png(paste0(pdir, '/fitHm_rownames.png'),width = 12000,height = 10000,res = 300)
   # print(plotFitHm(Res, showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 10))
   # dev.off()
@@ -107,6 +117,7 @@ for (path in c('erythroid','monocyte', 'lymph')){
   plotGene(Res, gene, plot.point = T, point.size = 0.2, point.alpha = 0.5)
   dev.off()
 }
+
 
 
 
