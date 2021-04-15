@@ -37,7 +37,11 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     colnames(fit.scale) <- paste0(rep(names(fit), each = ncol(fit.scale)/length(fit)), ';cell', seq(1, ncol(fit.scale)))
     res <- data.frame(clu = clu, 
                       cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
-                      changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))),
+                      # changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(1, ncol(fit.scale)/2)]))),
+                      changepoint = sapply(names(clu), function(i) {
+                        v <- fit.scale[i, seq(1, ncol(fit.scale)/2)]
+                        which(v[-length(v)] * v[-1] < 0)[1]
+                        }),
                       DDGType = DDGType[names(clu)])
     res <- res[order(res$clu, res$DDGType, res$changepoint, res$cor), ]
   } else {
@@ -45,7 +49,12 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     dimnames(fit.scale) <- dimnames(fit)
     res <- data.frame(clu = clu, 
                       cor = sapply(names(clu), function(i) cor(fit.scale[i, seq(1, ncol(fit.scale)/2)], seq(1, ncol(fit.scale)/2))),
-                      changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(round(ncol(fit.scale)*0.1), round(ncol(fit.scale)*0.9))]))))
+                      changepoint = sapply(names(clu), function(i) {
+                        v <- fit.scale[i, seq(round(ncol(fit.scale)*0.05), round(ncol(fit.scale)*0.95))]
+                        which(v[-length(v)] * v[-1] < 0)[1]
+                        }))
+                      # changepoint = sapply(names(clu), function(i) which.min(abs(fit.scale[i, seq(round(ncol(fit.scale)*0.01), round(ncol(fit.scale)*0.99))]))))
+    
     res <- res[order(res$clu, res$changepoint, res$cor), ]
   }
   
