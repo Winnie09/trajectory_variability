@@ -1,6 +1,7 @@
 cluster_gene <- function(testobj, 
                          gene,
                          k,
+                         k.auto = FALSE,
                          type = 'time',
                          method = 'kmeans', 
                          scale.difference = F){
@@ -30,7 +31,12 @@ cluster_gene <- function(testobj,
   
   if (method == 'kmeans'){
     set.seed(12345)
-    clu <- kmeans(mat.scale, k, iter.max = 1000)$cluster
+    # 
+    if (k.auto){
+      clu <- mykmeans(mat.scale, maxclunum = 20)$cluster
+    } else {
+      clu <- kmeans(mat.scale, k, iter.max = 1000)$cluster
+    }
   } else if (method == 'hierarchical') {
     clu <- cutree(hclust(dist(mat.scale)), k = k)
   }
@@ -48,7 +54,8 @@ cluster_gene <- function(testobj,
 }
 
 
-clusterGene <- function(testobj, gene, type = 'variable', k=5, method = 'kmeans', scale.difference = F){
+clusterGene <- function(testobj, gene, type = 'variable', k.auto = FALSE,  k=5, method = 'kmeans', scale.difference = F){
+  ## k.auto: if FALSE (default), use input k value. If TRUE, automatically select number of clusters. 
   if (toupper(type) == 'TIME'){
     clu <- cluster_gene(testobj = testobj, 
                         gene = gene,
@@ -61,9 +68,8 @@ clusterGene <- function(testobj, gene, type = 'variable', k=5, method = 'kmeans'
     } else {
       DDGType <- getDDGType(testobj)
     }
-    clu <- cluster_gene(testobj, gene = names(DDGType)[!DDGType %in% c('nonDDG', 'meanSig')], type = 'variable', k=k-2, scale.difference = scale.difference, method = method)
     
-    
+    clu <- cluster_gene(testobj, gene = names(DDGType)[!DDGType %in% c('nonDDG', 'meanSig')], type = 'variable', k=k, scale.difference = scale.difference, method = method, k.auto = k.auto)
     design = testobj$design
     cellanno = testobj$cellanno
     meandiff <- sapply(c(0,1), function(i){
@@ -73,14 +79,14 @@ clusterGene <- function(testobj, gene, type = 'variable', k=5, method = 'kmeans'
       } else {
         rowMeans(testobj$expr.ori[names(DDGType)[DDGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1]])
       }
-        
+      
     })
     large0 <- rownames(meandiff)[meandiff[,1] >= meandiff[,2]]
     large1 <- rownames(meandiff)[meandiff[,1] < meandiff[,2]]
     
-    clu2 <- rep(k-1, length(large0))
+    clu2 <- rep(max(clu)+1, length(large0))
     names(clu2) <- large0
-    clu3 <- rep(k, length(large1))
+    clu3 <- rep(max(clu)+2, length(large1))
     names(clu3) <- large1
     clu = c(clu, clu2, clu3)  
   }
