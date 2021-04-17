@@ -1,4 +1,4 @@
-plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, subsampleCell = TRUE, numSubsampleCell=1e3, sep = NA){
+plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, subsampleCell = TRUE, numSubsampleCell=1e3, sep = NA, break.0 = TRUE){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -184,7 +184,10 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   
   #### plot
   cpl = colorRampPalette(rev(brewer.pal(n = 7, name = "RdYlBu")))(100)
-  cpl <- c(cpl[1:40], cpl[60:100])
+  if (break.0){
+    cpl <- c(cpl[1:40], cpl[60:100])
+  } 
+    
   plist <- list()
   
   if (!is.na(sep)){
