@@ -182,7 +182,8 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   if (length(unique(clu)) < 8){
     col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
   } else {
-    col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
+    col.clu = colorRampPalette(brewer.pal(8, 'Set1'))(length(unique(clu)))
+    
   }
   names(col.clu) = unique(clu)
   
@@ -308,6 +309,7 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3,4,5,5,5,5),nrow=1))
   # dev.off()
 }  
+
 
 
 
