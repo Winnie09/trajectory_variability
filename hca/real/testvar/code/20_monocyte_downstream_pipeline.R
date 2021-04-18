@@ -4,7 +4,8 @@ setwd(here())
 # setwd('/Users/wenpinhou/Dropbox/trajectory_variability')
 source('function/01_function.R')
 path = 'monocyte'
-pdir <- 'hca/real/testvar/plot/EM_pm/monocyte/gender/'
+pdir <- paste0('hca/real/testvar/plot/EM_pm/', path, '/gender/')
+dir.create(pdir, showWarnings = F, recursive = T)
 ## read in gold standard Sex difference genes (chrX, chrY)
 u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
 u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
@@ -33,7 +34,7 @@ sink(paste0(pdir, '/DDGType_table.txt'))
 print(table(DDGType))
 sink()
 
-clu <- clusterGene(Res, gene = names(DDGType)[DDGType %in% c('nonDDG')], type = 'variable', k=5)
+clu <- clusterGene(Res, gene = names(DDGType)[!DDGType %in% c('nonDDG')], type = 'variable', k.auto=T)
 table(clu)
 Res$cluster = clu
 saveRDS(Res, paste0(pdir, paste0('numeric_res_with_clu.rds')))
@@ -67,10 +68,13 @@ nn <- sapply(names(goRes), function(i){
   return(0)
 })
 
-pdf(paste0(pdir, '/hm_GO_term.pdf'), width = 7.2, height = 3.5)
+pdf(paste0(pdir, '/hm_GO_term5.pdf'), width = 6.8, height = 3.5)
 print(plotGOEnrich(goRes))
 dev.off()
 
+pdf(paste0(pdir, '/hm_GO_term10.pdf'), width = 6.8, height = 3.5)
+print(plotGOEnrich(goRes, n = 10))
+dev.off()
 
 # --------------------------------------
 # compare original and fitted expression
@@ -84,13 +88,18 @@ dev.off()
 # dev.off()
 
 
-png(paste0(pdir, 'DiffFitHm.png'),width = 4000,height = 2200,res = 250)
-plotDiffFitHm(Res, type = 'variable', cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
+# png(paste0(pdir, 'DiffFitHm.png'),width = 4000,height = 2200,res = 250)
+# plotDiffFitHm(Res, type = 'variable', cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
+# dev.off()
+
+png(paste0(pdir, 'DiffFitHm3.png'),width = 4500,height = 2200,res = 250)
+plotDiffFitHm3(Res,  cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE, break.0 = FALSE)
 dev.off()
 
-png(paste0(pdir, 'DiffFitHm_rownames.png'),width = 5500,height = 3500,res = 300)
-print(plotDiffFitHm(Res, type='variable', showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*', , subsampleCell = FALSE))
+png(paste0(pdir, 'DiffFitHm3_rownames.png'),width = 7500,height = 3500,res = 300)
+plotDiffFitHm3(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*', , subsampleCell = FALSE, break.0 = FALSE)
 dev.off()
+
 
 # ## ----------
 # ## plot DDG
@@ -124,6 +133,7 @@ dev.off()
 #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
 #   dev.off()
 # }
+
 
 
 
