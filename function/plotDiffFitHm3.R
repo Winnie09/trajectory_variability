@@ -122,7 +122,6 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     quantile(as.vector(fit.scale), 0.02)
   
   ### annotate rows and columns
-  
   if (is.null(colann)){
     colann <- data.frame(
       # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
@@ -141,12 +140,10 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   names(col.pseudotime) = unique(colann$pseudotime)
   
   if (is.null(rowann)){
-    
     rowann = data.frame(
       cluster = as.character(clu),
       DDGType = as.character(DDGType[names(clu)]),
       stringsAsFactors = F)
-    
     rownames(rowann) = names(clu)
   }
   rowann <- rowann[rownames(fit.scale), ,drop=F]
@@ -187,7 +184,7 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   if (break.0){
     cpl <- c(cpl[1:40], cpl[60:100])
   } 
-    
+  
   plist <- list()
   
   if (!is.na(sep)){
