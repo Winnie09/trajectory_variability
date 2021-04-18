@@ -3,7 +3,7 @@ mykmeans <- function(matrix, number.cluster = NA, maxclunum = 30, seed = 12345){
   library(parallel)
   if (is.na(number.cluster)){
     rss <- mclapply(1:maxclunum,function(clunum) {
-      set.seed(12345)
+      set.seed(seed)
       tmp <- kmeans(matrix,clunum,iter.max = 1000)
       tmp$betweenss/tmp$totss
     },mc.cores=30)
