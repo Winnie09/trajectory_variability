@@ -9,6 +9,7 @@ cluster_gene <- function(testobj,
   ## gene: a character vector of genes.
   ## k: number of clusters. 2 are for meanSig, and the remaining k-2 clusters are for DDG of NOT meanSig.
   ## type: "time" or "variable". A character denoting the population fit is on "time" or "variable".  Default is "time". ## method: 'kmeans'(default) or 'hierarchical'.
+  ## scale.difference: if FALSE (default), do not standardize the group difference. If TRUE, scale the group difference by the maximum of absolute values. 
   if (type == 'time'){
     if ('populationFit' %in% names(testobj)) {
       fit <- testobj$populationFit
