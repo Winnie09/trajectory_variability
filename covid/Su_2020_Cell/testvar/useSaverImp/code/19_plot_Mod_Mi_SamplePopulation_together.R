@@ -28,11 +28,21 @@ glist <- list(c('JAK3', 'ZEB2'),
               c('DNMT1', 'GNLY'),
               c('BRD4', 'ISG20'),
               c('IL27RA', 'FLI1'))
-
 for (c in 1:length(glist)){
   i = glist[[c]]
   png(paste0(pdir, 'cluster', c, '_SamplePopulation_select.png'), width = 600, height = 300, res = 200)
   plotGeneSampleAndPopulation(Res, gene = i, plot.point = F, variable = 'type', axis.text.blank = T, line.size = 0.1, continuous = F, palette = 'Dark2') 
   dev.off()  
 }
+
+g <- c('TCF7', 'GZMB', 'IL7RA', 'KLRD1', 'PDCD1')
+for (c in g){
+  if (c %in% rownames(Res$covariateGroupDiff)){
+    png(paste0(pdir, c, '_SamplePopulation.png'), width = 600, height = 450, res = 200)
+    plotGeneSampleAndPopulation(Res, gene = c, plot.point = F, variable = 'type', axis.text.blank = T, line.size = 0.05, continuous = F, palette = 'Dark2') 
+    dev.off()  
+  }
+    
+}  
+
 
