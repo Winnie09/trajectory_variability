@@ -12,8 +12,8 @@ plotClusterMeanAndDiff <- function(testobj,
   library(RColorBrewer)
   library(reshape2)
   library(gridExtra)
-  a1 <- ifelse(free.scale1, 'free', 'fixed') 
-  a2 <- ifelse(free.scale2, 'free', 'fixed') 
+  a1 <- ifelse(free.scale1, 'free_y', 'fixed') 
+  a2 <- ifelse(free.scale2, 'free_y', 'fixed') 
   int <- intersect(rownames(fit[[1]]), names(cluster))
   clu <- cluster[int]
   pd <- lapply(1:length(fit), function(i){
@@ -39,12 +39,12 @@ plotClusterMeanAndDiff <- function(testobj,
     p1 <- p1 + scale_color_manual(values = colorRampPalette(brewer.pal(8,'Dark2'))(length(unique(pd$type))))
   }
    
-   
   if ('covariateGroupDiff' %in% names(testobj)){
     fit <- testobj$covariateGroupDiff
   } else {
     fit <- getCovariateGroupDiff(testobj = testobj, gene = int)
   }
+  fit <- fit[names(clu), , drop=FALSE]
   colnames(fit) <- seq(1, ncol(fit))
   library(ggplot2)
   library(RColorBrewer)
