@@ -10,7 +10,7 @@ rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method, '/
 pdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/plot/', test.method, '/', comparison, '/')
 
 Res <- readRDS(paste0(rdir, paste0('numeric_res_with_clu.rds')))
-tb <- read.csv('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/EM_pm/Mod_Mi/differential_genes_mymarkes.csv', row.names = 1)
+tb <- read.csv('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/EM_pm/Mod_Mi/differential_genes_zeyu.csv', row.names = 1)
 i = tb[1:2,1]
 
 for (c in unique(tb[,11])){
@@ -21,12 +21,17 @@ for (c in unique(tb[,11])){
   dev.off()  
 }  
 
-glist <- list(c('JAK3', 'ZEB2'),
-              c('CXCR4', 'FOS'),
-              c('IFI6', 'RELA'),
-              c('TBX21', 'TNF'),
-              c('DNMT1', 'GNLY'),
-              c('BRD4', 'ISG20'),
+# Cluster 1—On the pre-activation stage, CD8 T cells from moderate patients are more sensitive to IFNG signaling (e.g. JAK3, IFNGR2) and pre-programed to an effector activation state by having more effector TF ZEB2 expression. This difference diminished smoothly through activation.
+# Cluster 3—Along activation trajectory, CD8 T cells from moderate patients continually presents more inflammation signaling (NFKB1a, RelA) and get more inflammation driven activation (AP-1 family such as FOSB/JUNB). 
+# Cluster 5—From activation to hyper-effector activation, CD8 T cells from moderate patients significantly gained more terminal effector T cell marker GNLY and secret more chemokine CCL5, with potential epigenetic changes on the global DNA methylation level (DNMT1).
+
+glist <- list(c('TBX21', 'ZEB2'),
+              c('NFKBIA', 'FOSB'),
+              c('IFI6', 'HLA-DPA1'),
+              c('ZNF593', 'IKBIP'),
+              c('JAK3', 'IFNGR2'),
+              c('GZMA', 'GNLY'),
+              c('ISG20', 'IFT27'),
               c('IL27RA', 'FLI1'))
 for (c in 1:length(glist)){
   i = glist[[c]]
@@ -44,5 +49,6 @@ for (c in g){
   }
     
 }  
+
 
 
