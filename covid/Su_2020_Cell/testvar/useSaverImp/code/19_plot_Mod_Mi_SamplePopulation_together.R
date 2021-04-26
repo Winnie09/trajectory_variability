@@ -10,8 +10,9 @@ rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method, '/
 pdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/plot/', test.method, '/', comparison, '/')
 
 Res <- readRDS(paste0(rdir, paste0('numeric_res_with_clu.rds')))
-tb <- read.csv('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/EM_pm/Mod_Mi/differential_genes_zeyu.csv', row.names = 1)
+tb <- read.csv(paste0('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/EM_pm/', comparison, '/differential_genes_zeyu.csv'), row.names = 1)
 i = tb[1:2,1]
+str(tb)
 
 for (c in unique(tb[,11])){
   print(c)
@@ -27,7 +28,7 @@ for (c in unique(tb[,11])){
 
 glist <- list(c('TBX21', 'ZEB2'),
               c('NFKBIA', 'FOSB'),
-              c('IFI6', 'HLA-DPA1'),
+              c('IFI6', 'ISG15'),
               c('ZNF593', 'IKBIP'),
               c('JAK3', 'IFNGR2'),
               c('GZMA', 'GNLY'),
@@ -49,6 +50,7 @@ for (c in g){
   }
     
 }  
+
 
 
 
