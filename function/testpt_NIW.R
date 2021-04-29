@@ -1,6 +1,6 @@
 # ncores=detectCores(); test.type='Time';test.method = 'permutation'
 # permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE, cutoff = 1e-5) {
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'EM)
   ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
@@ -17,12 +17,12 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       tmp <- expr[,cellanno[,2]==us, drop=FALSE]
       m <- rowMeans(tmp)
       rowMeans(tmp*tmp)-m*m
-    })==0
+    })<cutoff ## first version <20210407 is 0.
     gid <- which(rowSums(sdm) > 0)  ## identify if any genes have sd=0 expression in any one of the samples
     if (length(gid) > 0) { ## if yes, for those genes, add a white-noise with sd=1e-5 on the sample with sd=0.
       mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
       colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
-      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr),sd=1e-5),nrow=length(gid))
+      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(gid)*ncol(expr),sd=cutoff),nrow=length(gid))
       rm('mask')  
     } 
   }
@@ -40,7 +40,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   if (test.method == 'chisq'){
     res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 1)##save 13%
     ll1 <- sapply(res1$parameter,function(i) i$ll)
-    if (test.type == 'Time'){
+    if (toupper(test.type) == 'TIME'){
       res0 <- fitpt.m0(expr, cellanno, pseudotime, design[,1,drop=FALSE]) ##  
       ll0 <- sapply(res0[[1]], function(i) i$ll)
       paradiff10 <- sapply(res1[[1]], function(i) length(unlist(i[1:4]))) - sapply(res0[[1]], function(i) length(unlist(i[1:4])))
@@ -52,7 +52,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
                         df.diff= paradiff10,
                         stringsAsFactors = FALSE)
       reslist = list(statistics = res,  parameter = res1$parameter, knotnum = res1$knotnum)  ## function return
-    } else if (test.type == 'Variable'){
+    } else if (toupper(test.type) == 'VARIABLE'){
       res2 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 2, knotnum = res1[[2]])## save 13%
       ll2 <- sapply(res2$parameter,function(i) i$ll)
       res3 <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 3, knotnum = res1[[2]])
