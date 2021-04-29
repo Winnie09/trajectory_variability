@@ -9,12 +9,15 @@ for (path in c('lymph', 'erythroid', 'monocyte')){
   pseudotime = readRDS(paste0(ddir, 'input_pseudotime.rds'))
   design = design[, 1:2]
   design[,2] <- ifelse(design[,2] == 'male', 0, 1)
-  res <- cellPropTest(cellanno = cellanno, pseudotime = pseudotime, design = design, ncores = 4)
-  saveRDS(res, paste0(rdir, 'cell_proportion_test_gender.rds'))
+  res <- cellPropTest(cellanno = cellanno, pseudotime = pseudotime, design = design, ncores = 4, test.type = 'variable')
+  saveRDS(res, paste0(rdir, 'gender/cell_proportion_test_gender.rds'))
   
   design = readRDS(paste0(ddir, 'input_design.rds'))
   design = design[, c(1,3)]
   design[,2] <- as.numeric(design[,2])
-  res <- cellPropTest(cellanno = cellanno, pseudotime = pseudotime, design = design, ncores = 4)
-  saveRDS(res, paste0(rdir, 'cell_proportion_test_age.rds'))
+  res <- cellPropTest(cellanno = cellanno, pseudotime = pseudotime, design = design, ncores = 4, test.type = 'variable')
+  saveRDS(res, paste0(rdir, 'age/cell_proportion_test_age.rds'))
 }
+
+
+
