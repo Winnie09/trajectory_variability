@@ -12,7 +12,8 @@ cellPropTest <- function(cellanno, pseudotime, design=NULL, ncores=detectCores()
   
   ptpt <- ptdat$pt
   names(ptpt) <- ptdat$cell
-  res <- testpt(expr=ptexpr, cellanno=data.frame(cell=ptdat$cell,sample=ptdat$s), pseudotime=ptpt, design=design, ncores=ncores, test.type = test.type, demean = FALSE, test.method = 'permutation', ncores.fit = 1,fix.all.zero=F)
+  ptcellanno <- data.frame(cell=ptdat$cell,sample=ptdat$s, stringsAsFactors = F)
+  res <- testpt(expr=ptexpr, cellanno=ptcellanno, pseudotime=ptpt, design=design, ncores=ncores, test.type = test.type, demean = FALSE, test.method = 'permutation', ncores.fit = 1,fix.all.zero=F)
   res$statistics <- res$statistics[1, 2:3]
   return(res)
 }
