@@ -31,8 +31,9 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
     omega <- t(sapply(genesub, function(g){
       testObj$parameter[[g]]$omega
     }))
-    
+     
     phi <- philist[[as.character(num.knot)]]
+    phipred <- phi
     phi <- sapply(as,function(ss) phi[sname[[ss]],],simplify = F)
     
     if (toupper(test.type)  == 'TIME') {
@@ -69,17 +70,39 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
       })
       K <- tcrossprod(t(phi[[s]]),sexpr_phibx)
       JK <- rowsum((Jsolve*K[rep(1:nb,nb),,drop=FALSE]),rep(1:nb,each=nb)) ## u's poterior mean
-      t(phi[[s]] %*% JK)
+      t(phipred %*% JK)
     }, simplify = F)
-    predtmp <- do.call(cbind, predtmp)
+    if (toupper(test.type) == 'VARIABLE') {
+      predtmp <- do.call(cbind, predtmp)
+    } else {
+      return(predtmp)
+    }
   })
-  pred <- do.call(rbind, pred)
-  pred <- pred[gene, colnames(expr), drop=FALSE]
+  
   if ('populationFit' %in% names(testObj))  populationFit = testObj$populationFit else 
     populationFit <- getPopulationFit(testObj,gene, type = testObj$test.type)
+  
   if (toupper(test.type) == 'TIME'){
-    return( pred + populationFit[gene, , drop=F] )
+    predfit <- lapply(pred, function(i){
+      for (j in 1:length(i)){
+        if (ncol(populationFit) < ncol(i[[j]])){ ## cell proportion test case
+          i[[j]] <- i[[j]][, cellanno[cellanno[,2] == names(i)[j], 1], drop = FALSE]
+          i[[j]] <- i[[j]] + populationFit[rownames(i[[j]]), , drop = FALSE]
+          
+        } else { ## differential gene test case
+          i[[j]] <- i[[j]] + populationFit[rownames(i[[j]]), , drop = FALSE]
+          i[[j]] <- i[[j]][, cellanno[cellanno[,2] == names(i)[j], 1], drop = FALSE]
+        }
+          
+      }
+      tmp <- do.call(cbind, i)
+      tmp[, names(pseudotime), drop = FALSE]
+    })
+    predfit <- do.call(rbind, predfit)
+    return(predfit)
   } else {
+    pred <- do.call(rbind, pred)
+    pred <- pred[gene, colnames(expr), drop=FALSE]
     l <- lapply(populationFit, function(i){
       pred + i[gene, pseudotime , drop=F] 
     })
@@ -87,4 +110,7 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
   }
   
 }
+
+
+
 
