@@ -83,7 +83,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
   } else if (test.method == 'permutation'){
     print('fitting model: overall: CovariateTest (Model 3 vs.1) or ConstantTest (Model 1) ...')
     if (ncores == 1){
-      fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))} else {
+       fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))} else {
         fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose,  expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
       }
     print('The length of fit is ...')  ##
@@ -109,13 +109,20 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       den <- density(z)$bw
       mean(pnorm(llr.overall[i,1], z, sd=den, lower.tail = F))
     })
+    
+    log.pval <- sapply(1:nrow(llr.overall), function(i) {
+      z <- llr.overall[i,2:ncol(llr.overall)]
+      den <- density(z)$bw
+      max(pnorm(llr.overall[i,1], z, sd=den, lower.tail = F, log.p = T))
+    })
     fdr.overall <- p.adjust(pval.overall,method='fdr')
     names(pval.overall) <- names(fdr.overall) <- row.names(llr.overall)
     z.score <- (llr.overall[,1] - rowMeans(llr.overall[,2:(ncol(llr.overall))]))/apply(llr.overall[,2:(ncol(llr.overall))],1,sd)
-    res.overall <- data.frame(fdr.overall = fdr.overall, pval.overall = pval.overall, z.overall = z.score, stringsAsFactors = FALSE)
+    res.overall <- data.frame(fdr.overall = fdr.overall, pval.overall = pval.overall, z.overall = z.score,
+                              log.pval.overall = log.pval, stringsAsFactors = FALSE)
     print(paste0('Number of overall DDG: ', sum(fdr.overall < 0.05) ))
     
-    if (sum(fdr.overall <0.05 ) > 0 & test.type == 'Variable' & !overall.only){
+    if (sum(fdr.overall <0.05 ) > 0 & toupper(test.type) == 'VARIABLE' & !overall.only){
       print('meanDiff pvalues: Model 2 vs. model 1...')
       if (ncores == 1){
         fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))
@@ -139,11 +146,16 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           den <- density(z)$bw
           mean(pnorm(llr[i,1], z, sd=den,lower.tail = F))
         })
+        log.pval <- sapply(1:nrow(llr.overall), function(i) {
+          z <- llr[i,2:ncol(llr)]
+          den <- density(z)$bw
+          max(pnorm(llr[i,1], z, sd=den,lower.tail = F, log.p = T))
+    })
         fdr <- p.adjust(pval,method='fdr')
         names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
-      res.meanDiff <- data.frame(fdr.meanDiff = fdr, pval.meanDiff = pval, z.meanDiff = z.score, stringsAsFactors = FALSE)
+      res.meanDiff <- data.frame(fdr.meanDiff = fdr, pval.meanDiff = pval, z.meanDiff = z.score, log.pval.meanDiff = log.pval, stringsAsFactors = FALSE)
       
       print('trendDiff pvalues: Model 3 vs. model 2...')
       if (ncores == 1){
@@ -168,17 +180,22 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           den <- density(z)$bw
           mean(pnorm(llr[i,1], z, sd=den,lower.tail = F))
         })
+        log.pval <- sapply(1:nrow(llr), function(i) {
+          z <- llr[i,2:ncol(llr)]
+          den <- density(z)$bw
+          max(pnorm(llr[i,1], z, sd=den,lower.tail = F, log.p = T))
+        })
         fdr <- p.adjust(pval,method='fdr')
         names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
-      res.trendDiff <- data.frame(fdr.trendDiff = fdr,  pval.trendDiff = pval, z.trendDiff = z.score, stringsAsFactors = FALSE)
+      res.trendDiff <- data.frame(fdr.trendDiff = fdr,  pval.trendDiff = pval, z.trendDiff = z.score, pval.trendDiff.magnitute = log.pval.trendDiff,  stringsAsFactors = FALSE)
       res <- matrix(NA, nrow = nrow(res.overall), ncol = 9, 
                     dimnames = list(rownames(res.overall),c(colnames(res.overall), colnames(res.meanDiff), colnames(res.trendDiff))))
       res[rownames(res.overall), colnames(res.overall)] <- as.matrix(res.overall)
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
       res[rownames(res.meanDiff), colnames(res.meanDiff)] <- as.matrix(res.meanDiff)
-    } else if (sum(fdr.overall < 0.05) == 0 | (test.type == 'Variable' & overall.only) | test.type == 'Time'){
+    } else if (sum(fdr.overall < 0.05) == 0 | (toupper(test.type) == 'VARIABLE' & overall.only) | toupper(test.type) == 'TIME'){
       print('Not returning meanDiff and trendDiff: constantTest, user required or no overall DDG.')
       res <- res.overall
     }
