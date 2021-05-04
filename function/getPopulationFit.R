@@ -43,13 +43,12 @@ getPopulationFit <- function(testobj,
       # phi <- cbind(1, bs(pt, knots = knots))
       phi <- bs(pt,knots = knots, intercept = TRUE)
     }
-    if (!exists('variable')) {
-      if (ncol(phi) == ncol(x[[1]])){
-         fit <- t(phi %*% t(x[[1]]) %*% beta)[1,]
-       } else {
-         fit <- t(phi %*% x[[1]] %*% beta)[1,]
-       }
-    } else {
+    if (exists('variable')) {
+      # if (ncol(phi) == ncol(x[[1]])){
+      #   fit <- t(phi %*% t(x[[1]]) %*% beta)[1,]
+      # } else {
+      #   fit <- t(phi %*% x[[1]] %*% beta)[1,]
+      # }
       fit <- lapply(x, function(i) {
         if (ncol(phi) == nrow(i)){
           phi %*% i %*% beta
@@ -57,7 +56,13 @@ getPopulationFit <- function(testobj,
           phi %*% t(i) %*% beta
         }
       })
-      names(fit) <- names(x)
+    } else {
+      i = x[[1]]
+      if (ncol(phi) == nrow(i)){
+        fit <- phi %*% i %*% beta
+      } else {
+        fit <- phi %*% t(i) %*% beta
+      }
     }
     return(fit)
   })
@@ -72,6 +77,7 @@ getPopulationFit <- function(testobj,
     names(fitres) <- names(fitlist[[1]])
   } else if (type == 'TIME'){
     fitres <- t(do.call(cbind, fitlist))
+    rownames(fitres) <- gene
   }
   return(fitres)
 }
