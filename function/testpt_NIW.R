@@ -146,7 +146,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
           den <- density(z)$bw
           mean(pnorm(llr[i,1], z, sd=den,lower.tail = F))
         })
-        log.pval <- sapply(1:nrow(llr.overall), function(i) {
+        log.pval <- sapply(1:nrow(llr), function(i) {
           z <- llr[i,2:ncol(llr)]
           den <- density(z)$bw
           max(pnorm(llr[i,1], z, sd=den,lower.tail = F, log.p = T))
@@ -216,18 +216,6 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(c(reslist, list(test.type = test.type, test.method = test.method)))
   } 
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
