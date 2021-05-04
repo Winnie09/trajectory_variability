@@ -189,8 +189,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         names(pval) <- names(fdr) <- row.names(llr)
         z.score <- (llr[,1] - rowMeans(llr[,2:(ncol(llr))]))/apply(llr[,2:(ncol(llr))],1,sd)
       }
-      res.trendDiff <- data.frame(fdr.trendDiff = fdr,  pval.trendDiff = pval, z.trendDiff = z.score, pval.trendDiff.magnitute = log.pval.trendDiff,  stringsAsFactors = FALSE)
-      res <- matrix(NA, nrow = nrow(res.overall), ncol = 9, 
+      res.trendDiff <- data.frame(fdr.trendDiff = fdr,  pval.trendDiff = pval, z.trendDiff = z.score, log.pval.trendDiff = log.pval,  stringsAsFactors = FALSE)
+      res <- matrix(NA, nrow = nrow(res.overall), ncol = (ncol(res.overall) + ncol(res.meanDiff) + ncol(res.trendDiff)), 
                     dimnames = list(rownames(res.overall),c(colnames(res.overall), colnames(res.meanDiff), colnames(res.trendDiff))))
       res[rownames(res.overall), colnames(res.overall)] <- as.matrix(res.overall)
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
@@ -216,6 +216,18 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(c(reslist, list(test.type = test.type, test.method = test.method)))
   } 
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
