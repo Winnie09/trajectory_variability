@@ -16,7 +16,7 @@ for (id in 1:8){
   dir.create(rdir, recursive = TRUE, showWarnings = FALSE)
   selcell1 <- cellanno[cellanno[,2] %in% rownames(design)[id], 1]
   selcell2 <- setdiff(cellanno[,1], selcell1)
-  design1 <- design[c(1,2,5,6),, drop = F]
+  design1 <- design[id,, drop = F]
   design2 <- design[setdiff(rownames(design), rownames(design1)),, drop = F]
   cellanno1 <- cellanno[selcell1, ]
   cellanno2 <- cellanno[selcell2, ]
@@ -38,4 +38,5 @@ for (id in 1:8){
   saveRDS(pt2, paste0(rdir, 'pt_7sample.rds'))
   saveRDS(expr2, paste0(rdir, 'expr_7sample.rds'))
 }
+
 
