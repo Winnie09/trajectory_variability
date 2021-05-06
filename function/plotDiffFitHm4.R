@@ -58,7 +58,7 @@ plotDiffFitHm4 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
     print('subsample done!')
   } else {
-    if (sum(DDGType == 'meanSig') > 0){
+    if (sum(DDGType == 'meanSig', na.rm = T) > 0){
       meanid <- which(DDGType == 'meanSig')
       ## <<<<<<<<<<<<<< scale group difference by absmax
       # FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,,drop=F]) ## add FitDiff.scale
@@ -314,3 +314,4 @@ plotDiffFitHm4 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3,4,5,5,5,5,6,7,7,7,7),nrow=1))
   # dev.off()
 }  
+
