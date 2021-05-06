@@ -18,7 +18,7 @@ plotDiffFitHm3 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     for (i in 1:length(fit)){
       fit[[i]] <- fit[[i]][, id]
     }
-    if (sum(DDGType == 'meanSig') > 0){
+    if (sum(DDGType == 'meanSig', na.rm = T) > 0){
       meanid <- which(DDGType == 'meanSig')
       ## <<<<<<<<<<<<<< scale group difference by absmax
       # FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,id,drop=F]) ## add FitDiff.scale
