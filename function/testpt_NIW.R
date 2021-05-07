@@ -81,22 +81,22 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     }
     
   } else if (test.method == 'permutation'){
-    print('fitting model: overall: CovariateTest (Model 3 vs.1) or ConstantTest (Model 1) ...')
+    #print('fitting model: overall: CovariateTest (Model 3 vs.1) or ConstantTest (Model 1) ...')
     if (ncores == 1){
        fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))} else {
         fit <- mclapply(1:(permuiter+1),function(i){set.seed(i); fitfunc(iter = i, diffType = 'overall', test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose,  expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design)}, mc.cores = ncores)
       }
-    print('The length of fit is ...')  ##
-    print(sapply(fit, length))
-    print(summary(sapply(fit,is.null))) ##
+    #print('The length of fit is ...')  ##
+    #print(sapply(fit, length))
+    #print(summary(sapply(fit,is.null))) ##
     fit <- fit[!sapply(fit,is.null)]
-    print('The length of fit after removing null is ...')  ##
-    print(sapply(fit, length))
-    print(summary(sapply(fit,is.null))) ##
+    #print('The length of fit after removing null is ...')  ##
+    #print(sapply(fit, length))
+    #print(summary(sapply(fit,is.null))) ##
     if (length(fit[[1]]) > 1){
       fit <- fit[sapply(fit,length) > 1]
-      print('The length of fit having both null and full model is ...')  ##
-      print(sapply(fit, length))
+      #print('The length of fit having both null and full model is ...')  ##
+      #print(sapply(fit, length))
     }
     # saveRDS(fit, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/debug/fitoverall.rds')
     knotnum <- fit[[1]]$fitres.full$knotnum
@@ -120,10 +120,10 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     z.score <- (llr.overall[,1] - rowMeans(llr.overall[,2:(ncol(llr.overall))]))/apply(llr.overall[,2:(ncol(llr.overall))],1,sd)
     res.overall <- data.frame(fdr.overall = fdr.overall, pval.overall = pval.overall, z.overall = z.score,
                               log.pval.overall = log.pval, stringsAsFactors = FALSE)
-    print(paste0('Number of overall DDG: ', sum(fdr.overall < 0.05) ))
+    #print(paste0('Number of overall DDG: ', sum(fdr.overall < 0.05) ))
     
     if (sum(fdr.overall <0.05 ) > 0 & toupper(test.type) == 'VARIABLE' & !overall.only){
-      print('meanDiff pvalues: Model 2 vs. model 1...')
+      #print('meanDiff pvalues: Model 2 vs. model 1...')
       if (ncores == 1){
         fit <- lapply(1:(permuiter+1),function(i) fitfunc(iter = i, diffType = 'meanDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))
       } else {
@@ -157,7 +157,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       }
       res.meanDiff <- data.frame(fdr.meanDiff = fdr, pval.meanDiff = pval, z.meanDiff = z.score, log.pval.meanDiff = log.pval, stringsAsFactors = FALSE)
       
-      print('trendDiff pvalues: Model 3 vs. model 2...')
+      #print('trendDiff pvalues: Model 3 vs. model 2...')
       if (ncores == 1){
         fit <- lapply(1:(permuiter+1), function(i) fitfunc(iter = i, diffType = 'trendDiff', gene = names(fdr.overall)[fdr.overall<0.05], test.type = test.type, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design))
       } else {
@@ -196,7 +196,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
       res[rownames(res.trendDiff), colnames(res.trendDiff)] <- as.matrix(res.trendDiff)
       res[rownames(res.meanDiff), colnames(res.meanDiff)] <- as.matrix(res.meanDiff)
     } else if (sum(fdr.overall < 0.05) == 0 | (toupper(test.type) == 'VARIABLE' & overall.only) | toupper(test.type) == 'TIME'){
-      print('Not returning meanDiff and trendDiff: constantTest, user required or no overall DDG.')
+      #print('Not returning meanDiff and trendDiff: constantTest, user required or no overall DDG.')
       res <- res.overall
     }
     reslist <- list(statistics = res, 
