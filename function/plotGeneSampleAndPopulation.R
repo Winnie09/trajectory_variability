@@ -1,12 +1,10 @@
-plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.type = 'variable', variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F){
+plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F){
   ## testobj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
-  ## test.type: 'variable' or 'time'. Only useful if populationFit is not in the testobj.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
   ## continuous: if TRUE, samples are colored using viridis continuous colors. If FALSE, RColorBrewer "Dark2" discrete palette.
   ## expression: a character ('demean',or 'original') to define the expression values shown on the plots. if "demean"(default), show demeaned expression. if 'original", show original gene expression.
   ## ncol: only functional when plotting multiple genes. Used to define the number of columns. 
-  
   library(splines)
   library(ggplot2)
   library(gridExtra)
@@ -16,7 +14,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.typ
   cellanno <- testobj[['cellanno']]
   colnames(cellanno) <- c('Cell', 'Sample')
   if ('expr.ori' %in% names(testobj)) expression <- testobj[['expr.ori']] else expression <- testobj[['expr']]
-  if ('populationFit' %in% names(testobj)) fit <- testobj$populationFit else fit = getPopulationFit(testobj, gene = gene, type = test.type)
+  if ('populationFit' %in% names(testobj)) fit <- testobj$populationFit else fit = getPopulationFit(testobj, gene = gene, type = testobj$test.type)
   predict.values <- predict_fitting(testobj, gene= gene, test.type = testobj$test.type)
   
   pseudotime = pseudotime[colnames(expression)]
@@ -61,23 +59,23 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.typ
     ld[, 'Variable'] <- as.factor(ld[ ,'Variable'])
     ld <- ld[order(ld$pseudotime), ] ## add 20200812
     ### add population Line >>>>>>>>>>>>>>
-    pd <- sapply(1:length(fit), function(i){
+    pd.pop <- sapply(1:length(fit), function(i){
       tmp <- reshape2::melt(fit[[i]][gene, ,drop=F])
       tmp <- reshape2::melt(fit[[i]][gene, ,drop=F])
-      colnames(tmp) <- c('g', 'pseudotime', 'expression')
+      colnames(tmp) <- c('g', 'pseudotime', 'expr')
       tmp <- data.frame(tmp, 
                         type = names(fit)[i],
                         stringsAsFactors = FALSE)
     }, simplify = FALSE)
-    pd <- do.call(rbind, pd)
+    pd.pop <- do.call(rbind, pd.pop)
     if (!is.na(sep)) {
-      pd$g <- sub(sep, '', pd$g)
-      pd$g <- factor(as.character(pd$g), levels = sub(sep, '', gene))
+      pd.pop$g <- sub(sep, '', pd.pop$g)
+      pd.pop$g <- factor(as.character(pd.pop$g), levels = sub(sep, '', gene))
     } else{
-      pd$g <- factor(as.character(pd$g), levels = gene)
+      pd.pop$g <- factor(as.character(pd.pop$g), levels = gene)
     }
-    pd$type <- sub('.*_', '', pd$type)
-    pd2 <- pd
+    pd.pop$type <- sub('.*_', '', pd.pop$type)
+    
     ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     if (is.null(variable)){
@@ -100,7 +98,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.typ
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size)   
       }   
     }
-    p <- p + geom_line(data = pd2, aes(x = pseudotime, y = expression, group = type, color = type), size = 2, alpha = 1)  ## add population line
+    p <- p + geom_line(data = pd.pop, aes(x = pseudotime, y = expr, group = type, color = type), size = 2, alpha = 1)  ## add population line
     p <- p + 
       theme_classic() +
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testobj$fdr[gene], format = "e", digits = 2))) +
@@ -173,23 +171,23 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.typ
     }
     pd1 <- pd
     ### add population Line >>>>>>>>>>>>>>
-    pd <- sapply(1:length(fit), function(i){
+    pd.pop <- sapply(1:length(fit), function(i){
       tmp <- reshape2::melt(fit[[i]][gene, ,drop=F])
       tmp <- reshape2::melt(fit[[i]][gene, ,drop=F])
-      colnames(tmp) <- c('g', 'pseudotime', 'expression')
+      colnames(tmp) <- c('g', 'pseudotime', 'expr')
       tmp <- data.frame(tmp, 
                         type = names(fit)[i],
                         stringsAsFactors = FALSE)
     }, simplify = FALSE)
-    pd <- do.call(rbind, pd)
+    pd.pop <- do.call(rbind, pd.pop)
     if (!is.na(sep)) {
-      pd$g <- sub(sep, '', pd$g)
-      pd$g <- factor(as.character(pd$g), levels = sub(sep, '', gene))
+      pd.pop$g <- sub(sep, '', pd.pop$g)
+      pd.pop$g <- factor(as.character(pd.pop$g), levels = sub(sep, '', gene))
     } else{
-      pd$g <- factor(as.character(pd$g), levels = gene)
+      pd.pop$g <- factor(as.character(pd.pop$g), levels = gene)
     }
-    pd$type <- sub('.*_', '', pd$type)
-    pd2 <- pd
+    pd.pop$type <- sub('.*_', '', pd.pop$type)
+    
     ### <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     if (is.null(variable)){
       if (plot.point){
@@ -213,7 +211,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.typ
       }
     }
     
-    p <- p + geom_line(data = pd2, aes(x = pseudotime, y = expression, group = type, color = type), size = 2, alpha = 1)
+    p <- p + geom_line(data = pd.pop, aes(x = pseudotime, y = expr, group = type, color = type), size = 2, alpha = 1)
     
     p <- p + 
       theme_classic() + 
@@ -243,6 +241,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, test.typ
   }
   
 }
+
 
 
 
