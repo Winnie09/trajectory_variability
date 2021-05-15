@@ -70,7 +70,14 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
       })
       K <- tcrossprod(t(phi[[s]]),sexpr_phibx)
       JK <- rowsum((Jsolve*K[rep(1:nb,nb),,drop=FALSE]),rep(1:nb,each=nb)) ## u's poterior mean
-      t(phipred %*% JK)
+      ## 20210515 <<<<<<<<<<<<<<<<<<<<
+      if (toupper(test.type) == 'VARIABLE') {
+      tmpfit <- t(phipred %*% JK) 
+      tmpfit <- tmpfit[, colnames(tmpfit) %in% cellanno[cellanno[,2] == s,1], drop = FALSE] 
+      } else {
+        t(phipred %*% JK) 
+      }
+      ## 20210515 >>>>>>>>>>>>>>>>>>>
     }, simplify = F)
     if (toupper(test.type) == 'VARIABLE') {
       predtmp <- do.call(cbind, predtmp)
@@ -108,9 +115,6 @@ predict_fitting <- function(testObj, gene = NULL, test.type = 'time'){
     })
     return(l)
   }
-  
 }
-
-
 
 
