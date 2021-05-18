@@ -34,7 +34,7 @@ sink(paste0(pdir, '/DDGType_table.txt'))
 print(table(DDGType))
 sink()
 
-clu <- clusterGene(Res, gene = names(DDGType)[!DDGType %in% c('nonDDG')], type = 'variable', k.auto=T)
+clu <- clusterGene(Res, gene = names(Res$DDGType)[!Res$DDGType %in% c('nonDDG')], type = 'variable', k.auto=F, scale.difference = T, k = 3)
 table(clu)
 Res$cluster = clu
 saveRDS(Res, paste0(pdir, paste0('numeric_res_with_clu.rds')))
@@ -96,13 +96,16 @@ dev.off()
 # plotDiffFitHm3(Res,  cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE, break.0 = FALSE)
 # dev.off()
 
-png(paste0(pdir, 'DiffFitHm3_rownames.png'),width = 7500,height = 3500,res = 300)
-plotDiffFitHm3(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*', subsampleCell = FALSE, break.0 = FALSE)
-dev.off()
+# png(paste0(pdir, 'DiffFitHm3_rownames.png'),width = 7500,height = 3500,res = 300)
+# plotDiffFitHm3(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*', subsampleCell = FALSE, break.0 = FALSE)
+# dev.off()
+# 
+# png(paste0(pdir, 'DiffFitHm4_rownames.png'),width = 7500,height = 3500,res = 300)
+# plotDiffFitHm4(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+# dev.off()
 
-
-png(paste0(pdir, 'DiffFitHm4_rownames.png'),width = 7500,height = 3500,res = 300)
-plotDiffFitHm4(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+png(paste0(pdir, 'DiffFitHm5_rownames.png'),width = 12000,height = 3500,res = 300)
+plotDiffFitHm5(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
 dev.off()
 
 
@@ -176,4 +179,5 @@ dev.off()
 png(paste0(pdir, 'RPS4Y1_new.png'),width = 1000,height = 1000,res = 100)
 plotGene(rr, gene = "RPS4Y1:ENSG00000129824", plot.point = T)
 dev.off()
+
 
