@@ -41,17 +41,33 @@ cluster_gene <- function(testobj,
   } else if (method == 'hierarchical') {
     clu <- cutree(hclust(dist(mat.scale)), k = k)
   }
-  # order clusters by genes' max expr position
-  v <- sapply(unique(clu), function(i) {
-    tmp <- fit[clu == i,]
-    mean(apply(tmp, 1, which.max))
+  
+  # order clusters by genes' earliest max expr position
+  
+  v <- sapply(unique(clu), function(i){
+    ap <- which(colMeans(mat.scale[names(clu)[clu==i], -ncol(mat.scale), drop=FALSE]) * colMeans(mat.scale[names(clu)[clu==i], -1, drop = FALSE]) < 0)
+    ap[which.min(abs(ap-ncol(mat.scale)/2))]
   })
   names(v) <- unique(clu)
-  trans <- cbind(as.numeric(names(v)),rank(v))
+  
+  corv <- apply(mat.scale,1,cor,1:ncol(mat.scale))
+  corv <- tapply(corv,list(clu),mean)
+  corv <- corv[names(v)]
+  # self study
+  v[corv < 0] <- ncol(mat.scale)-v[corv < 0]
+  v <- v * (2*(corv > 0)-1)
+  
+  trans <- cbind(as.numeric(names(sort(v))),1:length(v))
   n <- names(clu)
   clu <- trans[match(clu,trans[,1]),2]
+  
   names(clu) <- n
-  return(clu)  
+  
+  clu2 <- paste0(clu, ';',rowMeans(fit[names(clu), , drop=F]) > 0)
+  uclu2 <- sort(unique(clu2))
+  clu2 <- match(clu2,uclu2)
+  names(clu2) <- n
+  return(clu2)  
 }
 
 
