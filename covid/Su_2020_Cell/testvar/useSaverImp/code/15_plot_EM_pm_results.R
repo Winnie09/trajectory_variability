@@ -6,7 +6,7 @@ source('function/01_function.R')
 test.method = 'EM_pm'
 # for (comparison in c('HD_Se', 'HD_Mi','Mod_Se','HD_Mod', 'Se_Mi', 'Recovered_Deceased')){
 # for (comparison in list.files(paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method))){
-for (comparison in c('Mod_Mi,','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se', 'Mod_Se')){ ## 'Se_Mi', 'Mod_Mi',  
+for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se', 'Mod_Se')){ ## 'Se_Mi', 'Mod_Mi',  
   print(comparison)
   rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', test.method, '/', comparison, '/')
   pdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/plot/', test.method, '/', comparison, '/')
@@ -38,7 +38,7 @@ for (comparison in c('Mod_Mi,','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se
   
   ## autoclu
   # clu <- clusterGene(Res, gene = names(DDGType)[!DDGType %in% c('nonDDG')], type = 'variable', scale.difference = F, method = 'kmeans', k.auto = TRUE)
-  clu <- clusterGene(Res, gene = names(DDGType)[!DDGType %in% c('nonDDG')], type = 'variable', scale.difference = F, method = 'kmeans', k.auto = TRUE) 
+  clu <- clusterGene(Res, gene = names(Res$DDGType)[!Res$DDGType %in% c('nonDDG')], type = 'variable', scale.difference = T, method = 'kmeans', k.auto = F, k = 3) 
   sink(paste0(pdir, '/DDGType_table.txt'))
   print(table(DDGType))
   table(clu)
@@ -101,10 +101,10 @@ for (comparison in c('Mod_Mi,','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se
   # --------------------------------------
   # compare original and fitted expression
   # --------------------------------------
-  png(paste0(pdir, 'DiffFitHm3.png'),width = 5000,height = 3000,res = 300)
-  plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
-  dev.off()
-  
+  # png(paste0(pdir, 'DiffFitHm3.png'),width = 5000,height = 3000,res = 300)
+  # plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
+  # dev.off()
+  # 
   # png(paste0(pdir, 'DiffFitHm3_sub.png'),width = 5000,height = 3000,res = 300)
   # plotDiffFitHm3(Res,  cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = T)
   # dev.off()
@@ -113,10 +113,16 @@ for (comparison in c('Mod_Mi,','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se
   # plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
   # dev.off()
   # 
-  png(paste0(pdir, 'DiffFitHm3_100.png'),width = 5000,height = 3000,res = 100)
-  plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
+  # png(paste0(pdir, 'DiffFitHm3_100.png'),width = 5000,height = 3000,res = 100)
+  # plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
+  # dev.off()
+  
+  png(paste0(pdir, 'DiffFitHm5.png'),width = 5000,height = 3000,res = 200)
+  plotDiffFitHm5(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
   dev.off()
-  # 
+  
+  
+  # # 
   # ########
   # png(paste0(pdir, 'DiffFitHm3_clu_changepoint.png'),width = 5000,height = 3000,res = 100)
   # plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
@@ -191,5 +197,6 @@ for (comparison in c('Mod_Mi,','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se
     dev.off()
   }
 }
+
 
 
