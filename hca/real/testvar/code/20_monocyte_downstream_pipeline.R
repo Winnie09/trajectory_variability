@@ -9,6 +9,8 @@ dir.create(pdir, showWarnings = F, recursive = T)
 ## read in gold standard Sex difference genes (chrX, chrY)
 u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
 u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
+# u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
+# u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
 
 Res <- readRDS(paste0('hca/real/testvar/result/EM_pm/', path, '/gender/gender_res.rds'))
 Res$statistics <- Res$statistics[rownames(Res$statistics)!='RPS4Y1:ENSG00000129824',]
@@ -68,13 +70,13 @@ nn <- sapply(names(goRes), function(i){
   return(0)
 })
 
-pdf(paste0(pdir, '/hm_GO_term5.pdf'), width = 6.8, height = 3.5)
-print(plotGOEnrich(goRes))
-dev.off()
+#pdf(paste0(pdir, '/hm_GO_term5.pdf'), width = 6.8, height = 3.5)
+#print(plotGOEnrich(goRes))
+#dev.off()
 
-pdf(paste0(pdir, '/hm_GO_term10.pdf'), width = 6.8, height = 3.5)
-print(plotGOEnrich(goRes, n = 10))
-dev.off()
+#pdf(paste0(pdir, '/hm_GO_term10.pdf'), width = 6.8, height = 3.5)
+#print(plotGOEnrich(goRes, n = 10))
+#dev.off()
 
 # --------------------------------------
 # compare original and fitted expression
@@ -179,5 +181,7 @@ dev.off()
 png(paste0(pdir, 'RPS4Y1_new.png'),width = 1000,height = 1000,res = 100)
 plotGene(rr, gene = "RPS4Y1:ENSG00000129824", plot.point = T)
 dev.off()
+
+
 
 
