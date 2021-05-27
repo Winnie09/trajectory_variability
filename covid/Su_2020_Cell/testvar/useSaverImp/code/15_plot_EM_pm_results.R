@@ -94,7 +94,7 @@ for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se'
   print(plotGOEnrich(goRes, n = 10, fdr.cutoff = 0.25))
   dev.off()
   
-  pdf(paste0(pdir, '/hm_GO_term10_sortbyFC_fdr0.25.pdf'), width = 6.8, height = 7)
+  pdf(paste0(pdir, '/hm_GO_term10_sortbyFC_fdr0.25.pdf'), width = 9, height = 7)
   print(plotGOEnrich(goRes, n = 10, sortByFDR = F,fdr.cutoff = 0.25))
   dev.off()
   
@@ -117,9 +117,11 @@ for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se'
   # plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
   # dev.off()
   
-  png(paste0(pdir, 'DiffFitHm5.png'),width = 5000,height = 3000,res = 200)
+  png(paste0(pdir, 'DiffFitHm5.png'),width = 10000,height = 6000,res = 300)
   plotDiffFitHm5(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
   dev.off()
+  
+  
   
   
   # # 
@@ -156,9 +158,9 @@ for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se'
   mat2 <- mat2[order(d2), ]  
   Res$covariateGroupDiff <- rbind(groupdiff[names(clu)[clu %in% seq(1, max(clu)-2)], ], mat1, mat2)
    
-  png(paste0(pdir, 'DiffFitHm3_clu_type_changepoint_cor.png'),width = 5000,height = 3000,res = 100)
-  plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = F)
-  dev.off()
+  # png(paste0(pdir, 'DiffFitHm3_clu_type_changepoint_cor.png'),width = 5000,height = 3000,res = 100)
+  # plotDiffFitHm3(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = F)
+  # dev.off()
   
   # png(paste0(pdir, 'DiffFitHm_rownames3.png'),width = 12000,height = 10000,res = 300)
   # print(plotDiffFitHm3(Res, type='variable', showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 10))
@@ -173,30 +175,31 @@ for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se'
   # Res$populationFit[[2]] <- Res$populationFit[[2]][, id]
   # colnames(Res$population[[1]]) <- colnames(Res$population[[2]]) <- id
 
-  for (i in unique(DDGType)){  ## debug -- ok!!
-    print(i)
-    gene <- names(DDGType)[DDGType == i]
-    png(paste0(pdir, 'diffgene_sampleFit_', i, '.png'), width = 4000, height = 2500, res = 200)
-    print(plotGene(Res, gene = gene[1:min(length(gene), 25)], plot.point = T, point.size = 0.1, variable = 'type'))
-    dev.off()
-  }
-
-  for (i in unique(DDGType)){
-    print(i)
-    gene <- names(DDGType)[DDGType == i]
-    png(paste0(pdir, 'diffgene_groupFit_', i, '.png'), width = 2500, height = 2500, res = 200)
-    print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
-    dev.off()
-  }
-
-  for (i in 1:max(Res$cluster)){
-    print(i)
-    gene <- rownames(res)[res$cluster == i]
-    png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
-    print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
-    dev.off()
-  }
+  # for (i in unique(DDGType)){  ## debug -- ok!!
+  #   print(i)
+  #   gene <- names(DDGType)[DDGType == i]
+  #   png(paste0(pdir, 'diffgene_sampleFit_', i, '.png'), width = 4000, height = 2500, res = 200)
+  #   print(plotGene(Res, gene = gene[1:min(length(gene), 25)], plot.point = T, point.size = 0.1, variable = 'type'))
+  #   dev.off()
+  # }
+  # 
+  # for (i in unique(DDGType)){
+  #   print(i)
+  #   gene <- names(DDGType)[DDGType == i]
+  #   png(paste0(pdir, 'diffgene_groupFit_', i, '.png'), width = 2500, height = 2500, res = 200)
+  #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
+  #   dev.off()
+  # }
+  # 
+  # for (i in 1:max(Res$cluster)){
+  #   print(i)
+  #   gene <- rownames(res)[res$cluster == i]
+  #   png(paste0(pdir, 'diffgene_groupFit_cluster', i, '.png'), width = 2500, height = 2500, res = 200)
+  #   print(plotGenePopulation(testobj = Res, type = 'variable', gene = gene[1:min(length(gene), 100)], subSampleNumber=1000))
+  #   dev.off()
+  # }
 }
+
 
 
 
