@@ -121,8 +121,13 @@ for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se'
   plotDiffFitHm5(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
   dev.off()
   
+  pdf(paste0(pdir, 'DiffFitHm5_sub1e3.pdf'),width = 30,height = 8)
+  plotDiffFitHm5(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = T)
+  dev.off()
   
-  
+  pdf(paste0(pdir, 'DiffFitHm5.pdf'),width = 30,height = 8)
+  plotDiffFitHm5(Res, cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = F)
+  dev.off()
   
   # # 
   # ########
@@ -199,6 +204,7 @@ for (comparison in c('Mod_Mi','Se_Mi')){ #'Recovered_Deceased', 'HD_Mi', 'HD_Se'
   #   dev.off()
   # }
 }
+
 
 
 
