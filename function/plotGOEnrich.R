@@ -31,6 +31,9 @@ plotGOEnrich <- function(goRes, n = 5, sortByFDR = TRUE, fdr.cutoff = 0.05, fc.c
   fulld <- data.frame(Cluster=fulld[,1],Term=as.character(fulld[,2]),FDR=1,FC=0,enc=FALSE)
   pd <- rbind(d,fulld)
   
+  v1 <- sapply(unique(pd$Term),function(i) mean(pd$Cluster[pd$Term==i & pd$enc]))
+  v2 <- sapply(unique(pd$Term),function(i) min(pd$Cluster[pd$Term==i & pd$enc]))
+
   # dmat <- dcast(d,Term~Cluster)
   # rownames(dmat) <- dmat[,1]
   # dmat <- as.matrix(dmat[,-1,drop=F])
@@ -42,10 +45,10 @@ plotGOEnrich <- function(goRes, n = 5, sortByFDR = TRUE, fdr.cutoff = 0.05, fc.c
   # pd <- melt(dmat)
   # colnames(pd) <- c('Term','Cluster','enc')
   # # pd$Term <- factor(as.character(pd$Term),levels=rownames(dmat)[hclust(dist(dmat))$order])
-  pd$Term <- factor(as.character(pd$Term),levels=names(v[rev(order(v))]))
+  # pd$Term <- factor(as.character(pd$Term),levels=names(v[rev(order(v))]))
+  pd$Term <- factor(as.character(pd$Term),levels=names(v2)[rev(order(v2,v1))])
   pd$enc <- ifelse(pd$enc,'Significant','Non-significant')
   pd$Cluster <- as.character(pd$Cluster)
-  library(RColorBrewer)
   p <- ggplot(pd,aes(x=Cluster,y=Term,fill=enc)) + geom_tile() + theme_classic() + 
     scale_fill_manual(values=c('darkblue', 'orange'))+
     theme(legend.position = 'right')+
