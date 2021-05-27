@@ -108,7 +108,13 @@ png(paste0(pdir, 'examplegene_sampleFit.png'), res = 300, width = 4900, height =
 plotGene(Res, gene, plot.point = T, point.size = 0.05, point.alpha = 0.5, line.size = 0.5, line.alpha = 0.8, axis.text.blank = F, free.scale = F, ncol = 4)
 dev.off()
 
+pdf(paste0(pdir, 'examplegene_sampleFit.pdf'), width = 11.5, height = 5.1)
+plotGene(Res, gene, plot.point = T, point.size = 0.01, point.alpha = 0.05, line.size = 0.1, line.alpha = 0.7, axis.text.blank = T, free.scale = F, ncol = 2)
+dev.off()
+
+
 png(paste0(pdir, 'examplegene_populationFit.png'), res = 300, width = 2000, height = 800)
 plotGenePopulation(Res, gene, axis.text.blank = F, free.scale = F, line.size = 2, ncol = 4)
 dev.off()
+
 
