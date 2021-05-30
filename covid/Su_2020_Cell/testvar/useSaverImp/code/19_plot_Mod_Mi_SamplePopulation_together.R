@@ -27,13 +27,18 @@ for (c in unique(tb[,11])){
 # Cluster 5—From activation to hyper-effector activation, CD8 T cells from moderate patients significantly gained more terminal effector T cell marker GNLY and secret more chemokine CCL5, with potential epigenetic changes on the global DNA methylation level (DNMT1).
 
 glist <- list(c('TBX21', 'ZEB2'),
-              c('NFKBIA', 'FOSB'),
-              c('IFI6', 'ISG15'),
-              c('ZNF593', 'IKBIP'),
               c('JAK3', 'IFNGR2'),
-              c('GZMA', 'GNLY'),
+              c('JUN', 'FOS'),
+              c('CD69','IL7R'),
+              c('FOSB', 'JUNB'),
+              c('IKBIP','IFI6'),
               c('ISG20', 'IFT27'),
               c('IL27RA', 'FLI1'))
+
+  pdf(paste0(pdir, 'SamplePopulation_select.pdf'), width = 3, height = 8.5)
+  plotGeneSampleAndPopulation(Res, gene = unlist(glist), plot.point = F, variable = 'type', axis.text.blank = T, line.size = 0.01, line.alpha = 0.5, continuous = F, palette = 'Dark2', ncol = 2) 
+  dev.off()  
+  
 for (c in 1:length(glist)){
   i = glist[[c]]
   png(paste0(pdir, 'cluster', c, '_SamplePopulation_select.png'), width = 600, height = 300, res = 200)
@@ -50,6 +55,7 @@ for (c in g){
   }
     
 }  
+
 
 
 
