@@ -7,10 +7,10 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   library(ggplot2)
   fit <- testobj$populationFit
   
-  if ('DDGType' %in% names(Res)) {
-    DDGType <- Res$DDGType
+  if ('DDGType' %in% names(testobj)) {
+    DDGType <- testobj$DDGType
   } else {
-    DDGType <- getDDGType(Res)
+    DDGType <- getDDGType(testobj)
   }
   DDGType <- DDGType[rownames(testobj$covariateGroupDiff)]
   
@@ -25,11 +25,17 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
       }
       if (sum(DDGType == 'meanSig') > 0){
         meanid <- which(DDGType == 'meanSig')
+        
         FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,id,drop=F]) ## add FitDiff.scale
+        
+        
         FitDiff.scale <- rbind(FitDiff.scale1, testobj$covariateGroupDiff[meanid,id,drop=F])
         FitDiff.scale <- FitDiff.scale[rownames(testobj$covariateGroupDiff),, drop=F]
       } else {
+        
         FitDiff.scale <- scalematrix(testobj$covariateGroupDiff[,id,drop=F]) ## add FitDiff.scale  
+        
+        
       }
       colnames(FitDiff.scale) <- paste0('FitDiff:cell', seq(1, ncol(FitDiff.scale)))
       testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
@@ -40,6 +46,7 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
       if (sum(DDGType == 'meanSig') > 0){
         meanid <- which(DDGType == 'meanSig')
         FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,,drop=F]) ## add FitDiff.scale
+        
         FitDiff.scale <- rbind(FitDiff.scale1, testobj$covariateGroupDiff[meanid,,drop=F])
         FitDiff.scale <- FitDiff.scale[rownames(testobj$covariateGroupDiff),, drop=F]
       } else {
@@ -104,16 +111,15 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
   }
   expr.scale <- scalematrix(expr.scale)
   expr.scale <- expr.scale[rownames(fit.scale), ]  
-  
-  # 
+
   ## plot ------------------------
   expr.scale[expr.scale > quantile(as.vector(expr.scale), 0.98)] <-
     quantile(as.vector(expr.scale), 0.98)
-  expr.scale[expr.scale < quantile(as.vector(expr.scale), 0.08)] <-
+  expr.scale[expr.scale < quantile(as.vector(expr.scale), 0.02)] <-
     quantile(as.vector(expr.scale), 0.02)
   FitDiff.scale[FitDiff.scale > quantile(as.vector(FitDiff.scale), 0.98)] <-
     quantile(as.vector(FitDiff.scale), 0.98)
-  FitDiff.scale[FitDiff.scale < quantile(as.vector(FitDiff.scale), 0.08)] <-
+  FitDiff.scale[FitDiff.scale < quantile(as.vector(FitDiff.scale), 0.02)] <-
     quantile(as.vector(FitDiff.scale), 0.02)
   fit.scale[fit.scale > quantile(as.vector(fit.scale), 0.98)] <-
     quantile(as.vector(fit.scale), 0.98)
@@ -272,9 +278,7 @@ plotDiffFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, ce
     border_color = NA, silent = TRUE)
   plist[[3]] <- p2[[4]] 
   plist[[2]] <- ggplot(data=NULL) + geom_blank() + theme_void()
-  # png(paste0('g.png'),width = 4300,height = 3200,res = 300)
   grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1))
-  # dev.off()
 }  
 
 
