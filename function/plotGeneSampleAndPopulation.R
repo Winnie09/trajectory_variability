@@ -98,7 +98,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size)   
       }   
     }
-    p <- p + geom_line(data = pd.pop, aes(x = pseudotime, y = expr, group = type, color = type), size = 2, alpha = 1)  ## add population line
+    p <- p + geom_line(data = pd.pop, aes(x = pseudotime, y = expr, group = type, color = type), size = 1.2, alpha = 1)  ## add population line
     p <- p + 
       theme_classic() +
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testobj$fdr[gene], format = "e", digits = 2))) +
@@ -115,9 +115,9 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
       if (length(unique(ld[, 'Variable'])) > 8){
-        p <- p + scale_color_manual(values = colorRampPalette(rev(brewer.pal(8, palette)))(length(unique(ld[, 'Variable']))))  
+        p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8, palette))(length(unique(ld[, 'Variable']))))  
       } else {
-        p <- p + scale_color_manual(values = brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))])
+        p <- p + scale_color_manual(values = rev(brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))]))
       } 
     }
     if (facet.sample){
@@ -211,7 +211,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
       }
     }
     
-    p <- p + geom_line(data = pd.pop, aes(x = pseudotime, y = expr, group = type, color = type), size = 2, alpha = 1)
+    p <- p + geom_line(data = pd.pop, aes(x = pseudotime, y = expr, group = type, color = type), size = 1.2, alpha = 1)
     
     p <- p + 
       theme_classic() + 
@@ -227,9 +227,9 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
       p <- p + scale_color_viridis(discrete = TRUE, direction = -1) 
     } else {
       if (length(unique(ld[, 'Variable'])) > 8){
-        p <- p + scale_color_manual(values = colorRampPalette(rev(brewer.pal(8, palette)))(length(unique(ld[, 'Variable']))))  
+        p <- p + scale_color_manual(values = colorRampPalette(brewer.pal(8, palette))(length(unique(ld[, 'Variable']))))  
       } else {
-        p <- p + scale_color_manual(values = brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))])
+        p <- p + scale_color_manual(values = rev(brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))]))
       } 
     }
     if (axis.text.blank) {
