@@ -14,6 +14,30 @@ for (path in c('erythroid', 'monocyte', 'lymph')){
   samp <- sub(':.*','',names(pt))
   names(samp) <- names(pt)
   set.seed(12345)
+  g1g <- rownames(design)[design[,2]==1]
+  g0g <- rownames(design)[design[,2]==0]
+  
+  window <- cut(pt,quantile(pt,seq(0,1,length.out=101)),include.lowest = T)
+  names(window) <- names(pt)
+  tab <- table(samp,window)
+  prop <- tab/rowSums(tab)
+  sn <- rowSums(tab)
+  exclist <- unlist(sapply(unique(window),function(sw){
+    g1swm <- median(prop[g1g,sw]) ## not median of median
+    g0swm <- median(prop[g0g,sw])
+    sid <- names(window)[window==sw]
+    ssamp <- sub(':.*','',sid)
+    if (g1swm < g0swm) { ## sub-sample cells from  each sample in the low group weighted by the sample's proportion in that group within this window (otherwise bugs when a sample does not have cells or enough cells in this window to sub-sample from)
+      unlist(sapply(names(which(!is.na(table(ssamp)[g0g]))),function(si) sample(sid[ssamp==si],round(sn[si] * (g0swm - g1swm) * table(ssamp)[si]/length(ssamp) ))))
+    } else {
+      unlist(sapply(names(which(!is.na(table(ssamp)[g1g]))),function(si) {
+        sample(sid[ssamp==si],round(sn[si] * (g1swm - g0swm) * table(ssamp)[si]/length(ssamp)))
+        }))
+    }
+  }))
+  
+  pt <- pt[!names(pt) %in% exclist]
+  saveRDS(pt,file=paste0(rdir, '0.rds'))
   for (prop in c(0.01,0.05, 0.25,seq(0.1, 0.9, 0.1))) {
     print(paste0(path, '_', prop))
     spt <- pt
@@ -21,10 +45,4 @@ for (path in c('erythroid', 'monocyte', 'lymph')){
     spt <- spt[!names(spt) %in% sample(exccell,length(exccell)*prop)]
     saveRDS(spt,file=paste0(rdir, prop,'.rds'))
   }
-}  
-
-
-# ggplot(data.frame(pt=pt,samp=sub('_.*','',names(pt))),aes(pt,col=samp)) + geom_density() + facet_wrap(~samp)
-
-# ggplot(data.frame(pt=spt,samp=sub('_.*','',names(spt))),aes(pt,col=samp)) + geom_density() + facet_wrap(~samp)
-
+}
