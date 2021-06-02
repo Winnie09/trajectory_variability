@@ -1,4 +1,4 @@
-plotGeneCIAndPopulation <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE,  point.alpha=1, point.size=0.5, ribbon.alpha = 0.3, ribbon.size = 1, line.size = 1, line.alpha = 1, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F){
+plotGeneCIAndPopulation <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE,  point.alpha=1, point.size=0.5, ribbon.alpha = 0.3, ribbon.size = 1, line.size = 1, line.alpha = 1, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F, x.lab='Pseudotime', y.lab = 'Expression', legend.position = 'right', axis.size = 8, title.size = 8, axis.text.size = 8){
   ## testobj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
@@ -107,15 +107,14 @@ plotGeneCIAndPopulation <- function(testobj, gene, variable = NULL, variable.tex
     scale_fill_manual(values = brewer.pal(3,'Dark2')[2:1]) + ggtitle(gene)
   p <- p + theme_classic() +
     # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testobj$fdr[gene], format = "e", digits = 2))) +
-    xlab('Pseudotime') + ylab('Expression') + 
-    theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"), axis.title = element_text(size = 8), plot.title = element_text(size = 8)) +
+    xlab(x.lab) + ylab(y.lab) + 
+    theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"), axis.title = element_text(size = axis.size), axis.text.x = element_text(angle = 45, hjust = 1, size = axis.text.size), axis.text.y = element_text(size = axis.text.size), plot.title = element_text(size = title.size), legend.position = legend.position) +
     guides(colour = guide_legend(override.aes = list(size=2, alpha = 1))) 
-  
   if (axis.text.blank) {
-      p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
-    } else {
-      p 
-    }
+    p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
+  } else {
+    p 
+  }
 }
 
 
