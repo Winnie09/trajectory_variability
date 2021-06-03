@@ -1,6 +1,4 @@
-testobj = Res; gene = gene; variable = 'gender'; plot.point = T; sep = ':.*'; continuous = F; point.alpha = 0.1; point.size = 0.05; line.size = 0.3; palette = 'Dark2'; ncol = 2
-
-plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F, cellProp = FALSE, x.lab = 'Pseudotime', y.lab = 'Expression', use.palette = FALSE){
+plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F, cellProp = FALSE, x.lab = 'Pseudotime', y.lab = 'Expression', use.palette = FALSE, legend.position = 'right', axis.text.range.only = FALSE, ylim = NA, xlim = NA){
   ## testobj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
@@ -104,7 +102,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
       # ggtitle(paste0(sub(':.*','',gene),',adj.pvalue=', formatC(testobj$fdr[gene], format = "e", digits = 2))) +
       xlab(x.lab) + ylab(y.lab) + 
       labs(color = variable) +
-      theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm")) +
+      theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"), legend.position = legend.position) +
       guides(colour = guide_legend(override.aes = list(size=2, alpha = 1)))
     if (!is.na(sep)){
       p <- p + ggtitle(sub(sep,'',gene)) 
@@ -125,6 +123,8 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     } else {
       p <- p + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
     }
+    if (!is.na(xlim)) p <- p + xlim(xlim)
+    if (!is.na(ylim)) p <- p + ylim(ylim)
     if (facet.sample){
       print(p + facet_wrap(~Sample, scales=a))
     } else {
@@ -201,7 +201,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
       xlab(x.lab) + ylab(y.lab) + 
       labs(color = variable) +
       facet_wrap(~g, scales = a, ncol = ncol) +
-      theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
+      theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"), legend.position = legend.position, axis.text.x = element_text(angle = 45, hjust = 1), strip.background = element_blank())+
       guides(colour = guide_legend(override.aes = list(size=2, alpha = 1)))
     
     if (continuous & !use.palette){
@@ -215,9 +215,11 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     }
     if (axis.text.blank) {
       p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
-    } else {
+    } else if (axis.text.range.only) {
       p <- p + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
     }
+    if (!is.na(xlim)) p <- p + xlim(xlim)
+    if (!is.na(ylim)) p <- p + ylim(ylim)
     print(p)
   }
   
