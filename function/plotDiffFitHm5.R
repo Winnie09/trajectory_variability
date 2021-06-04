@@ -24,10 +24,10 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   library(RColorBrewer)
   library(ggplot2)
   fit <- testobj$populationFit
-  if ('DDGType' %in% names(Res)) {
-    DDGType <- Res$DDGType
+  if ('DDGType' %in% names(testobj)) {
+    DDGType <- testobj$DDGType
   } else {
-    DDGType <- getDDGType(Res)
+    DDGType <- getDDGType(testobj)
   }
   DDGType <- DDGType[rownames(testobj$covariateGroupDiff)]
   
@@ -123,14 +123,17 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   res4 <- res[res$DDGType=='meanSig',]
   
   o1 <- rownames(res1)[order(res1$clu,res1$changepoint)]
-  o2 <- rownames(res2)[order(res2$clu,res2$changepoint)]
-  o3 <- rownames(res3)[order(res3$clu,res3$changepoint)]
   
+  pn <- rowMeans(alluniformdiff[rownames(res2),])
+  o2 <- rownames(res2)[order(pn > 0,res2$clu,res2$changepoint)]
+  
+  o3 <- rownames(res3)[order(res3$clu,res3$changepoint)]
   #o1 <- rownames(res1)[order(match(res1$clu,names(sort(tapply(res1$cor,res1$clu,mean)))),res1$cor > 0,res1$changepoint)]
   # o2 <- rownames(res2)[order(match(res2$clu,names(sort(tapply(res2$cor,res2$clu,mean)))),res2$cor > 0,res2$changepoint)]
   # o3 <- rownames(res3)[order(match(res3$clu,names(sort(tapply(res3$cor,res3$clu,mean)))),res3$cor > 0,res3$changepoint)]
   o4 <- rownames(res4)[order(res4$clu)]
-  res <- res[c(o1,o2,o3,o4), ]
+  #res <- res[c(o1,o2,o4,o3), ] ## put others in the last
+  res <- res[c(o1,o2,o4), ] ## put others in the last
   fit.scale <- fit.scale[rownames(res), ]
   FitDiff.scale <- FitDiff.scale[rownames(res), ]
   # colnames(fit.scale) <- paste0(colnames(fit.scale), '_', seq(1, ncol(fit.scale)))
@@ -189,15 +192,19 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     
     col.meanDiff = c('blue','red')
     names(col.meanDiff) <- c('Positive','Negative')
-    col.DDGType = brewer.pal(8, 'Set3')[1:5]
-    names(col.DDGType) = c('trendSig','meanSig','bothSig','nonDDG','other')
+    #col.DDGType = brewer.pal(8, 'Set3')[1:5]
+    #names(col.DDGType) = c('trendSig','meanSig','bothSig','nonDDG','other')
+    
+    col.DDGType = brewer.pal(8, 'Set3')[1:3]
+    names(col.DDGType) = c('trendSig','meanSig','bothSig')
+    
     annotation_colors = list(
       pseudotime = col.pseudotime,
       group = col.group,
       expression = col.expression,
       cluster = col.clu,
-      DDGType = col.DDGType,
-      meanDiff = col.meanDiff)
+      DDGType = col.DDGType)
+      #meanDiff = col.meanDiff)
   }
   col.gs <- c('pink', 'skyblue')
   names(col.gs) <- c('No', 'Yes')
@@ -218,13 +225,19 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   
   plist <- list()
   
+  
   if (!is.na(sep)){
+    tmpid <- rownames(expr.scale)[which(!duplicated(sub(sep, '', rownames(expr.scale))))]
+    expr.scale <- expr.scale[tmpid,]
+    rowann <- rowann[tmpid,]
+    oridata <- oridata[tmpid,]
+  
     rownames(expr.scale) <-sub(sep, '', rownames(expr.scale))
     rownames(rowann) <- sub(sep, ':.*', rownames(rowann))
     rownames(oridata) <- sub(sep, '', rownames(oridata))
   }
   
-  rowann$meanDiff <- ifelse(rowMeans(oridata[sub(':.*','',rownames(rowann)),]) > 0,'Positive','Negative')
+  #rowann$meanDiff <- ifelse(rowMeans(oridata[sub(':.*','',rownames(rowann)),]) > 0,'Positive','Negative')
   
   p1data <- expr.scale
   p1data[p1data > quantile(as.vector(p1data), 0.95,na.rm=T)] <- quantile(as.vector(p1data), 0.95,na.rm=T)

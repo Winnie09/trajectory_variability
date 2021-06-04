@@ -3,6 +3,12 @@ library(here)
 setwd(here())
 # setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
 source('function/01_function.R')
+ddir <- 'hca/simu/testvar/addMultiSignalUsingExpr'
+selgene <- readRDS(paste0(ddir, '/data/selgene/selgene.rds'))
+selgene1 <- readRDS(paste0(ddir, '/data/selgene/selgene1.rds'))
+selgene2 <- readRDS(paste0(ddir, '/data/selgene/selgene2.rds'))
+selgene3 <- readRDS(paste0(ddir, '/data/selgene/selgene3.rds'))
+
 # ---------------------
 # prepare data and test
 # ---------------------
@@ -26,9 +32,7 @@ Res$populationFit <- getPopulationFit(Res, gene = diffgene, type = 'variable')
 Res$covariateGroupDiff <- getCovariateGroupDiff(testobj = Res, gene = diffgene)
 Res$DDGType = getDDGType(Res)
 Res$cluster <- clusterGene(Res, gene = names(Res$DDGType)[!Res$DDGType %in% c('nonDDG')], type = 'variable', k.auto=F, scale.difference = T, k = 3)
-table(clu)
-
-res 
+table(Res$cluster)
 
 ## --------------
 ## save diff gene
@@ -38,31 +42,88 @@ res <- data.frame(gene = allg, statistics[allg, ], cluster = Res$cluster[allg])
 res <- res[order(res[, grep('^fdr.*overall$', colnames(res))]), ]
 write.csv(res, paste0(pdir, 'differential_genes.csv'))
 
-## ----------------
-## plotClusterDiff
-## ----------------
-pdf(paste0(pdir, '/cluster_diff.pdf'), width = 3, height = 2)
-plotClusterDiff(testobj=Res, gene = allg)
+# ## ----------------
+# ## plotClusterDiff
+# ## ----------------
+# pdf(paste0(pdir, '/cluster_diff.pdf'), width = 3, height = 2)
+# plotClusterDiff(testobj=Res, gene = allg)
+# dev.off()
+
+# ## ---------------
+# ## plotClusterMean
+# ## ----------------
+# pdf(paste0(pdir, '/cluster_mean.pdf'), width = 5, height = 3.5)
+# plotClusterMean(testobj=Res, cluster = Res$cluster, type = 'variable')
+# dev.off()
+
+
+## -----------------------
+## plotClusterMeanAndDiff
+## -----------------------
+pdf(paste0(pdir, 'cluster_mean_and_diff.pdf'), width = 3, height = 7)
+print(plotClusterMeanAndDiff(Res, cluster = Res$cluster))
 dev.off()
 
-## ---------------
-## plotClusterMean
-## ----------------
-pdf(paste0(pdir, '/cluster_mean.pdf'), width = 5, height = 3.5)
-plotClusterMean(testobj=Res, cluster = Res$cluster, type = 'variable')
-dev.off()
+
 
 ## ----------------
 ## plot fit heatmap
 ## ----------------
-png(paste0(pdir, 'DiffFitHm5.png'),width = 12000,height = 3500,res = 300)
-plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+# png(paste0(pdir, 'DiffFitHm5_2.png'),width = 12000,height = 3500,res = 400)
+# plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+# dev.off()
+# 
+# png(paste0(pdir, 'DiffFitHm5_200.png'),width = 12000,height = 3500,res = 200)
+# plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+# dev.off()
+
+clu = Res$cluster
+DDGType = Res$DDGType
+
+  meanres <- readRDS(paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/meandiff/4.rds'))
+  str(meanres)
+  meanDiffTest <- ifelse(meanres[rownames(Res$populationFit[[1]]), 5] < 0.05, 'Diff', 'nonDiff')
+  names(meanDiffTest) <- rownames(Res$populationFit[[1]])
+  
+rowann = data.frame(
+    cluster = as.character(clu),
+    signalType = sapply(names(clu), function(i){
+      if (i %in% selgene1){
+        'trend only'
+      } else if (i %in% selgene2){
+        'mean only'
+      } else {
+        'both'
+      }
+    }),
+    DDGType = DDGType[names(clu)], 
+    limmaPb = meanDiffTest[names(clu)],
+    gs = sapply(names(clu), function(i)
+      ifelse(i %in% selgene, 'Yes', 'No')),
+    stringsAsFactors = F
+  )
+  rownames(rowann) = names(clu)
+  rowann <- rowann[rownames(Res$populationFit[[1]]), ]
+
+
+
+png(paste0(pdir, 'DiffFitHm5_300.png'),width = 12000,height = 3500,res = 300)
+plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, sep = ':.*' , subsampleCell = T, break.0 = FALSE, rowann = rowann)
 dev.off()
 
-png(paste0(pdir, 'DiffFitHm5_rownames.png'),width = 12000,height = 3500,res = 300)
-plotDiffFitHm5(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+png(paste0(pdir, 'DiffFitHm5_100.png'),width = 12000,height = 3500,res = 100)
+plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, sep = ':.*' , subsampleCell = T, break.0 = FALSE, rowann = rowann)
 dev.off()
 
+
+png(paste0(pdir, 'DiffFitHm5_500.png'),width = 20000,height = 9000,res = 500)
+plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, sep = ':.*' , subsampleCell = T, break.0 = FALSE, rowann = rowann)
+dev.off()
+
+
+# pdf(paste0(pdir, 'DiffFitHm5.pdf'), width = 30, height = 11)
+# plotDiffFitHm5(Res, showRowName = F, cellWidthTotal = 300, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
+# dev.off()
 
  
 # ## -----------
@@ -77,12 +138,7 @@ dev.off()
 #   return(0)
 # })
 # 
-# ## -----------------------
-# ## plotClusterMeanAndDiff
-# ## -----------------------
-# pdf(paste0(pdir, 'cluster_mean_and_diff.pdf'), width = 3.8, height = 10)
-# print(plotClusterMeanAndDiff(Res, cluster = Res$cluster))
-# dev.off()
+
 # 
 # for (i in 1:max(Res$cluster)){
 #   print(i)
@@ -112,5 +168,6 @@ dev.off()
 # dev.off()
 # 
 # 
+
 
 
