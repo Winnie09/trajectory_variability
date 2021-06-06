@@ -13,6 +13,8 @@ for (path in c('erythroid', 'monocyte', 'lymph')){
   dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept','group'))
   samp <- sub(':.*','',names(pt))
   names(samp) <- names(pt)
+
+  if (path=='erythroid') {
   set.seed(12345)
   g1g <- rownames(design)[design[,2]==1]
   g0g <- rownames(design)[design[,2]==0]
@@ -23,21 +25,31 @@ for (path in c('erythroid', 'monocyte', 'lymph')){
   prop <- tab/rowSums(tab)
   sn <- rowSums(tab)
   exclist <- unlist(sapply(unique(window),function(sw){
-    g1swm <- median(prop[g1g,sw]) ## not median of median
+    g1swm <- median(prop[g1g,sw])
     g0swm <- median(prop[g0g,sw])
     sid <- names(window)[window==sw]
     ssamp <- sub(':.*','',sid)
-    if (g1swm < g0swm) { ## sub-sample cells from  each sample in the low group weighted by the sample's proportion in that group within this window (otherwise bugs when a sample does not have cells or enough cells in this window to sub-sample from)
-      unlist(sapply(names(which(!is.na(table(ssamp)[g0g]))),function(si) sample(sid[ssamp==si],round(sn[si] * (g0swm - g1swm) * table(ssamp)[si]/length(ssamp) ))))
+    if (g1swm < g0swm) {
+      unlist(sapply(g0g,function(si) sample(sid[ssamp==si],min(sum(ssamp==si),round(sn[si] * (g0swm - g1swm))))))
     } else {
-      unlist(sapply(names(which(!is.na(table(ssamp)[g1g]))),function(si) {
-        sample(sid[ssamp==si],round(sn[si] * (g1swm - g0swm) * table(ssamp)[si]/length(ssamp)))
-        }))
+      unlist(sapply(g1g,function(si) sample(sid[ssamp==si],min(sum(ssamp==si),round(sn[si] * (g1swm - g0swm))))))
     }
   }))
   
-  pt <- pt[!names(pt) %in% exclist]
+  pt <- pt[!names(pt) %in% exclist]  
+  samp <- sub('_.*','',names(pt))
+  for (iter in 1:10000) {
+    id <- sample(1:length(samp),2)
+    tmp <- samp[id[2]]
+    samp[id[2]] <- samp[id[1]]
+    samp[id[1]] <- tmp
+  }
+  names(pt) <- paste0(samp,'_',sub('.*_','',names(pt)))  
+}
+
   saveRDS(pt,file=paste0(rdir, '0.rds'))
+  samp <- sub(':.*','',names(pt))
+names(samp) <- names(pt)
   for (prop in c(0.01,0.05, 0.25,seq(0.1, 0.9, 0.1))) {
     print(paste0(path, '_', prop))
     spt <- pt
@@ -46,3 +58,4 @@ for (path in c('erythroid', 'monocyte', 'lymph')){
     saveRDS(spt,file=paste0(rdir, prop,'.rds'))
   }
 }
+

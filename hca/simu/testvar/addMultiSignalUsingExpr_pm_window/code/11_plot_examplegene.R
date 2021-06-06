@@ -20,16 +20,16 @@ diffgene <- rownames(statistics[statistics[, grep('^fdr.*overall$', colnames(sta
 
 Res$populationFit <- getPopulationFit(Res, gene = rownames(Res$expr), type = 'variable')
 v = rownames(Res$expr)
-ag = c('NUCB2', 'LMNB1', 'ZNF263', 'POLR3F')
+ag = c('NUCB2', 'LMNB1', 'NSMCE3', 'POLR3F')
 ag = sapply(ag, function(i){
   v[grepl(i, v)]
 })
 
-pdf(paste0(pdir, 'examplegene_curve.pdf'), width = 4.9, height = 4.6)
+pdf(paste0(pdir, 'examplegene_curve.pdf'), width = 4, height = 3.8)
 plotGene(testobj = Res, gene = ag, variable = 'group', variable.text = NULL, x.lab = 'Pseudotime', y.lab = 'Expression', plot.point = F, use.palette = T, ncol = 2, sep = ':.*')
 dev.off()
 
-pdf(paste0(pdir, 'examplegene_point.pdf'), width = 4.9, height = 4.6)
+pdf(paste0(pdir, 'examplegene_point.pdf'), width = 4, height = 3.8)
 plotGene(testobj = Res, gene = ag, variable = 'group', variable.text = NULL, x.lab = 'Pseudotime', y.lab = 'Expression', plot.point = T, use.palette = T, ncol = 2, sep = ':.*', line.alpha = 0, point.size = 0.01, point.alpha = 0.8)
 dev.off()
 
@@ -50,3 +50,4 @@ ag = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/s
 png(paste0(pdir, 'selgene3.png'), width = 5000, height = 5000)
 plotGene(testobj = Res, gene = ag[1:30], variable = 'group', variable.text = NULL, x.lab = 'Pseudotime', y.lab = 'Expression', plot.point = F, use.palette = T, ncol = 5, sep = ':.*')
 dev.off()
+
