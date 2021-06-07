@@ -10,6 +10,7 @@ u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
 u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
 # u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
 # u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
+library(RColorBrewer)
 
 for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/EM_pm'),'perf')) {
   lamian <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/EM_pm/',celltype,'/gender/gender_res.rds'))[[1]]
@@ -77,7 +78,6 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
       mean(tmp[seq(1,length(tmp)) %% 10 == 0])
     },mc.cores=detectCores()))
     
-    
     v2_pm <- unlist(mclapply(seq(1,1e4), function(myseed){
       set.seed(myseed+100)
       allg.pm = sample(allg)
@@ -91,11 +91,10 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   permud$method <- factor(permud$method,levels=c('Lamian_excludeLimma', 'tradeSeq_excludeLamian', 'Lamian','limma', 'tradeSeq_diffEndTest', 'tradeSeq_patternTest', 'tradeSeq_earlyDETest'))
   reald$method <- factor(reald$method,levels=c('Lamian_excludeLimma', 'tradeSeq_excludeLamian', 'Lamian','limma', 'tradeSeq_diffEndTest', 'tradeSeq_patternTest', 'tradeSeq_earlyDETest'))
   
-  
-  library(RColorBrewer)
+  saveRDS(list(permud = permud, reald = reald), paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_plotdata.rds'))
+
   pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin.pdf'),width=5,height=5)
   print(ggplot() + geom_violin(data=permud,aes(x=method,y=per,col=type)) + geom_point(data=reald,aes(x=method,y=per,col=type),size=3) + geom_text(data=reald,aes(x=method,y=max(reald$per)*1.3,label=pvalue)) + theme_classic() + facet_wrap(~type) + coord_flip(ylim=c(0,max(reald$per)*1.5)) + xlab('') + ylab('Proportion') + scale_color_manual(values=c('chrX'=brewer.pal(3,'Pastel1')[1],'chrY'=brewer.pal(3,'Pastel1')[2])) + theme(legend.position = 'bottom',strip.background = element_blank(),strip.text = element_text(size=20),legend.title = element_blank()) + scale_y_continuous(breaks=c(0,round(max(reald$per)*0.6,2),round(max(reald$per)*1.2,2))))
   dev.off()
   
 }
-
