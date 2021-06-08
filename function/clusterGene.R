@@ -70,6 +70,22 @@ cluster_gene <- function(testobj,
   return(clu2)  
 }
 
+# testobj = Res
+# gene = diffgene
+# type = 'variable'
+# k=3
+# k.auto = FALSE
+# k=5
+# method = 'kmeans'
+# scale.difference = F
+# 
+# gene = names(DDGType)[!DDGType %in% c('nonDDG', 'meanSig')]
+# type = 'variable'
+# k=k
+# scale.difference = scale.difference
+# method = method
+# k.auto = k.auto
+
 
 clusterGene <- function(testobj, gene, type = 'variable', k.auto = FALSE,  k=5, method = 'kmeans', scale.difference = F){
   ## k.auto: if FALSE (default), use input k value. If TRUE, automatically select number of clusters. 
@@ -92,19 +108,20 @@ clusterGene <- function(testobj, gene, type = 'variable', k.auto = FALSE,  k=5, 
     meandiff <- sapply(c(0,1), function(i){
       as <- rownames(design[design[,2]==i, ])
       if ('expr' %in% names(testobj)){
-        rowMeans(testobj$expr[names(DDGType)[DDGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1]])
+        rowMeans(testobj$expr[names(DDGType)[DDGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1], drop = FALSE])
       } else {
-        rowMeans(testobj$expr.ori[names(DDGType)[DDGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1]])
+        rowMeans(testobj$expr.ori[names(DDGType)[DDGType == 'meanSig'], cellanno[cellanno[,2] %in% as,1], drop = FALSE])
       }
       
-    })
+    }, simplify = FALSE)
+    meandiff = do.call(cbind, meandiff)
     large0 <- rownames(meandiff)[meandiff[,1] >= meandiff[,2]]
     large1 <- rownames(meandiff)[meandiff[,1] < meandiff[,2]]
     
-    clu2 <- rep(max(clu)+1, length(large0))
-    names(clu2) <- large0
-    clu3 <- rep(max(clu)+2, length(large1))
-    names(clu3) <- large1
+    clu2 <- rep(max(clu)+1, length(large1))
+    names(clu2) <- large1
+    clu3 <- rep(max(clu)+2, length(large0))
+    names(clu3) <- large0
     clu = c(clu, clu2, clu3)  
   }
   clu <- clu[gene]
