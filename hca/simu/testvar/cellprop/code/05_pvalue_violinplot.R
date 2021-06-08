@@ -16,6 +16,7 @@ ggplot(df, aes(x=Var2,y=value, color = Var2)) +
   theme_classic()+
   theme(legend.position = 'none') +
   scale_color_manual(values = colorRampPalette(brewer.pal(9, 'Blues')[2:9])(ncol(pd))) +
-  xlab('remove cell proportion') + ylab('significance percentage')
+  xlab('remove cell proportion') + ylab('p values')
 dev.off()
+
 
