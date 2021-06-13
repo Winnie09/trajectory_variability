@@ -14,9 +14,11 @@ u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
 # u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
 
 for (path in c('erythroid', 'lymph', 'monocyte')){
+  print(path)
   ## read data
   Res <- readRDS(paste0(ddir, path, '/gender/testvar_res.rds'))
   for (sn in names(Res)) {
+    print(sn)
     res <- Res[[sn]]
     allg <- sub(':.*', '', rownames(res))
     
@@ -47,6 +49,8 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     names(v2_pm) <- paste0('top',seq(1,length(v2_pm)))
     
     pd <- data.frame(chrX_pm = v1_pm, chrY_pm = v2_pm, stringsAsFactors = FALSE)
+    saveRDS(list(pd, overlap_chrX = v1, overlap_chrY = v2), paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/tradeSeq/perf/', path,'_',sn, '_gender.rds'))
+    
     p1 <- ggplot(data = pd, aes(x=chrX_pm)) + 
       geom_histogram(aes(y=..density..), colour="black", fill="white")+
       geom_density(alpha=.2, fill="#FF6666") +
@@ -68,4 +72,5 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
     dev.off()  
   }
 }
+
 
