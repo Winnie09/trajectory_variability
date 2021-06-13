@@ -122,12 +122,12 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   res3 <- res[res$DDGType=='other',]
   res4 <- res[res$DDGType=='meanSig',]
   
-  o1 <- rownames(res1)[order(res1$clu,res1$changepoint)]
+  o1 <- rownames(res1)[order(res1$clu,res1$cor,res1$changepoint)]
   
-  pn <- rowMeans(alluniformdiff[rownames(res2),])
-  o2 <- rownames(res2)[order(pn > 0,res2$clu,res2$changepoint)]
+  pn <- rowMeans(alluniformdiff[rownames(res2),,drop=FALSE])
+  o2 <- rownames(res2)[order(pn > 0,res2$clu,res2$cor,res2$changepoint)]
   
-  o3 <- rownames(res3)[order(res3$clu,res3$changepoint)]
+  o3 <- rownames(res3)[order(res3$clu,res3$cor,res3$changepoint)]
   #o1 <- rownames(res1)[order(match(res1$clu,names(sort(tapply(res1$cor,res1$clu,mean)))),res1$cor > 0,res1$changepoint)]
   # o2 <- rownames(res2)[order(match(res2$clu,names(sort(tapply(res2$cor,res2$clu,mean)))),res2$cor > 0,res2$changepoint)]
   # o3 <- rownames(res3)[order(match(res3$clu,names(sort(tapply(res3$cor,res3$clu,mean)))),res3$cor > 0,res3$changepoint)]
@@ -225,13 +225,7 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   
   plist <- list()
   
-  
   if (!is.na(sep)){
-    tmpid <- rownames(expr.scale)[which(!duplicated(sub(sep, '', rownames(expr.scale))))]
-    expr.scale <- expr.scale[tmpid,]
-    rowann <- rowann[tmpid,]
-    oridata <- oridata[tmpid,]
-  
     rownames(expr.scale) <-sub(sep, '', rownames(expr.scale))
     rownames(rowann) <- sub(sep, ':.*', rownames(rowann))
     rownames(oridata) <- sub(sep, '', rownames(oridata))
@@ -344,7 +338,7 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   
   # p5data <- fit.scale[, rownames(colann.fit)[colann.fit[,'expression'] == 'ModeledGroupDiff']]
   rownames(alluniformdiff) <- sub(':.*','',rownames(alluniformdiff))
-  p5data <- rowMeans(alluniformdiff[rownames(fit.scale),]) %*% matrix(1,nrow=1,ncol=ncol(p4data))
+  p5data <- rowMeans(alluniformdiff[rownames(fit.scale),,drop=FALSE]) %*% matrix(1,nrow=1,ncol=ncol(p4data))
   rownames(p5data) <- rownames(p4data)
   
   p5 <- pheatmap(
@@ -369,5 +363,4 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,1,2,3,3,3,3,3,4,5,5,5,5,6,7,7,7,7,8,9,9,9,9),nrow=1))
   # dev.off()
 }  
-
 
