@@ -34,7 +34,10 @@ for (path in c('erythroid', 'lymph', 'monocyte')){
 }
 res <- do.call(rbind, res)
 dir.create('hca/real/testtime/result/EM_pm/perf/', recursive = T)
+
+res[,'fdr'] = p.adjust(res[,'pval.overall'], 'fdr')
 write.csv(res, 'hca/real/testtime/result/EM_pm/perf/cellprop_res.csv')
+saveRDS(res, 'hca/real/testtime/result/EM_pm/perf/cellprop_res.rds')
 
 ###############################
 for (path in c('erythroid', 'lymph', 'monocyte')){
