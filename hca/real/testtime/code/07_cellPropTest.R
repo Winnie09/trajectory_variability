@@ -15,14 +15,14 @@ for (path in c('lymph', 'erythroid', 'monocyte')){
   design[,2] <- ifelse(design[,2] == 'male', 0, 1)
   print('gender')
   res <- cellPropTest(cellanno = cellanno, pseudotime = pseudotime, design = design, ncores = 4, test.type = 'time')
-  saveRDS(res, paste0(rdir, 'gender/cell_proportion_test_gender.rds'))
+  saveRDS(res, paste0(rdir, 'gender/cell_proportion_test.rds'))
   
   print('age')
   design = readRDS(paste0(ddir, 'input_design.rds'))
   design = design[, c(1,3)]
   design[,2] <- as.numeric(design[,2])
   res <- cellPropTest(cellanno = cellanno, pseudotime = pseudotime, design = design, ncores = 4, test.type = 'time')
-  saveRDS(res, paste0(rdir, 'age/cell_proportion_test_age.rds'))
+  saveRDS(res, paste0(rdir, 'age/cell_proportion_test.rds'))
 }
 
 
