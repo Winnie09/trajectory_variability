@@ -2,7 +2,6 @@ library(here)
 setwd(here())
 source('function/01_function.R')
 path <- 'erythroid'
-
 ddir <- paste0('hca/real/build_from_tree_variability/result/', path, '/')
 rdir <- paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/cellprop/repdata/')
 dir.create(rdir, recursive = T)
@@ -12,15 +11,12 @@ opt = readRDS(paste0(ddir, 'input_pseudotime.rds'))
 design = matrix( c(rep(1, 8),1,1,0,0,1,1,0,0), nrow=8)
 dimnames(design) = list(paste0('BM',seq(1,8)), c('intercept','group'))
 
-# library(ggplot2)
-# ggplot(data.frame(pt=pt,samp=sub('_.*','',names(pt)),group=sub('_.*','',names(pt)) %in% rownames(design)[design[,2]==1]),aes(pt,color=group,group=samp)) + geom_density() + theme_classic()
-
-
-for (seed in 1:1000) {
+## prop != 0, do not bootstrap cells, remove prop = x cells in the first half of pseudotime bins
+for (seed in 1:1e3) {
   set.seed(seed)
-pt <- sample(opt)
-names(pt) <- names(opt)
-pt <- sort(pt)
+  pt <- sample(opt)
+  names(pt) <- names(opt)
+  pt <- sort(pt)
   samp <- sub(':.*','',names(pt))
   names(samp) <- names(pt)
   for (prop in c(0.15,0.25,0.35)) {
@@ -32,5 +28,15 @@ pt <- sort(pt)
   }
 }
 
-
+## prop = 0, only bootstrap cells
+for (seed in 1:1e3){
+  print(seed)
+  set.seed(seed)
+  pt = sample(opt, replace = T)
+  pt = sort(pt)
+  samp <- sub(':.*','',names(pt))
+  names(samp) <- names(pt)
+  prop = 0
+  saveRDS(pt,file=paste0(rdir, seed,'_',prop,'.rds'))
+}
 
