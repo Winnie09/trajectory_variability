@@ -3,6 +3,7 @@ rm(list = ls())
 library(here)
 setwd(here())
 source('function/01_function.R')
+pdir <- 'covid/Su_2020_Cell/testtime/plot/EM_pm/'
 Res <- readRDS('covid/Su_2020_Cell/testtime/result/EM_pm/testtime_res.rds')
 pdir <- rdir <- 'covid/Su_2020_Cell/testtime/plot/EM_pm/'
 dir.create(pdir, recursive = T, showWarnings = F)
@@ -11,7 +12,7 @@ stat = Res$statistics
 str(stat)
 str(Res$expr)
 
-pdir <- 'covid/Su_2020_Cell/testtime/plot/EM_pm/'
+
 # ---------------------------- #
 # downstream analysis pipeline #  
 # ---------------------------- #
@@ -103,18 +104,20 @@ dev.off()
 # dev.off()
 
 
-gene <- c('TCF7', 'SELL', 'JUNB', 'CD7', 'GZMA', 'CCL5', 'GZMB', 'GNLY')
-png(paste0(pdir, 'examplegene_sampleFit.png'), res = 300, width = 4900, height = 900)
-plotGene(Res, gene, plot.point = T, point.size = 0.05, point.alpha = 0.5, line.size = 0.5, line.alpha = 0.8, axis.text.blank = F, free.scale = F, ncol = 4)
+# gene <- c('TCF7', 'SELL', 'JUNB', 'CD7', 'GZMA', 'CCL5', 'GZMB', 'GNLY')
+gene <- c('TCF7', 'SELL', 'JUNB', 'CD7', 'CCL5', 'IFNG','GZMB', 'GNLY')
+png(paste0(pdir, 'examplegene_sampleFit2.png'), res = 300, width = 3000, height = 1300)
+plotGene(Res, gene, plot.point = T, point.size = 0.05, point.alpha = 0.5, line.size = 0.1, line.alpha = 0.8, axis.text.blank = F, free.scale = F, ncol = 2, legend.position = 'right')
 dev.off()
 
-pdf(paste0(pdir, 'examplegene_sampleFit.pdf'), width = 11.5, height = 5.1)
-plotGene(Res, gene, plot.point = T, point.size = 0.01, point.alpha = 0.05, line.size = 0.1, line.alpha = 0.7, axis.text.blank = T, free.scale = F, ncol = 2)
+pdf(paste0(pdir, 'examplegene_sampleFit2.pdf'), width = 12, height = 4.8)
+plotGene(Res, gene, plot.point = T, point.size = 0.01, point.alpha = 0.05, line.size = 0.1, line.alpha = 0.7, axis.text.blank = F, free.scale = F, ncol = 2, legend.position = 'right')
 dev.off()
 
 
-png(paste0(pdir, 'examplegene_populationFit.png'), res = 300, width = 2000, height = 800)
+png(paste0(pdir, 'examplegene_populationFit2.png'), res = 300, width = 2000, height = 800)
 plotGenePopulation(Res, gene, axis.text.blank = F, free.scale = F, line.size = 2, ncol = 4)
 dev.off()
+
 
 
