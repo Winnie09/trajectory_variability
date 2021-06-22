@@ -19,28 +19,52 @@ af = list.files(paste0(ddir, m, '/'))
 df1.nc <- sapply(af, function(f){
   print(f)
   r = readRDS(paste0(ddir, m, '/', f))
-  res = r$statistics
-  res = res[order(res[,1], -res[,2]), c(1:3)]
-  colnames(res) <- c('fdr', 'zscore', 'pvalue')
+  res = data.frame(adj.P.Val = r$statistics[,'fdr.overall'], zscore = r$statistics[,'z.overall'], stringsAsFactors = F)
+  res = res[order(res[,1], res[,2]), ]
   res = res[!rownames(res) %in% rmgene, ]
   c(sub('.rds','',f), 'EM_pm', AreaUnderSensFdr(SensFdr(selgene, res)))
 })
 perflist[['EM_pm']] = t(df1.nc)
 
 
-m = 'EM_chisq'
+m = 'tradeSeq'
 af = list.files(paste0(ddir, m, '/'))
-df1 <- sapply(af, function(f){
-  print(f)
-  r = readRDS(paste0(ddir, m, '/', f))
-  res = r$statistics
-  res = res[order(res[,1], res[,2]), c(1:2)]
-  colnames(res) <- c('fdr', 'pvalue')
+af = af[!grepl('sce', af)]
+df3 <- sapply(af, function(f) {
+  res = readRDS(paste0(ddir, m, '/', f))[[1]]
   res = res[!rownames(res) %in% rmgene, ]
-  c(sub('.rds','',f), 'EM_chisq', AreaUnderSensFdr(SensFdr(selgene, res)))
+  res = res[order(res[, 3],-abs(res[, 1])),]
+  c(sub('.rds', '', f), 'tradeSeq_diffEndTest', AreaUnderSensFdr(SensFdr(selgene, res)))
 })
-perflist[['EM_chisq']] = t(df1)
+perflist[['tradeSeq_diffEndTest']] = t(df3)
 
+m = 'tradeSeq'
+af = list.files(paste0(ddir, m, '/'))
+af = af[!grepl('sce', af)]
+df3 <- sapply(af, function(f) {
+  res = readRDS(paste0(ddir, m, '/', f))[[2]]
+  res[is.na(res[,3]),3] <- 1
+  res[is.na(res[,2]),2] <- 1
+  res[is.na(res[,1]),1] <- 0
+  res = res[!rownames(res) %in% rmgene, ]
+  res = res[order(res[, 3],-abs(res[, 1])),]
+  c(sub('.rds', '', f), 'tradeSeq_patternTest', AreaUnderSensFdr(SensFdr(selgene, res)))
+})
+perflist[['tradeSeq_patternTest']] = t(df3)
+
+m = 'tradeSeq'
+af = list.files(paste0(ddir, m, '/'))
+af = af[!grepl('sce', af)]
+df3 <- sapply(af, function(f) {
+  res = readRDS(paste0(ddir, m, '/', f))[[3]]
+  res[is.na(res[,3]),3] <- 1
+  res[is.na(res[,2]),2] <- 1
+  res[is.na(res[,1]),1] <- 0
+  res = res[!rownames(res) %in% rmgene, ]
+  res = res[order(res[, 3],-abs(res[, 1])),]
+  c(sub('.rds', '', f), 'tradeSeq_earlyDETest', AreaUnderSensFdr(SensFdr(selgene, res)))
+})
+perflist[['tradeSeq_earlyDETest']] = t(df3)
 
 m = 'meandiff'
 af = list.files(paste0(ddir, m, '/'))
@@ -54,17 +78,6 @@ df2 <- sapply(af, function(f){
 perflist[['limma']] = t(df2)
 
 
-m = 'tscan'
-af = list.files(paste0(ddir, m, '/'))
-df3 <- sapply(af, function(f) {
-  res = readRDS(paste0(ddir, m, '/', f))
-  res = res[!rownames(res) %in% rmgene, ]
-  res = res[order(res[, 3],-abs(res[, 2])),]
-  c(sub('.rds', '', f), 'TSCAN', AreaUnderSensFdr(SensFdr(selgene, res)))
-})
-perflist[['tscan']] = t(df3)
-
-## concatenate
 saveRDS(perflist, paste0(rdir,'perflist_trendOnly.rds'))
 perf <- do.call(rbind, perflist)
 colnames(perf) <- c('SignalStrength', 'Method', 'Fdr.Diff', 'AUC')
@@ -76,5 +89,4 @@ perf[,4] <- as.numeric(as.character(perf[,4]))
 
 saveRDS(perf, paste0(rdir,'perf_trendOnly.rds'))
 rm(list=ls())
-
 

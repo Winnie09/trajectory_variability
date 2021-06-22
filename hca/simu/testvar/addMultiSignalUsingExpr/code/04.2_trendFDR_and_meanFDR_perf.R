@@ -36,6 +36,8 @@ df1.nc <- sapply(af, function(f){
   res = res[order(res[,1], -res[,2]), ]
   c(sub('.rds','',f), 'meanDiff', AreaUnderSensFdr(SensFdr(c(selgene2,selgene3), res)))
 })
+# df1.nc[3,4] = (as.numeric(df1.nc[3,3]) + as.numeric(df1.nc[3,5]))/2
+# df1.nc[4,4] = (as.numeric(df1.nc[4,3]) + as.numeric(df1.nc[4,5]))/2
 perflist[['meanDiff']] = t(df1.nc)
 
 perf <- do.call(rbind,perflist)
@@ -75,7 +77,7 @@ pd[pd[,2] == 'EM_pm', 2] <- 'Lamian' ## method name
 pd <- rbind(pd,pdonly)
 pd <- pd[complete.cases(pd), ]
 library(ggplot2)
-pdf(paste0(pdir, 'compare_fdr_diff_auc_trenddiff_meandiff.pdf'),width=12.5,height=2.9)
+pdf(paste0(pdir, 'compare_fdr_diff_auc_trenddiff_meandiff.pdf'),width=12.5,height=2.8)
 p1 <- ggplot(pd, aes(x = SignalStrength, y = Fdr.Diff, color=Method)) + 
   geom_point(size=2)  + 
   geom_line(size=1) + 
@@ -85,7 +87,7 @@ p1 <- ggplot(pd, aes(x = SignalStrength, y = Fdr.Diff, color=Method)) +
   scale_color_brewer(palette = 'Set1')  +
   facet_wrap(~comparison, nrow =1) +
   theme(legend.position = 'bottom',legend.title = element_blank()) + 
-  ylim(c(-0.04,0.195))+
+  ylim(c(-0.04,0.2))+
   guides(color=guide_legend(nrow=2,byrow=TRUE))
 p2 <- ggplot(pd, aes(x = SignalStrength, y = AUC, color=Method)) + 
   geom_point(size=2)  + 
@@ -100,6 +102,8 @@ p2 <- ggplot(pd, aes(x = SignalStrength, y = AUC, color=Method)) +
     guides(color=guide_legend(nrow=2,byrow=TRUE))
 grid.arrange(p1,p2,nrow=1)
 dev.off()
+
+
 
 
 
