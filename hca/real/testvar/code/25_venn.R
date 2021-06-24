@@ -23,10 +23,11 @@ library(RColorBrewer)
 myCol <- brewer.pal(3, "Pastel1")
 
 library(VennDiagram)
-venn.diagram(
+pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/venn/venn_diagramm.pdf', width = 2.1, height = 2.1)
+grid.draw(venn.diagram(
   x = list(lamian,limma,tradeseq),
   category.names = c("Lamian" , "Limma" , "tradeSeq"),
-  filename = '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/venn/venn_diagramm.png',
+  filename = NULL,
   output=TRUE,
   # Output features
   imagetype="png" ,
@@ -52,7 +53,6 @@ venn.diagram(
   cat.pos = c(-27, 27, 135),
   cat.dist = c(0.055, 0.055, 0.085),
   cat.fontfamily = "sans",
-  rotation = 1
-)
-
-
+  rotation = 2
+))
+dev.off()
