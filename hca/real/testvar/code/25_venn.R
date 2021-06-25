@@ -11,11 +11,13 @@ u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
 # u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
 # u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
 
-lamian <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/EM_pm/monocyte/gender/gender_res.rds'))[[1]]
-lamian <- rownames(lamian)[lamian[,'fdr.overall'] < 0.05]
-limma <- readRDS(paste0('hca/real/testvar/result/limma/monocyte/gender_res.rds'))
+path = 'erythroid'
+
+lamian = read.csv(paste0('hca/real/testvar/plot/EM_pm/', path, '/gender/', 'differential_genes.csv'), row.names = 1)
+lamian = as.character(lamian[,1])
+limma <- readRDS(paste0('hca/real/testvar/result/limma/', path, '/gender_res.rds'))
 limma <- rownames(limma)[limma$adj.P.Val < 0.05]
-tradeseq <- readRDS(paste0('hca/real/testvar/result/tradeSeq/monocyte/gender/testvar_res.rds'))
+tradeseq <- readRDS(paste0('hca/real/testvar/result/tradeSeq/', path, '/gender/testvar_res.rds'))
 tradeseq <- unique(unlist(sapply(tradeseq,function(i) {rownames(i)[i$adj.P.Val < 0.05]})))
 tradeseq <- tradeseq[!is.na(tradeseq)]
 
@@ -23,7 +25,7 @@ library(RColorBrewer)
 myCol <- brewer.pal(3, "Pastel1")
 
 library(VennDiagram)
-pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/venn/venn_diagramm.pdf', width = 2.1, height = 2.1)
+pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/venn/venn_diagramm_', path, '.pdf'), width = 2.1, height = 2.1)
 grid.draw(venn.diagram(
   x = list(lamian,limma,tradeseq),
   category.names = c("Lamian" , "Limma" , "tradeSeq"),
@@ -56,3 +58,4 @@ grid.draw(venn.diagram(
   rotation = 2
 ))
 dev.off()
+
