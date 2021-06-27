@@ -13,3 +13,13 @@ png(paste0(pdir, 'newgene_zeyu.png'), res = 200, width = 1000, height = 450)
 plotGene(res, selgene, variable = 'type', ncol = 4)
 dev.off()
 
+selgene <- c('NCK2', 'PAK1','RBPJ', 'PBRM1')
+png(paste0(pdir, 'newgene_zeyu4.png'), res = 300, width = 1000, height = 900)
+plotGene(res, selgene, variable = 'type', ncol = 2, continuous = F, line.size = 0.1, line.alpha = 0.8)
+dev.off()
+
+pdf(paste0(pdir, 'newgene_zeyu4.pdf'), width = 4.1, height = 4)
+plotGene(res, selgene, variable = 'type', ncol = 2, continuous = F, line.size = 0.1, line.alpha = 0.8)
+dev.off()
+
+
