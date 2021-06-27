@@ -28,7 +28,6 @@ cnt <- cnt[intersect(rownames(cnt),rownames(expr)), colnames(expr)]
 cnt <- cnt[, colnames(sce)]
 
 ## plot example genes
-
 ### ============
 ### limma_excEM
 ### ============
@@ -52,21 +51,19 @@ for (i in selgene) {
 
 ag = c('SH2D3A', 'TMEM183A')
 for (i in ag) {
-  print(i)
-  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/limma_excEM/',i,'.pdf'))
-  plotGeneSampleAndPopulation(lamian,i,variable='type',line.alpha=0.4)
-  dev.off()
-  
-  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/limma_excEM/', i, '_CI.pdf'), width = 2.1, height = 1.4)
+  # print(i)
+  # pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/limma_excEM/',i,'.pdf'))
+  # plotGeneSampleAndPopulation(lamian,i,variable='type',line.alpha=0.4)
+  # dev.off()
+  # 
+  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/limma_excEM/', i, '_CI.pdf'), width = 2, height = 1.5)
   print(plotGeneCIAndPopulation(lamian, i, variable='type', ribbon.alpha=0.2, axis.text.blank = F, line.size = 0.9))
   dev.off()
   
-  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/limma_excEM/', i, '_samplefit.pdf'), width = 2, height = 1.5)
-  plotGene(lamian, i, variable = 'type', ncol = 4, axis.text.blank = F, line.size = 0.2, continuous = T, use.palette = T)
-  dev.off()
+  # pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/limma_excEM/', i, '_samplefit.pdf'), width = 2, height = 1.5)
+  # print(plotGene(lamian, i, variable = 'type', ncol = 4, axis.text.blank = F, line.size = 0.1, line.alpha = 0.6, continuous = T, use.palette = T))
+  # dev.off()
 }
-
-
 
 ### ===============
 ### tradeSeq_excEM
@@ -110,8 +107,29 @@ for (g in ag) {
   dev.off()  
 }
 for (g in ag) {
-  pdf(paste0('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/tradeseq_excEM/',g,'_sample.pdf'), width = 2, height = 1.5)
-  plotGene(lamian, g, variable = 'type', ncol = 4, axis.text.blank = T, line.size = 0.2, continuous = T, use.palette = T)
+  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/tradeseq_excEM/',g,'_sample.pdf'), width = 2, height = 1.5)
+  plotGene(lamian, g, variable = 'type', ncol = 4, axis.text.blank = F, line.size = 0.1, line.alpha = 0.6, continuous = T, use.palette = T)
   dev.off()  
 }
+
+
+
+
+
+
+## =======================
+## plot Lamian only genes
+## =======================
+ag <- c('ATG14','PBRM1', 'VCP','SUCLG2','RNF11','RBPJ','PAK1','NCK2')
+for (g in ag) {
+  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/lamianOnly/',g,'_sample.pdf'), width = 2, height = 1.5)
+  plotGene(lamian, g, variable = 'type', ncol = 4, axis.text.blank = F, line.size = 0.1, line.alpha = 0.6, continuous = T, use.palette = T)
+  dev.off()  
+  
+  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/plot/examplegene/lamianOnly/', g, '_CI.pdf'), width = 2, height = 1.5)
+  print(plotGeneCIAndPopulation(lamian, g, variable='type', ribbon.alpha=0.2, axis.text.blank = F, line.size = 0.9))
+  dev.off()
+
+}
+
 
