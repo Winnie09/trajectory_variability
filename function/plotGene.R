@@ -1,4 +1,4 @@
-plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F, cellProp = FALSE, x.lab = 'Pseudotime', y.lab = 'Expression', use.palette = FALSE, legend.position = 'right', axis.text.range.only = FALSE, ylim = NA, xlim = NA){
+plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.scale = TRUE, facet.sample = FALSE, plot.point = FALSE, line.alpha = 1, line.size = 1, point.alpha=1, point.size=0.5, continuous = TRUE, sep = NA, palette = 'Dark2', ncol = NULL,  axis.text.blank = F, cellProp = FALSE, x.lab = 'Pseudotime', y.lab = 'Expression', use.palette = FALSE, legend.position = 'right', axis.text.range.only = FALSE, ylim = NA, xlim = NA, axis.size = 8, title.size = 8, axis.text.size = 8){
   ## testobj: the output of function testpt() which is a list containing fdr, etc..
   ## variable: character, the variable (covariate) to color the samples, should be null or one of the column names of design matrix. Default is NULL, meaning each sample is colored differently. Otherwise, samples are colored by the variable (covariate) values.
   ## variable.text: a character vector. The text for the legend of the plot, corresponding to each variable values.
@@ -80,7 +80,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     if (is.null(variable)){
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size, stroke = 0) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size) 
         
       } else {
@@ -90,7 +90,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     } else {
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size, stroke = 0) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size) 
       } else {
         p <- ggplot() + 
@@ -118,15 +118,24 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
         p <- p + scale_color_manual(values = rev(brewer.pal(8, palette)[1:length(unique(ld[, 'Variable']))]))
       } 
     }
-    if (axis.text.blank) {
-      p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
-    } else {
-      p <- p + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
-    }
+    
     if (!is.na(xlim)) p <- p + xlim(xlim)
     if (!is.na(ylim)) p <- p + ylim(ylim)
+    
+     if (axis.text.blank) {
+      p <- p + theme(axis.text = element_blank(), axis.ticks = element_blank())
+    } else if (axis.text.range.only) {
+      p <- p + scale_x_continuous(breaks=c(min(pd$pseudotime),max(pd$pseudotime)))
+    }
+    
+    p <- p + theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"), axis.title = element_text(size = axis.size), axis.text.x = element_text(angle = 45, hjust = 1, size = axis.text.size), axis.text.y = element_text(size = axis.text.size), plot.title = element_text(size = title.size), legend.position = legend.position) +
+    guides(colour = guide_legend(override.aes = list(size=2, alpha = 1))) 
     if (facet.sample){
-      print(p + facet_wrap(~Sample, scales=a))
+      if (is.null(ncol)){
+        print(p + facet_wrap(~Sample, scales=a))  
+      } else {
+        print(p + facet_wrap(~Sample, scales=a, ncol = ncol))
+      }
     } else {
       print(p)
     }
@@ -177,7 +186,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     if (is.null(variable)){
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size, stroke = 0) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size)
         
       } else {
@@ -188,7 +197,7 @@ plotGene <- function(testobj, gene, variable = NULL, variable.text = NULL, free.
     } else {
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size, stroke = 0) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample), alpha=line.alpha, size=line.size) 
       } else {
         p <- ggplot() + 
