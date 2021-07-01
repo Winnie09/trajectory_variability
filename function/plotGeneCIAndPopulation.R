@@ -90,7 +90,7 @@ plotGeneCIAndPopulation <- function(testobj, gene, variable = NULL, variable.tex
     tmp <- ldim[names(which(design[,variable]==s)),]
     sdv <- apply(tmp,2,sd)/sqrt(nrow(tmp))
     # data.frame(ymin=mv+qnorm(0.025)*sdv,ymax=mv+qnorm(0.975)*sdv,Variable=s,pseudotime=1:max(ld$pseudotime))
-    data.frame(ymin=mv-sdv,ymax=mv+sdv,Variable=s,pseudotime=1:max(ld$pseudotime))
+    data.frame(ymin=mv-1.96*sdv,ymax=mv+1.96*sdv,Variable=s,pseudotime=1:max(ld$pseudotime))
   }))
   ldg$type <- as.factor(ldg$Variable)
   
