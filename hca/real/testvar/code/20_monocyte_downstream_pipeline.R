@@ -13,7 +13,7 @@ u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
 # u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
 
 Res <- readRDS(paste0('hca/real/testvar/result/EM_pm/', path, '/gender/gender_res.rds'))
-Res$statistics <- Res$statistics[rownames(Res$statistics)!='RPS4Y1:ENSG00000129824',]
+# Res$statistics <- Res$statistics[rownames(Res$statistics)!='RPS4Y1:ENSG00000129824',]
 print(names(Res))
 stat = Res$statistics
 diffgene <- rownames(stat[stat[, grep('^fdr.*overall$', colnames(stat))] < 0.05,])
@@ -69,42 +69,6 @@ nn <- sapply(names(goRes), function(i){
   print(str(tmp))
   return(0)
 })
-
-#pdf(paste0(pdir, '/hm_GO_term5.pdf'), width = 6.8, height = 3.5)
-#print(plotGOEnrich(goRes))
-#dev.off()
-
-#pdf(paste0(pdir, '/hm_GO_term10.pdf'), width = 6.8, height = 3.5)
-#print(plotGOEnrich(goRes, n = 10))
-#dev.off()
-
-# --------------------------------------
-# compare original and fitted expression
-# --------------------------------------
-# png(paste0(pdir, 'fitHm.png'),width = 4000,height = 2200,res = 300)
-# plotFitHm(Res, type = 'variable')
-# dev.off()
-# 
-# png(paste0(pdir, 'fitHm_rownames.png'),width = 12000,height = 10000,res = 300)
-# print(plotFitHm(Res, type='variable', showRowName = T, cellWidthTotal = 1000, cellHeightTotal = length(Res$cluster) * 10))
-# dev.off()
-
-
-# png(paste0(pdir, 'DiffFitHm.png'),width = 4000,height = 2200,res = 250)
-# plotDiffFitHm(Res, type = 'variable', cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE)
-# dev.off()
-
-# png(paste0(pdir, 'DiffFitHm3.png'),width = 4500,height = 2200,res = 250)
-# plotDiffFitHm3(Res,  cellWidthTotal = 200, cellHeightTotal = 300, subsampleCell = FALSE, break.0 = FALSE)
-# dev.off()
-
-# png(paste0(pdir, 'DiffFitHm3_rownames.png'),width = 7500,height = 3500,res = 300)
-# plotDiffFitHm3(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*', subsampleCell = FALSE, break.0 = FALSE)
-# dev.off()
-# 
-# png(paste0(pdir, 'DiffFitHm4_rownames.png'),width = 7500,height = 3500,res = 300)
-# plotDiffFitHm4(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
-# dev.off()
 
 png(paste0(pdir, 'DiffFitHm5_rownames.png'),width = 12000,height = 3500,res = 300)
 plotDiffFitHm5(Res, showRowName = T, cellWidthTotal = 300, cellHeightTotal = length(Res$cluster) * 10, sep = ':.*' , subsampleCell = FALSE, break.0 = FALSE)
@@ -181,6 +145,7 @@ dev.off()
 png(paste0(pdir, 'RPS4Y1_new.png'),width = 1000,height = 1000,res = 100)
 plotGene(rr, gene = "RPS4Y1:ENSG00000129824", plot.point = T)
 dev.off()
+
 
 
 
