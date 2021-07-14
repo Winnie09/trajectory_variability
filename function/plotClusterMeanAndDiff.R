@@ -2,16 +2,18 @@ plotClusterMeanAndDiff <- function(testobj,
                             cluster = testobj[['cluster']],
                             free.scale1 = TRUE,
                             free.scale2 = FALSE){
+  library(ggplot2)
+  library(RColorBrewer)
+  library(reshape2)
+  library(gridExtra)
   ## only works for Covariate Test. 
   if ('populationFit' %in% names(testobj)){
     fit <- testobj$populationFit
   } else {
     print("The object testobj should contain populationFit!")
   }
-  library(ggplot2)
-  library(RColorBrewer)
-  library(reshape2)
-  library(gridExtra)
+  ## give populationFit cell names as colnames
+  colnames(testobj$populationFit[[1]]) <- colnames(testobj$populationFit[[1]]) <- colnames(testobj$expr) 
   a1 <- ifelse(free.scale1, 'free_y', 'fixed') 
   a2 <- ifelse(free.scale2, 'free_y', 'fixed') 
   int <- intersect(rownames(fit[[1]]), names(cluster))
@@ -22,8 +24,9 @@ plotClusterMeanAndDiff <- function(testobj,
       colMeans(mat[clu == i, , drop = FALSE])
     })
     tmp <- melt(tmp)
+    tmp[,1] = testobj[['pseudotime']][as.character(tmp[,1])]
     colnames(tmp) <- c('pseudotime', 'cluster', 'populationFitClusterMean')
-    tmp <- data.frame(tmp, type = names(fit[i]))
+    tmp <- data.frame(tmp, type = names(fit)[i])
   })
   pd <- do.call(rbind, pd)
   pd$cluster <- factor(pd$cluster)
@@ -46,9 +49,7 @@ plotClusterMeanAndDiff <- function(testobj,
   }
   fit <- fit[names(clu), , drop=FALSE]
   colnames(fit) <- seq(1, ncol(fit))
-  library(ggplot2)
-  library(RColorBrewer)
-  library(reshape2)
+  
 
   tmp <- sapply(sort(unique(clu)), function(i){
     m <- colMeans(fit[clu == i, , drop = FALSE])
@@ -69,5 +70,7 @@ plotClusterMeanAndDiff <- function(testobj,
   }
   grid.arrange(p1,p2,ncol=2)
 }
+
+
 
 
