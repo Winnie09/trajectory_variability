@@ -20,7 +20,6 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   } else {
     lamiansig <- rownames(lamian)[lamian[,'pval.overall'] < 0.05]    
   }
-  
   limma <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/limma/',celltype,'/gender_res.rds'))
   limmagene <- rownames(limma)[order(limma$P.Value)]
   limmasig <- rownames(limma)[limma$adj.P.Val < 0.05]
@@ -143,7 +142,7 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   # reald$method <- factor(reald$method,levels=c('Lamian_excludeLimma', 'tradeSeq_excludeLamian', 'Lamian','limma', 'tradeSeq_diffEndTest', 'tradeSeq_patternTest', 'tradeSeq_earlyDETest'))
   saveRDS(list(permud = permud, reald = reald), paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_plotdata.rds'))
   
-  
+  library(RColorBrewer)
   pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all.pdf'),width=13,height=4)
   print(ggplot() + 
           geom_violin(data=permud,aes(x=method,y=per,col=type)) + 
@@ -169,11 +168,11 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   # ## _pvalue_violin_all_exc5.pdf
   # excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq', 'Lamian_excCondiments', 'Lamian_excLimma')
   
-  excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq', 'Lamian_excCondiments', 'Lamian_excLimma', 'monocle2_excLamian', 'phenopath_excLamian')
+  excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq', 'Lamian_excCondiments', 'monocle2_excLamian', 'phenopath_excLamian')
   permud <- permud[!permud[,3] %in% excComp, ]
   reald <- reald[!reald[,4] %in% excComp, ]
   
-  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all_exc7.pdf'),width=13,height=3.5)
+  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all_exc6.pdf'),width=13,height=3.5)
   print(ggplot() + 
           geom_violin(data=permud,aes(x=method,y=per,col=type)) + 
           geom_point(data=reald,aes(x=method,y=per,col=type),size=1) + 
