@@ -21,8 +21,9 @@ source('function/01_function.R')
 rdir <- paste0('covid/Su_2020_Cell/testvar/useSaverImp/result/', m, '/Mod_Mi/')
 dir.create(rdir, recursive = T, showWarnings = F)
 system.time({
-  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, test.type='Variable', ncores = 24, demean = FALSE, test.method = ifelse(m == 'EM_pm', 'permutation', 'chisq'))
+  res <- testpt(expr=expr, cellanno=cellanno, pseudotime=pt, design=design, test.type='Variable', ncores = 24, demean = FALSE, test.method = ifelse(m == 'EM_pm', 'permutation', 'chisq'), ncores.fit=1)
 })
 saveRDS(res, paste0(rdir, 'numeric_res.rds'))
+
 
 
