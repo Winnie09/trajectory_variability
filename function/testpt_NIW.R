@@ -2,7 +2,7 @@
 # permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
 testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE, cutoff = 1e-5) {
   ## test.type = c('Time', 'Variable')
-  ## test.method = c('chisq', 'EM)
+  ## test.method = c('chisq', 'permutaton')
   ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
   if (test.method == 'permutation') ncores.fit = 1
   set.seed(12345)
