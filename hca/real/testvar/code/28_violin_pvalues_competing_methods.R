@@ -1,6 +1,7 @@
 rm(list=ls())
 library(here)
 library(ggplot2)
+library(RColorBrewer)
 setwd(here())
 # setwd('/Users/wenpinhou/Dropbox/trajectory_variability/')
 source('function/01_function.R')
@@ -10,37 +11,46 @@ u1 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrX_genename.rds')
 u2 = readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/chrY_genename.rds')
 # u1 = readRDS('/Users/wenpinhou/Dropbox/resource/chrX_genename.rds')
 # u2 = readRDS('/Users/wenpinhou/Dropbox/resource/chrY_genename.rds')
-library(RColorBrewer)
 
 for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/EM_pm'),'perf')) {
+  ## Lamian.pm
   lamian <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/EM_pm/',celltype,'/gender/gender_res.rds'))[[1]]
-  lamiangene <- rownames(lamian)[order(lamian[,2])]
-  if (celltype=='monocyte') {
-    lamiansig <- rownames(lamian)[lamian[,'fdr.overall'] < 0.05]  
+  lamiangene <- rownames(lamian)[order(lamian[,2])] ## all genes order
+  if (celltype=='monocyte') { ## significant genes
+    lamiansig <- rownames(lamian)[lamian[,'fdr.overall'] < 0.05]   
   } else {
     lamiansig <- rownames(lamian)[lamian[,'pval.overall'] < 0.05]    
   }
+  ## limma
   limma <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/limma/',celltype,'/gender_res.rds'))
-  limmagene <- rownames(limma)[order(limma$P.Value)]
-  limmasig <- rownames(limma)[limma$adj.P.Val < 0.05]
+  limmagene <- rownames(limma)[order(limma$P.Value)] ## all genes order
+  limmasig <- rownames(limma)[limma$adj.P.Val < 0.05] ## significant genes
+  ## tradeSeq
   tradeseq <- readRDS(paste0('hca/real/testvar/result/tradeSeq/',celltype,'/gender/testvar_res.rds'))
   tradeseqgene <- lapply(tradeseq,function(i) rownames(i)[order(i$P.Value,-i$waldStat)])
   tradeseqsig <- lapply(tradeseq,function(i) rownames(i)[i$adj.P.Val < 0.05])
-  
-  ######
+  ## Lamian.chisq
+  lamc <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/Lamian.chisq/',celltype,'/gender_res.rds'))[[1]]
+  lamcgenes <- rownames(lamc)[order(lamc[,2])] ## all genes order
+  lamcsig <- rownames(lamc)[lamc[,'fdr.chisq.overall'] < 0.05]   ## significant genes
+  ## condiments
   res = readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/condiments/', celltype, '/gender/cond_gene_res.rds'))
   res[is.na(res[,3]),3] <- 1
   res$FDR <- p.adjust(res[,3],method='fdr')
   res = res[order(res[, 3],-abs(res[, 1])),]
-  condiments_genes = rownames(res)
-  condiments_sig = rownames(res)[res[,'FDR']<0.05]
-  
+  condiments_genes = rownames(res) ## all genes
+  condiments_sig = rownames(res)[res[,'FDR']<0.05] ## significant genes
+  ## monocle2 trajTest
   res = readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/monocle2_trajtest/', celltype, '/gender/res.rds'))
   res = res[order(res[, 1]),]
   monocle2trajtest_genes = rownames(res)
   monocle2trajtest_sig = rownames(res)[res[,'fdr'] < 0.05]
-  
-  ##
+  ## monocle2 trajTest corrected by ourself (change null model)
+  res = readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/monocle2_trajtest.corr/', celltype, '/gender/res.rds'))
+  res = res[order(res[, 1]),]
+  monocle2trajtestcorr_genes = rownames(res)
+  monocle2trajtestcorr_sig = rownames(res)[res[,'fdr'] < 0.05]
+  ## phenopath 100 epoch
   fit <- readRDS(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/result/phenopath100/', celltype, '/gender/fit_res.rds'))
   zscore <- abs(fit$m_beta[1,]/sqrt(fit$s_beta[1,])) 
   names(zscore) <- fit$feature_names
@@ -58,7 +68,12 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   genes[['condiments']] <- condiments_genes
   genes[['monocle2trajtest']] <- monocle2trajtest_genes
   genes[['phenopath']] <- phenopath_genes
+  genes[['Lamian.chisq']] <- lamcgenes
+  genes[['monocle2trajtest.corr']] <- monocle2trajtestcorr_genes
   
+  ## ================================== 
+  ## old way of calculating overlap score
+  ## ================================== 
   # sig <- list(
   #   Lamian_excLimma = setdiff(lamiansig,limmasig),
   #   Lamian_excTradeseq = setdiff(lamiansig, unique(unlist(tradeseqgene))), ## no genes
@@ -69,6 +84,9 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   #   condiments_excLamian = setdiff(condiments_sig, lamiansig),
   #   phenopath_excLamian = setdiff(phenopath_sig, lamiansig),
   #   monocle2_excLamian = setdiff(monocle2trajtest_sig, lamiansig))
+  ## ==============================================
+  ## new way of calculating overlap score: 20211101
+  ## ==============================================
   sig <- list(
     Lamian_excLimma = setdiff(lamiangene,limmasig),
     Lamian_excTradeseq = setdiff(lamiangene, unique(unlist(tradeseqgene))), ## no genes
@@ -80,8 +98,10 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
     tradeSeqET_excludeLamian = setdiff(tradeseqgene[[2]],lamiansig), 
     condiments_excLamian = setdiff(condiments_genes, lamiansig),
     phenopath_excLamian = setdiff(phenopath_genes, lamiansig),
-    monocle2_excLamian = setdiff(monocle2trajtest_genes, lamiansig))
+    monocle2_excLamian = setdiff(monocle2trajtest_genes, lamiansig),
+    monocle2corr_excLamian = setdiff(monocle2trajtestcorr_genes, lamiansig))
   genes = c(genes, sig)
+  saveRDS(genes, paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_violin_plotdata_genes.rds'))
   
   allg <- sub(':.*','',rownames(tradeseq[[1]]))
   
@@ -137,12 +157,9 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
     permud <- rbind(permud,data.frame(per = c(v1_pm,v2_pm), type=rep(c('chrX','chrY'),each=1e4),method=met, stringsAsFactors = FALSE))
     reald <- rbind(reald,data.frame(per=c(v1,v2),type=c('chrX','chrY'),pvalue=c(mean(v1_pm >= v1),mean(v2_pm >= v2)),method=met,stringsAsFactors = F))
   }
-  
-  # permud$method <- factor(permud$method,levels=c('Lamian_excludeLimma', 'tradeSeq_excludeLamian', 'Lamian','limma', 'tradeSeq_diffEndTest', 'tradeSeq_patternTest', 'tradeSeq_earlyDETest'))
-  # reald$method <- factor(reald$method,levels=c('Lamian_excludeLimma', 'tradeSeq_excludeLamian', 'Lamian','limma', 'tradeSeq_diffEndTest', 'tradeSeq_patternTest', 'tradeSeq_earlyDETest'))
   saveRDS(list(permud = permud, reald = reald), paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_plotdata.rds'))
   
-  library(RColorBrewer)
+  
   pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all.pdf'),width=13,height=4)
   print(ggplot() + 
           geom_violin(data=permud,aes(x=method,y=per,col=type)) + 
@@ -187,5 +204,6 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   )
   dev.off()
 }
+
 
 
