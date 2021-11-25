@@ -1,5 +1,5 @@
-setwd("/Users/wenpinhou/Dropbox/trajectory_variability")
-# setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
+# setwd("/Users/wenpinhou/Dropbox/trajectory_variability")
+setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/')
 pdir <- 'hca/simu/testtime/addMultiSignalUsingExpr/plot/addsignal/perf/'
 dir.create(pdir, recursive=T, showWarnings=F)
 pd <- readRDS('hca/simu/testtime/addMultiSignalUsingExpr/result/addsignal/perf/perf.rds')
@@ -21,7 +21,7 @@ p2 <- ggplot(pd, aes(x = SignalStreghth, y = AUC, color=Method)) +
 gridExtra::grid.arrange(p1,p2,nrow=1)
 dev.off()
 
-pd <- pd[pd$Method != 'EM_chisq', ]
+pd <- pd[pd$Method != 'Lamian.chisq', ]
 pdf(paste0(pdir, 'compare_fdr_diff_auc.pdf'),width=10,height=3.2)
 p1 <- ggplot(pd, aes(x = SignalStreghth, y = Fdr.Diff, color=Method)) + 
   geom_point(size=3)  + 
