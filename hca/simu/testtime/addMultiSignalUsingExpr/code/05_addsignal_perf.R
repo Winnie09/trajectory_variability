@@ -3,23 +3,8 @@ here()
 source(here('function', '01_function.R'))
 selgene <- readRDS(here('hca','simu', 'testtime', 'addMultiSignalUsingExpr','data','selgene','selgene.rds'))
 rdir <- here('hca', 'simu','testtime','addMultiSignalUsingExpr','result','addsignal')
-
-## EM_centered
 perflist <- list()
-# af = list.files(paste0(rdir, '/EM_centered/'))
-# f = af[1]
-# if (length(af) > 0){
-#   df1<-sapply(af, function(f){
-#     print(f)
-#     Res = readRDS(paste0(rdir, '/EM_centered/', f))
-#     res = data.frame(fdr = Res$fdr, foldchange = Res$foldchange)
-#     res = res[order(res[,1], -res[,2]), ]
-#     c(sub('.rds','',f), 'EM_centered', AreaUnderSensFdr(SensFdr(selgene, res)))
-#   }, simplify = FALSE)
-#   df1 <- do.call(rbind, df1)
-#   perflist[['EM_centered']] <- df1
-# }
-  
+
 ## EM_NOT_centered
 rdir2 <- here('hca','simu','testtime','addMultiSignalUsingExpr','result','addsignal','EM_pm')
 af = list.files(rdir2)
@@ -27,12 +12,14 @@ if (length(af) > 0){
   df6<- sapply(af, function(f){
     print(f)
     Res = readRDS(paste0(rdir2, '/',f))
-    res = data.frame(fdr = Res$fdr, foldchange = Res$foldchange)
+    stat = Res$statistics
+    res = data.frame(fdr = stat$fdr.overall, zscore = stat$z.overall)
+    rownames(res) = rownames(stat)
     res = res[order(res[,1], -res[,2]), ]
-    c(sub('.rds','',f), 'EM_pm', AreaUnderSensFdr(SensFdr(selgene, res)))
+    c(sub('.rds','',f), 'Lamian.pm', AreaUnderSensFdr(SensFdr(selgene, res)))
   }, simplify = FALSE)
   df6 <- do.call(rbind, df6)
-  perflist[['EM_pm']] <- df6
+  perflist[['Lamian.pm']] <- df6
 }
 
 ## EM chisq
@@ -42,16 +29,17 @@ if (length(af) > 0){
   df <- sapply(af, function(f){
     print(f)
     Res = readRDS(paste0(rdir, '/', m, '/', f))
-    res = Res$statistics
-    colnames(res) <- c('fdr', 'pval')
-    res = res[order(res[,1], res[,2]), ]
-    c(sub('.rds','',f),  'EM_chisq', AreaUnderSensFdr(SensFdr(selgene, res)))
+    stat = Res$statistics
+    res = data.frame(fdr = stat[,1], statistics = stat$llr/stat$df.diff)
+    rownames(res) = rownames(stat)
+    
+    res = res[order(res[,1], -res[,2]), ]
+    c(sub('.rds','',f),  'Lamian.chisq', AreaUnderSensFdr(SensFdr(selgene, res)))
   }, simplify = FALSE)
   df2 <- do.call(rbind, df)
-  perflist[['EM_chisq']] <- df2
+  perflist[['Lamian.chisq']] <- df2
 }
 
-  
 ## tradeSeq
 m = 'tradeSeq'
 af = list.files(paste0(rdir, '/',m, '/'))
@@ -121,5 +109,6 @@ perf[,3] = as.numeric(as.character(perf[,3]))
 perf[,4] = as.numeric(as.character(perf[,4]))
 saveRDS(perf, here('hca', 'simu','testtime','addMultiSignalUsingExpr','result','addsignal','perf','perf.rds'))
 rm(list=ls())
+
 
 
