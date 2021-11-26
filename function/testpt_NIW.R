@@ -1,6 +1,6 @@
 # ncores=detectCores(); test.type='Time';test.method = 'permutation'
 # permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE, cutoff = 1e-5) {
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE, cutoff = 1e-5, sd.adjust = 1) { 
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'permutaton')
   ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
@@ -22,7 +22,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     if (length(gid) > 0) { ## if yes, for those genes, add a white-noise with sd=1e-5 on the sample with sd=0.
       mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
       colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
-      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(mask),sd=cutoff),nrow=length(gid))
+      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(mask),sd=sd.adjust), nrow=length(gid)) ## before 20211126, sd.adjust = 1e-5 
       rm('mask')  
     } 
   }
@@ -216,6 +216,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     return(c(reslist, list(test.type = test.type, test.method = test.method)))
   } 
 }
+
 
 
 
