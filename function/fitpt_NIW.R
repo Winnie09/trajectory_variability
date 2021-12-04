@@ -158,6 +158,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
       m <- m-rowMeans(m)
       tcrossprod(m)/(ncol(m)-1) + diag(nrow(m)) * 0.01
     }))
+    omega <- omega/rowMeans(s2)
     
     iter <- 0
     gidr <- rownames(sexpr)
