@@ -78,6 +78,7 @@ getPopulationFit <- function(testobj,
   } else if (type == 'TIME'){
     fitres <- t(do.call(cbind, fitlist))
     rownames(fitres) <- gene
+    if (ncol(Res$expr) == ncol(fitres)) colnames(fitres) <- colnames(Res$expr)
   }
   return(fitres)
 }
