@@ -443,7 +443,7 @@ plotXDEHm <-
       width = 1
     )
 
-    rownames(alluniformdiff) <- sub(':.*', '', rownames(alluniformdiff))
+    ## rownames(alluniformdiff) <- sub(':.*', '', rownames(alluniformdiff)) ## rm 20220108
     p5data <-
       rowMeans(alluniformdiff[rownames(fit.scale), , drop = FALSE]) %*% matrix(1, nrow =
                                                                                  1, ncol = ncol(p4data))
