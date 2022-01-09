@@ -10,7 +10,7 @@ for (dataType  in seq(1,4)){
   print(dataType)
   ddir <- 'hca/simu/testvar/addMultiSignalUsingExpr'
   rdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/cluster/',dataType)
-  pdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/plot/', dataType)
+  pdir <- paste0('hca/simu/testvar/addMultiSignalUsingExpr/EM_pm/plot/', dataType)
   dir.create(pdir, recursive = T, showWarnings = F)
   dir.create(rdir, recursive = T, showWarnings = F)
   Res <- readRDS(paste0('hca/simu/testvar/addMultiSignalUsingExpr/result/EM_pm/',dataType,'.rds'))
