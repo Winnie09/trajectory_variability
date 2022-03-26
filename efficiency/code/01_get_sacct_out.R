@@ -19,12 +19,12 @@ done
 ## 
 for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/code/ | grep phenograph100.sh| grep .sh.e | sed 's/.*.sh.e//g'`
 do
-sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> phenograph100_hca_simu_xde.txt
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> phenopath100_hca_simu_xde.txt
 done
 
 for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/code/ | grep phenograph500.sh| grep .sh.e | sed 's/.*.sh.e//g'`
 do
-sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> phenograph500_hca_simu_xde.txt
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> phenopath500_hca_simu_xde.txt
 done
 
 for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/simu/testvar/addMultiSignalUsingExpr/code/ | grep run01.chisq.sh| grep .sh.e | sed 's/.*.sh.e//g'`
@@ -99,5 +99,25 @@ sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,M
 done
 
 
+for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/code/ | grep run26.5.sh.e | sed 's/.*.sh.e//g'`
+do
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> phenopath3_covid.txt
+done
 
+for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/code/ | grep run27.sh.e | sed 's/.*.sh.e//g'`
+do
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> monocle2trajtest_covid.txt
+done
+
+
+for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/code/ | grep run28.sh.e | sed 's/.*.sh.e//g'`
+do
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> condiments_covid.txt
+done
+
+
+for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/code/ | grep run29.sh.e | sed 's/.*.sh.e//g'`
+do
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> monocle2trajtestcorr_covid.txt
+done
 
