@@ -194,14 +194,14 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
           geom_violin(data=permud,aes(x=method,y=per,col=type)) + 
           geom_point(data=reald,aes(x=method,y=per,col=type),size=1) + 
           geom_text(data=reald[reald[,2] == 'chrX', ],aes(x=method,y=max(reald$per)*1.3,label=pvalue), size = 10*5/14)+
-          geom_text(data=reald[reald[,2] == 'chrY', ],aes(x=method,y=max(reald$per)*1.3 + 0.008,label=pvalue), size = 10*5/14)+
+          geom_text(data=reald[reald[,2] == 'chrY', ],aes(x=method,y=max(reald$per)*1.3 + 0.007,label=pvalue), size = 10*5/14)+
           theme_compact() + #facet_wrap(~type) + 
           coord_flip(ylim=c(0,max(reald$per)*1.5)) + 
           xlab('') + 
           ylab('Proportion') + 
           scale_color_manual(values=c('chrX'=brewer.pal(3,'Pastel1')[1],'chrY'=brewer.pal(3,'Pastel1')[2])) +
           theme(legend.position = 'bottom',strip.background = element_blank(),strip.text = element_text(size=7),legend.title = element_blank(), text = element_text(size = 7)) + 
-          scale_y_continuous(breaks=c(0,round(max(reald$per)*0.6,2),round(max(reald$per)*1.2,2)), limits = c(0, max(reald$per) + 0.07))
+          scale_y_continuous(breaks=c(0,round(max(reald$per)*0.6,2),round(max(reald$per)*1.2,2)), limits = c(0, max(reald$per) + 0.1))
   )
   dev.off()
 }
