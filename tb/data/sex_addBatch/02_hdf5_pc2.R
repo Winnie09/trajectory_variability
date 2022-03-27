@@ -4,5 +4,5 @@ expr <- readRDS(paste0(rdir, 'expr.rds'))
 pseudotime <- readRDS(paste0(rdir, 'ptpc2.rds'))
 cellanno <- readRDS(paste0(rdir, 'cellanno.rds'))
 path <- paste0(rdir, 'exprpc2.h5')
-saveh5(expr2,pseudotime,cellanno,path)
+saveh5(expr,pseudotime,cellanno,path)
 
