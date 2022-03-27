@@ -18,7 +18,11 @@ d[,3] = as.character(d[,3])
 ## only retain batches that have both sexes in the batch (should be at least 1 sample to contribute to the estimation of batch effects, should be at least 1 male and 1 female to contribute to the estimation of sex difference)
 tb = table(d[,c(1,3)])
 sum(tb[,1] > 0 & tb[,2] > 0)
-batch.sel = rownames(tb[tb[,1] > 0 & tb[,2] > 0,])
+tb.sel = tb[tb[,1] > 0 & tb[,2] > 0,]
+batch.sel = rownames(tb.sel)
+rownames(tb.sel) = paste0('batch', rownames(tb.sel))
+
+write.csv(tb.sel, paste0(rdir, 'sample_batch_sex.csv'))
 
 ## update the dataframe of sample batch, sex info
 d.select = d[d[,1] %in% batch.sel, ]
@@ -63,4 +67,5 @@ ptpc2 = readRDS('ptpc2.rds')
 ptpc4 = readRDS('ptpc4.rds')
 saveRDS(ptpc2[cellanno2[,1]], paste0(rdir, 'ptpc2.rds'))
 saveRDS(ptpc4[cellanno2[,1]], paste0(rdir, 'ptpc4.rds'))
+
 
