@@ -189,9 +189,9 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   permud <- permud[!permud[,3] %in% excComp, ]
   reald <- reald[!reald[,4] %in% excComp, ]
   
-  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all_exc6.pdf'),width=6.5,height=3.8)
+  pdf(paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all_exc6.pdf'),width=6.5,height=4)
   print(ggplot() + 
-          geom_violin(data=permud,aes(x=method,y=per,col=type)) + 
+          geom_violin(data=permud,aes(x=method,y=per,col=type), scale = 'width') + 
           geom_point(data=reald,aes(x=method,y=per,col=type),size=1) + 
           geom_text(data=reald[reald[,2] == 'chrX', ],aes(x=method,y=max(reald$per)*1.3,label=pvalue), size = 10*5/14)+
           geom_text(data=reald[reald[,2] == 'chrY', ],aes(x=method,y=max(reald$per)*1.3 + 0.007,label=pvalue), size = 10*5/14)+
