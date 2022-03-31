@@ -10,7 +10,7 @@ timefunc <- function(i) {
 }
 
 setwd('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/efficiency/code/')
-af = list.files(getwd(), pattern = '.txt')
+af = list.files(getwd(), pattern = '.txt$')
 
 eff <- lapply(af,function(f){
   print(f)
@@ -35,7 +35,7 @@ eff <- lapply(af,function(f){
   a.mt = melt(a)
   df = data.frame(evaluation=as.character(a.mt[,1]), id=as.character(a.mt[,2]), value=as.character(a.mt[,3]), method = sub('_.*', '', f), data = strsplit(f, '_')[[1]][2], test = strsplit(f, '_')[[1]][3], stringsAsFactors = F)
   df[,3] = sapply(seq(1,nrow(df)), function(ii) {
-    if(df[ii, 1] == 'memory'){
+    if(df[ii, 1] == 'memory(GB)'){
       if (grepl('K',df[ii, 3])){
       as.numeric(sub('K','', df[ii, 3]))/1e6
       } else {
@@ -55,8 +55,16 @@ pd[,3] = as.numeric(pd[,3])
 
 time = pd[pd[,1] == 'time(h)', ]
 mem = pd[pd[,1] == 'memory(GB)', ]
+time = time[time[,4] != 'phenopath3', ]
+time = time[time[,4] != 'phenopath500', ]
+mem = mem[mem[,4] != 'phenopath500', ]
+mem = mem[mem[,4] != 'phenopath3', ]
+
+
 saveRDS(time, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/efficiency/plot/time.rds')
 saveRDS(mem, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/efficiency/plot/memory.rds')
 
 write.csv(time, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/efficiency/plot/time.csv')
 write.csv(mem, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/efficiency/plot/memory.csv')
+
+
