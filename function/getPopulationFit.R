@@ -5,10 +5,11 @@ getPopulationFit <- function(testobj,
   ## if type = 'time', then return population fit (a vector for a gene; or a gene by num.cell matrix) for constant test (test on time)
   ## if type = 'variable', then return population fit for all levels of that character (a matrix, columns are population fit for each level in the variabel). 
   ## gene: a vector of gene names. 
-  design = testobj$design[, c(1, testobj$testvar)]
+  design = testobj$design[, c(1, testobj$testvar)] ## design for multi
   pseudotime = testobj$pseudotime
   knotnum = testobj$knotnum
   pseudotime = pseudotime[order(pseudotime)]
+  testvar = testobj$testvar
   type <- toupper(type)
   if (sum(design[, 1]) != nrow(design)){
     print("The first column of design matrix should be all 1s (intercept)! Using the first column as the variable column ...")
@@ -25,11 +26,12 @@ getPopulationFit <- function(testobj,
   }
   
   fitlist <- lapply(gene, function(g){
+    print(g)
     # beta <- lapply(testobj$parameter[g], function(i) {
     #   i$beta
     # })
     # names(beta) <- g
-    beta <- testobj$parameter[[g]]$beta[c(seq(1, 4), seq((testobj$testvar-1)*(testobj$knotnum[g] + 4)+1, testobj$testvar*(testobj$knotnum[g] + 4)))] ### subset the beta values of the intercept and the test covariate
+    beta <- testobj$parameter[[g]]$beta[c(seq(1, knotnum[g]+4), seq((testvar-1)*(knotnum[g] + 4)+1, testvar*(knotnum[g] + 4)))] ### subset the beta values of the intercept and the test covariate for multi
     x <- sapply(row.names(design), function(i) {
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
