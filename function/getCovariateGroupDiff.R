@@ -17,8 +17,6 @@ getCovariateGroupDiff <- function(testobj,
   })
   names(beta) <- gene
   
-  beta <- i$beta[1:((testobj$knotnum[g] + 4) * 2)] ###
-  
   philist <-
     lapply(min(knotnum):max(knotnum), function(num.knot) {
       if (num.knot == 0) {
