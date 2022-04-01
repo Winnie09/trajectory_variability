@@ -5,7 +5,7 @@ getPopulationFit <- function(testobj,
   ## if type = 'time', then return population fit (a vector for a gene; or a gene by num.cell matrix) for constant test (test on time)
   ## if type = 'variable', then return population fit for all levels of that character (a matrix, columns are population fit for each level in the variabel). 
   ## gene: a vector of gene names. 
-  design = testobj$design
+  design = testobj$design[, c(1, testobj$testvar)]
   pseudotime = testobj$pseudotime
   knotnum = testobj$knotnum
   pseudotime = pseudotime[order(pseudotime)]
@@ -29,7 +29,7 @@ getPopulationFit <- function(testobj,
     #   i$beta
     # })
     # names(beta) <- g
-    beta <- testobj$parameter[[g]]$beta[1:((testobj$knotnum[g] + 4) * 2)] ###
+    beta <- testobj$parameter[[g]]$beta[c(seq(1, 4), seq((testobj$testvar-1)*(testobj$knotnum[g] + 4)+1, testobj$testvar*(testobj$knotnum[g] + 4)))] ### subset the beta values of the intercept and the test covariate
     x <- sapply(row.names(design), function(i) {
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
@@ -44,11 +44,6 @@ getPopulationFit <- function(testobj,
       phi <- bs(pt,knots = knots, intercept = TRUE)
     }
     if (exists('variable')) {
-      # if (ncol(phi) == ncol(x[[1]])){
-      #   fit <- t(phi %*% t(x[[1]]) %*% beta)[1,]
-      # } else {
-      #   fit <- t(phi %*% x[[1]] %*% beta)[1,]
-      # }
       fit <- lapply(x, function(i) {
         if (ncol(phi) == nrow(i)){
           phi %*% i %*% beta
