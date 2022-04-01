@@ -106,28 +106,6 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   allg <- sub(':.*','',rownames(tradeseq[[1]]))
   
   permud <- reald <- NULL
-  # for (met in names(sig)) {
-  #   gn <- sig[[met]]
-  #   gn <- sub(':.*','',gn)
-  #   v1 <- mean(gn %in% u1)
-  #   v2 <- mean(gn %in% u2)
-  #   
-  #   ##### permute reported gene order
-  #   v1_pm <- unlist(mclapply(seq(1,1e4), function(myseed){
-  #     set.seed(myseed+100)
-  #     gnpm = sample(allg,length(gn))
-  #     mean(gnpm %in% u1)
-  #   },mc.cores=detectCores()))
-  #   
-  #   v2_pm <- unlist(mclapply(seq(1,1e4), function(myseed){
-  #     set.seed(myseed+100)
-  #     gnpm = sample(allg,length(gn))
-  #     mean(gnpm %in% u2)
-  #   },mc.cores=detectCores()))
-  #   
-  #   permud <- rbind(permud,data.frame(per = c(v1_pm,v2_pm), type=rep(c('chrX','chrY'),each=1e4),method=met, stringsAsFactors = FALSE))
-  #   reald <- rbind(reald,data.frame(per=c(v1,v2),type=c('chrX','chrY'),pvalue=c(mean(v1_pm >= v1),mean(v2_pm >= v2)),method=met,stringsAsFactors = F))
-  # }
   
   for (met in names(genes)) {
     gn <- genes[[met]]
@@ -174,16 +152,7 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
           scale_y_continuous(breaks=c(0,round(max(reald$per)*0.6,2),round(max(reald$per)*1.2,2)))
   )
   dev.off()
-  
-  
-  # ## _pvalue_violin_all_exc3.pdf
-  # excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq')
-  # 
-  # ## _pvalue_violin_all_exc4.pdf
-  # excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq', 'Lamian_excCondiments')
-  # 
-  # ## _pvalue_violin_all_exc5.pdf
-  # excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq', 'Lamian_excCondiments', 'Lamian_excLimma')
+
   
   excComp <- c('Lamian_excPhenopath', 'Lamian_excMonocle2', 'Lamian_excTradeseq', 'Lamian_excCondiments', 'monocle2_excLamian', 'phenopath_excLamian')
   permud <- permud[!permud[,3] %in% excComp, ]
@@ -205,6 +174,7 @@ for (celltype in setdiff(list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/traje
   )
   dev.off()
 }
+
 
 
 
