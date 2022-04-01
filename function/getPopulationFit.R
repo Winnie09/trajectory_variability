@@ -20,7 +20,7 @@ getPopulationFit <- function(testobj,
     design = design[, 1, drop = FALSE]
   } else {
     variable = colnames(design)[2]
-    design <- unique(design[, c('intercept', variable)])
+    design <- unique(design[, c(colnames(design)[1], variable)])
     rownames(design) <- paste0(variable, '_', unique(design[, variable]))
   }
   
@@ -29,7 +29,7 @@ getPopulationFit <- function(testobj,
     #   i$beta
     # })
     # names(beta) <- g
-    beta <- testobj$parameter[[g]]$beta
+    beta <- testobj$parameter[[g]]$beta[1:((testobj$knotnum[g] + 4) * 2)] ###
     x <- sapply(row.names(design), function(i) {
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
@@ -82,6 +82,5 @@ getPopulationFit <- function(testobj,
   }
   return(fitres)
 }
-
 
 
