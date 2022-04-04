@@ -56,3 +56,10 @@ sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,M
 done
 
 
+for i in `ls /home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/code/ | grep Lamian.chisq.sh.e | sed 's/.*.sh.e//g'`
+do
+sacct -j $i --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,MaxRss >> Lamian.chisq_covid_xde.txt
+done
+
+
+
