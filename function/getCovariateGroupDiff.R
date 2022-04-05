@@ -10,9 +10,9 @@ getCovariateGroupDiff <- function(testobj,
   pseudotime = seq(1, max(testobj$pseudotime))
   beta <- lapply(gene, function(g) {
     if (reverse){
-      - testobj$parameter[[g]]$beta[1:((testobj$knotnum[g] + 4) * 2)] ###
+      - testobj$parameter[[g]]$beta[c(seq(1, knotnum[g]+4), seq((testvar-1)*(knotnum[g] + 4)+1, testvar*(knotnum[g] + 4)))] ###
     } else {
-      testobj$parameter[[g]]$beta[1:((testobj$knotnum[g] + 4) * 2)] ###
+      testobj$parameter[[g]]$beta[c(seq(1, knotnum[g]+4), seq((testvar-1)*(knotnum[g] + 4)+1, testvar*(knotnum[g] + 4)))] ###
     }
   })
   names(beta) <- gene
