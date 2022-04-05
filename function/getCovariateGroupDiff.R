@@ -8,6 +8,7 @@ getCovariateGroupDiff <- function(testobj,
   ## (deprecated) variable: A character denoting the covariate for population fit. It should be one of the colnames in the design matrix.
   knotnum = testobj$knotnum[gene]
   pseudotime = seq(1, max(testobj$pseudotime))
+  testvar = testobj$getCovariateGroupDiff
   beta <- lapply(gene, function(g) {
     if (reverse){
       - testobj$parameter[[g]]$beta[c(seq(1, knotnum[g]+4), seq((testvar-1)*(knotnum[g] + 4)+1, testvar*(knotnum[g] + 4)))] ###
