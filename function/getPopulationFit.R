@@ -1,14 +1,16 @@
 getPopulationFit <- function(testobj,
                              gene = NULL,
-                             type = 'time'){
+                             type = 'time',
+                             num.timepoint = 1e3){
   library(splines)
   ## if type = 'time', then return population fit (a vector for a gene; or a gene by num.cell matrix) for constant test (test on time)
   ## if type = 'variable', then return population fit for all levels of that character (a matrix, columns are population fit for each level in the variabel). 
   ## gene: a vector of gene names. 
   design = testobj$design[, c(1, testobj$testvar)] ## design for multi
-  pseudotime = testobj$pseudotime
   knotnum = testobj$knotnum
+  pseudotime = testobj$pseudotime
   pseudotime = pseudotime[order(pseudotime)]
+  pt <- round(seq(1, max(pseudotime), length.out = min(num.timepoint, max(pseudotime)))) ## downsample
   testvar = testobj$testvar
   type <- toupper(type)
   if (sum(design[, 1]) != nrow(design)){
@@ -31,12 +33,13 @@ getPopulationFit <- function(testobj,
     #   i$beta
     # })
     # names(beta) <- g
-    beta <- testobj$parameter[[g]]$beta[c(seq(1, knotnum[g]+4), seq((testvar-1)*(knotnum[g] + 4)+1, testvar*(knotnum[g] + 4)))] ### subset the beta values of the intercept and the test covariate for multi
+    tmp = matrix(testobj$parameter[[g]]$beta, ncol = knotnum[g]+4)
+    beta = as.vector(tmp[c(1,testvar), ]) ### subset the beta values of the intercept and the test covariate for multi
     x <- sapply(row.names(design), function(i) {
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
     
-    pt <- seq(1, max(pseudotime))
+    
     if (knotnum[g] == 0) {
       # phi <- cbind(1, bs(pt))
       phi <- bs(pt, intercept = TRUE)
@@ -45,6 +48,7 @@ getPopulationFit <- function(testobj,
       # phi <- cbind(1, bs(pt, knots = knots))
       phi <- bs(pt,knots = knots, intercept = TRUE)
     }
+    
     if (exists('variable')) {
       fit <- lapply(x, function(i) {
         if (ncol(phi) == nrow(i)){
