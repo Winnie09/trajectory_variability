@@ -23,21 +23,22 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   library(gridExtra)
   library(RColorBrewer)
   library(ggplot2)
+  testvar = testobj$testvar
   fit <- testobj$populationFit
-  if ('DDGType' %in% names(testobj)) {
-    DDGType <- testobj$DDGType
+  if ('XDEType' %in% names(testobj)) {
+    XDEType <- testobj$XDEType
   } else {
-    DDGType <- getDDGType(testobj)
+    XDEType <- getXDEType(testobj)
   }
-  DDGType <- DDGType[rownames(testobj$covariateGroupDiff)]
+  XDEType <- XDEType[rownames(testobj$covariateGroupDiff)]
   
   if (subsampleCell){
     id <- round(seq(1, ncol(fit[[1]]), length.out = numSubsampleCell))
     for (i in 1:length(fit)){
       fit[[i]] <- fit[[i]][, id]
     }
-    if (sum(DDGType == 'meanSig',na.rm=T) > 0){
-      meanid <- which(DDGType == 'meanSig')
+    if (sum(XDEType == 'meanSig',na.rm=T) > 0){
+      meanid <- which(XDEType == 'meanSig')
       ## <<<<<<<<<<<<<< scale group difference by absmax
       # FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,id,drop=F]) ## add FitDiff.scale
       max <- apply(abs(testobj$covariateGroupDiff[-meanid,id,drop=F]), 1, max)
@@ -57,8 +58,8 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     testobj$pseudotime <- sort(sample(testobj$pseudotime, numSubsampleCell))
     print('subsample done!')
   } else {
-    if (sum(DDGType == 'meanSig', na.rm = T) > 0){
-      meanid <- which(DDGType == 'meanSig')
+    if (sum(XDEType == 'meanSig', na.rm = T) > 0){
+      meanid <- which(XDEType == 'meanSig')
       ## <<<<<<<<<<<<<< scale group difference by absmax
       # FitDiff.scale1 <- scalematrix(testobj$covariateGroupDiff[-meanid,,drop=F]) ## add FitDiff.scale
       max <- apply(abs(testobj$covariateGroupDiff[-meanid,,drop=F]), 1, max)
@@ -94,11 +95,6 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     testobj$expr <- testobj$expr[, names(testobj$pseudotime)]
   }
   
-  if ('DDGType' %in% names(testobj)) {
-    DDGType <- testobj$DDGType
-  } else {
-    DDGType <- getDDGType(testobj) 
-  }
   
   fit.scale <- do.call(cbind, fit)
   fit.scale <- fit.scale[names(testobj$cluster), ]
@@ -113,14 +109,14 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
                     cor = sapply(names(clu), function(i) cor(FitDiff.scale[i, seq(1, ncol(FitDiff.scale))], seq(1, ncol(FitDiff.scale)))),
                     # changepoint = sapply(names(clu), function(i) which.min(abs(FitDiff.sd[i, seq(1, ncol(FitDiff.scale))]))),
                     changepoint = changepoint,
-                    DDGType = DDGType[names(clu)])
+                    XDEType = XDEType[names(clu)])
   
   
-  #res <- res[order(res$DDGType, res$clu, res$changepoint), ]
-  res1 <- res[res$DDGType=='trendSig',]
-  res2 <- res[res$DDGType=='bothSig',]
-  res3 <- res[res$DDGType=='other',]
-  res4 <- res[res$DDGType=='meanSig',]
+  #res <- res[order(res$XDEType, res$clu, res$changepoint), ]
+  res1 <- res[res$XDEType=='trendSig',]
+  res2 <- res[res$XDEType=='bothSig',]
+  res3 <- res[res$XDEType=='other',]
+  res4 <- res[res$XDEType=='meanSig',]
   
   o1 <- rownames(res1)[order(res1$clu,res1$cor>0,res1$changepoint)]
   
@@ -146,7 +142,7 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   
   
   tmp <- lapply(names(fit), function(i){
-    expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design)[testobj$design[, 2] == sub('.*_','', i)], 1]]
+    expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design)[testobj$design[, testvar] == sub('.*_','', i)], 1]]
   })
   expr.scale <- do.call(cbind, tmp)
   expr.scale <- scalematrix(expr.scale)
@@ -157,7 +153,7 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     colann <- data.frame(
       # sample = cellanno[match(colnames(expr.scale),cellanno[, 1]), 2],
       pseudotime = testobj$pseudotime[colnames(expr.scale)],
-      group = as.character(testobj$design[cellanno[match(colnames(expr.scale), cellanno[,1]),2],2]),
+      group = as.character(testobj$design[cellanno[match(colnames(expr.scale), cellanno[,1]),2], testvar]),
       expression = 'Original',
       stringsAsFactors = F)
     
@@ -173,12 +169,12 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   if (is.null(rowann)){
     rowann = data.frame(
       cluster = as.character(clu),
-      DDGType = as.character(DDGType[names(clu)]),
+      XDEType = as.character(XDEType[names(clu)]),
       stringsAsFactors = F)
     rownames(rowann) = names(clu)
   }
   rowann <- rowann[rownames(fit.scale), ,drop=F]
-  rowann[,'DDGType'] <- factor(as.character(rowann[,'DDGType']), levels = c('trendSig','meanSig','bothSig','nonDDG','other'))
+  rowann[,'XDEType'] <- factor(as.character(rowann[,'XDEType']), levels = c('trendSig','meanSig','bothSig','nonDDG','other'))
   
   if (length(unique(clu)) < 8){
     col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
@@ -192,18 +188,18 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
     
     col.meanDiff = c('blue','red')
     names(col.meanDiff) <- c('Positive','Negative')
-    #col.DDGType = brewer.pal(8, 'Set3')[1:5]
-    #names(col.DDGType) = c('trendSig','meanSig','bothSig','nonDDG','other')
+    #col.XDEType = brewer.pal(8, 'Set3')[1:5]
+    #names(col.XDEType) = c('trendSig','meanSig','bothSig','nonDDG','other')
     
-    col.DDGType = brewer.pal(8, 'Set3')[1:3]
-    names(col.DDGType) = c('trendSig','meanSig','bothSig')
+    col.XDEType = brewer.pal(8, 'Set3')[1:3]
+    names(col.XDEType) = c('trendSig','meanSig','bothSig')
     
     annotation_colors = list(
       pseudotime = col.pseudotime,
       group = col.group,
       expression = col.expression,
       cluster = col.clu,
-      DDGType = col.DDGType)
+      XDEType = col.XDEType)
       #meanDiff = col.meanDiff)
   }
   col.gs <- c('pink', 'skyblue')
@@ -364,4 +360,5 @@ plotDiffFitHm5 <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, c
   grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,1,2,3,3,3,3,3,4,5,5,5,5,6,7,7,7,7,8,9,9,9,9),nrow=1))
   # dev.off()
 }  
+
 
