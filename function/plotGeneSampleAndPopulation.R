@@ -81,7 +81,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
     if (is.null(variable)){
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size, stroke = 0.01) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size) 
         
       } else {
@@ -91,7 +91,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
     } else {
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size, stroke = 0.01) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample),alpha=line.alpha, size=line.size) 
       } else {
         p <- ggplot() + 
@@ -192,7 +192,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
     if (is.null(variable)){
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Sample), alpha=point.alpha, size=point.size, stroke = 0.01) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Sample), alpha=line.alpha, size=line.size)
         
       } else {
@@ -203,7 +203,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
     } else {
       if (plot.point){
         p <- ggplot() + 
-          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size) +
+          geom_point(data=pd, aes(x=pseudotime, y=expr, color=Variable), alpha=point.alpha, size=point.size, stroke = 0.01) +
           geom_line(data=ld, aes(x=pseudotime, y=expr, color=Variable, group = Sample), alpha=line.alpha, size=line.size) 
       } else {
         p <- ggplot() + 
@@ -241,6 +241,7 @@ plotGeneSampleAndPopulation <- function(testobj, gene, variable = NULL, variable
   }
   
 }
+
 
 
 

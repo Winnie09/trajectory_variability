@@ -3,7 +3,7 @@
 # test.position = 'all'
 # maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
 # test.pattern = 'overall'
-fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercutoff=0.1, verbose=F) {
+fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercutoff=0.05, verbose=F) {
   # set.seed(12345)
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
@@ -40,13 +40,13 @@ fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercu
     indfit[[s]] - B
   })
   
-  omega <- apply(diffindfit,1,var)
+  s2[s2 < 0.001] <- 0.001
+  omega <- rowMeans(diffindfit^2/s2)
   
   iter <- 0
-  EMitercutoff <- 0
   gidr <- rownames(expr)
-  all <- matrix(-Inf, nrow=nrow(expr),ncol=1,dimnames = list(rownames=gidr))
-  etalist <- alphalist <- omegalist <- Nlist <- Jslist <- list()
+  oldpara <- list(beta = B, alpha = alpha, eta = eta, omega = omega)
+  
   while (iter < EMmaxiter && length(gidr) > 0) {
     expr_phibx <- sapply(as,function(s) {
       expr[, cellanno[,2]==s, drop=F][gidr,,drop=F]-B[gidr]
@@ -80,14 +80,6 @@ fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercu
       (2*alpha[gidr]+cn[s])/L2eKJK[[s]]
     }),nrow=length(gidr),dimnames=list(gidr,as))
     
-    ll <- rowSums(matrix(sapply(as,function(s) {
-      dv <- omega[gidr]/Jsolve[gidr,s,drop=F]
-      alpha[gidr]*log(2*eta[gidr])+lgamma(cn[s]/2+alpha[gidr])-cn[s]*log(pi)/2-lgamma(alpha[gidr])-log(dv)/2-(cn[s]/2+alpha[gidr])*log(L2eKJK[[s]])
-    }),nrow=length(gidr),dimnames = list(rownames=gidr,colnames=as)))
-    
-    ## -------------->
-    
-    
     B1 <- rowSums(matrix(sapply(as, function(s){
       N[,s] * cn[s]
     }), ncol = length(as), dimnames = list(gidr, as)))  ## length(gidr) * length(as) debug here !!!
@@ -107,23 +99,52 @@ fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercu
       uniroot(function(eta) {digamma(eta * meanN)-log(eta)+meanA},c(1e-10,1e10))$root
     })
     alpha[gidr] <- eta[gidr] * rowMeans(N)
-    
+    para <- list(beta = B, alpha = alpha, eta = eta, omega = omega)
+    paradiff <- sapply(names(para),function(s) {
+      if (is.vector(para[[s]])) {
+        abs(para[[s]]-oldpara[[s]])/abs(oldpara[[s]])
+      } else {
+        rowSums(abs(para[[s]]-oldpara[[s]]))/rowSums(abs(oldpara[[s]]))
+      }
+    })
+    if (is.vector(paradiff)) paradiff <- matrix(paradiff,nrow=1,dimnames=list(gid,NULL))    
+    paradiff <- apply(paradiff,1,max)
+    gidr <- names(which(paradiff > EMitercutoff))
+    oldpara <- para
     iter <- iter + 1
     
-    llv <- all[,ncol(all)]
-    llv[gidr] <- ll
-    all <- cbind(all,llv)
-    gidr <- names(which(all[,ncol(all)] - all[,ncol(all)-1] > EMitercutoff))
-    etalist[[iter]] <- eta
-    alphalist[[iter]] <-alpha
-    omegalist[[iter]] <-omega
-    Nlist[[iter]] <- N
-    Jslist[[iter]] <- Jsolve
     rm(list = c('L','Jsolve', 'K'))
   }
   
+  ll <- rowSums(matrix(sapply(as,function(s) {
+    expr_phibx <- sapply(as,function(s) {
+      expr[, cellanno[,2]==s, drop=F]-B
+    },simplify = F)
+    
+    L <- sapply(as,function(s) {
+      rowSums(expr_phibx[[s]] * expr_phibx[[s]])
+    },simplify = F)
+    
+    Jsolve <- matrix(sapply(as,function(s) {
+      1/(cn[s] + 1/omega)
+    }), nrow = nrow(expr), dimnames = list(rownames(expr), as))
+    
+    K <- sapply(as,function(s) {
+      rowSums(expr_phibx[[s]])
+    },simplify = F)
+    
+    JK <- sapply(as,function(s) {
+      Jsolve[,s,drop=F] * K[[s]]  ## debug here !!
+    },simplify = F)
+    
+    L2eKJK <- sapply(as,function(s) {
+      2*eta + L[[s]] - K[[s]] * JK[[s]]
+    },simplify = F)
+    dv <- omega/Jsolve[,s,drop=F]
+    alpha*log(2*eta)+lgamma(cn[s]/2+alpha)-cn[s]*log(pi)/2-lgamma(alpha)-log(dv)/2-(cn[s]/2+alpha)*log(L2eKJK[[s]])
+  }),nrow=nrow(expr),dimnames=list(rownames(expr),NULL)))
   
-  allres  <- list(beta = B, alpha = alpha, eta = eta, omega = omega, logL = all)
+  allres  <- list(beta = B, alpha = alpha, eta = eta, omega = omega, ll = ll)
   
   para <- list()
   
@@ -132,11 +153,12 @@ fitpt.m0 <- function(expr, cellanno, pseudotime, design, EMmaxiter=100, EMitercu
                       alpha=allres[[2]][j],
                       eta=allres[[3]][j],
                       omega=allres[[4]][j],
-                      ll=allres[[5]][j,ncol(allres[[5]])])
+                      ll=allres[[5]][j])
   }
   
   return(list(parameter=para))
 }
+
 
 
 

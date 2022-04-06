@@ -28,7 +28,6 @@ getPopulationFit <- function(testobj,
   }
   
   fitlist <- lapply(gene, function(g){
-    print(g)
     # beta <- lapply(testobj$parameter[g], function(i) {
     #   i$beta
     # })

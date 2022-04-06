@@ -1,4 +1,4 @@
-fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type = 'Time', EMmaxiter=100, EMitercutoff=0.05, verbose=F, ncores=1, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design) {
+fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type = 'Time', testvar=testvar, EMmaxiter=100, EMitercutoff=0.05, verbose=F, ncores=1, expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design) {
   ## this function serves the function testpt().
   ## return(list(fitres.full = fitres.full, fitres.null = fitres.null))
   ## ncores = 1 or otherwise meaningless since the upper function is running in parallel
@@ -6,7 +6,7 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
   print(paste0('iter ', iter, '\n'))
   if (toupper(test.type)=='TIME') {
     if (iter == 1){
-      fitres.full <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model=1)
+      fitres.full <- fitpt(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], testvar=testvar,EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model=-1)
       fitres.null <- fitpt.m0(expr=expr, cellanno=cellanno, pseudotime=pseudotime, design=design[,1,drop=FALSE], EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose)
       return(list(fitres.full = fitres.full, fitres.null = fitres.null))
     } else {
@@ -26,7 +26,7 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
       percellanno <- cellanno[sampcell,,drop=F]
       perpsn <- perpsn[sampcell]
       colnames(perexpr) <- percellanno[,1] <- names(perpsn) <- paste0('cell_',1:length(perpsn))
-      tryCatch(fitres.full <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = 1), warning = function(w){}, error = function(e) {})
+      tryCatch(fitres.full <- fitpt(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design,testvar=testvar, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = -1), warning = function(w){}, error = function(e) {})
       tryCatch(fitres.null <- fitpt.m0(expr=perexpr, cellanno=percellanno, pseudotime=perpsn, design=design, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose), warning = function(w){}, error = function(e) {})
       if (exists('fitres.full') & exists('fitres.null')) {
         print(paste0('iter ', iter, ' success!'))
@@ -49,8 +49,8 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
       mod.null = 2
     }
     if (iter == 1){
-      fitres.full <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = mod.full)
-      fitres.null <- fitpt(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = mod.null, knotnum = fitres.full[[2]])
+      fitres.full <- fitpt(expr, cellanno, pseudotime, design,testvar=testvar, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = mod.full)
+      fitres.null <- fitpt(expr, cellanno, pseudotime, design, testvar=testvar,maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=1, model = mod.null, knotnum = fitres.full[[2]])
       if (exists('fitres.full') & exists('fitres.null')) {
         print(paste0('iter ', iter, ' success!'))
         return(list(fitres.full = fitres.full, fitres.null = fitres.null))
@@ -59,13 +59,13 @@ fitfunc <- function(iter, diffType = 'overall', gene = rownames(expr), test.type
         return(NULL)
       }
     } else {
-set.seed(iter)
-      dn <- paste0(as.vector(design),collapse = '_')
+      dn <- paste0(design[,testvar],collapse = '_')
       perdn <- dn
       while(perdn==dn) {
         perid <- sample(1:nrow(design))
-        perdesign <- design[perid,,drop=F]
-        perdn <- paste0(as.vector(perdesign),collapse = '_')  
+        perdesign <- design
+        perdesign[,testvar] <- design[perid,testvar]
+        perdn <- paste0(perdesign[,testvar],collapse = '_')  
       }
       row.names(perdesign) <- row.names(design)
       sampcell <- sample(1:ncol(expr),replace=T) ## boostrap cells
@@ -76,8 +76,8 @@ set.seed(iter)
       colnames(perexpr) <- percellanno[,1] <- names(psn) <- paste0('cell_',1:length(psn))
       
       
-      fitres.full <- fitpt(perexpr, percellanno, psn, perdesign, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model = mod.full)
-      fitres.null <- fitpt(perexpr, percellanno, psn, perdesign, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model = mod.null, knotnum = fitres.full[[2]])
+      fitres.full <- fitpt(perexpr, percellanno, psn, perdesign,testvar=testvar, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model = mod.full)
+      fitres.null <- fitpt(perexpr, percellanno, psn, perdesign,testvar=testvar, maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores, model = mod.null, knotnum = fitres.full[[2]])
       if (exists('fitres.full') & exists('fitres.null')) {
         print(paste0('iter ', iter, ' success!'))
         return(list(fitres.full = fitres.full, fitres.null = fitres.null))

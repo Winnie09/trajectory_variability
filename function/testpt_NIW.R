@@ -1,6 +1,6 @@
 # ncores=detectCores(); test.type='Time';test.method = 'permutation'
 # permuiter=100; EMmaxiter=100; EMitercutoff=0.1; verbose=F; fit.resolution = 1000; return.all.data = TRUE; demean = FALSE; overall.only = T; 
-testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.1, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE, cutoff = 1e-5, sd.adjust = 1) { 
+testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmaxiter=100, EMitercutoff=0.05, verbose=F, ncores=detectCores(), test.type='Time', fit.resolution = 1000, return.all.data = TRUE, demean = FALSE, overall.only = F, test.method = 'permutation', ncores.fit = 1, fix.all.zero = TRUE, cutoff = 1e-3, sd.adjust = 1e-3) { 
   ## test.type = c('Time', 'Variable')
   ## test.method = c('chisq', 'permutaton')
   ## ncores.fit is the ncores for fitpt() or fitfunc()(essentially fitpt()) only. It only works when test.method = 'chisq'.
@@ -22,7 +22,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     if (length(gid) > 0) { ## if yes, for those genes, add a white-noise with sd=1e-5 on the sample with sd=0.
       mask <- sdm[gid,rep(1:ncol(sdm),as.vector(table(cellanno[,2])[colnames(sdm)])),drop=F]
       colnames(mask) <- unlist(sapply(colnames(sdm),function(i) cellanno[cellanno[,2]==i,1]))
-      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(mask),sd=sd.adjust), nrow=length(gid)) ## before 20211126, sd.adjust = 1e-5 
+      expr[gid,] <- expr[gid,] + mask[,colnames(expr),drop=F] * matrix(rnorm(length(mask),sd=sd.adjust), nrow=length(gid)) ## before 20211126, sd.adjust = 1e-5; 20211126 changed to sd.adjust=1;  20220115 sd.adjust and cutoff both changed to 1e-3
       rm('mask')  
     } 
   }
@@ -41,7 +41,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
     res1 <- fitpt(expr, cellanno, pseudotime, design=design[,1,drop=FALSE], maxknotallowed=10, EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose, ncores=ncores.fit, model = 1)##save 13%
     ll1 <- sapply(res1$parameter,function(i) i$ll)
     if (toupper(test.type) == 'TIME'){
-      res0 <- fitpt.m0(expr, cellanno, pseudotime, design[,1,drop=FALSE]) ##  
+      res0 <- fitpt.m0(expr, cellanno, pseudotime, design[,1,drop=FALSE],EMmaxiter=EMmaxiter, EMitercutoff=EMitercutoff, verbose=verbose) ##  
       ll0 <- sapply(res0[[1]], function(i) i$ll)
       paradiff10 <- sapply(res1[[1]], function(i) length(unlist(i[1:4]))) - sapply(res0[[1]], function(i) length(unlist(i[1:4])))
       pval.chisq.constantTest <- pchisq(2*(ll1-ll0),df=paradiff10,lower.tail = F)
@@ -138,7 +138,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         z <- llr[2:length(llr)]
         den <- density(z)$bw
         fdr <- pval <- mean(pnorm(llr[1], z, sd=den,lower.tail = F))
-        names(pval) <- names(fdr) <- names(fdr.overall)[fdr.overall<0.05]
+        log.pval <- mean(pnorm(llr[1], z, sd=den,lower.tail = F,log.p=T))
+        names(pval) <- names(fdr) <- names(log.pval) <- names(fdr.overall)[fdr.overall<0.05]
         z.score <- (llr[1] - mean(z))/sd(z)
       } else {
         pval <- sapply(1:nrow(llr), function(i) {
@@ -172,7 +173,8 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, permuiter=100, EMmax
         z <- llr[2:length(llr)]
         den <- density(z)$bw
         fdr <- pval <- mean(pnorm(llr[1], z, sd=den,lower.tail = F))
-        names(pval) <- names(fdr) <- names(fdr.overall)[fdr.overall<0.05]
+        log.pval <- mean(pnorm(llr[1], z, sd=den,lower.tail = F,log.p=T))
+        names(pval) <- names(fdr) <- names(log.pval) <- names(fdr.overall)[fdr.overall<0.05]
         z.score <- (llr[1] - mean(z))/sd(z)
       } else {
         pval <- sapply(1:nrow(llr), function(i) {

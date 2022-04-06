@@ -1,9 +1,10 @@
-infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50, original = FALSE){
+infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50, original = FALSE,pcadim=NULL){
   ## ct: dataframe/matrix, first column is cell name, second column is cell type, third column is sample.
   library(igraph)
   alls <- ct[,3]
   names(alls) <- ct$cell
   set.seed(12345)
+  if (is.null(pcadim)) {
   sdev <- apply(pca, 2, sd)
   x <- 1:max.clunum
   optpoint <- which.min(sapply(2:max.clunum, function(i) {
@@ -11,6 +12,7 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
     sum(lm(sdev[1:max.clunum] ~ x + x2)$residuals^2)
   }))
   pcadim = optpoint + 1
+  }
   pr <- pca[,1:pcadim]  # 7
   
   ## clustering

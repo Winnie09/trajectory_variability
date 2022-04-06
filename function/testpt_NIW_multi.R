@@ -219,7 +219,7 @@ testpt <- function(expr, cellanno, pseudotime, design=NULL, testvar=2,permuiter=
   if (return.all.data){
     return(c(reslist, list(pseudotime = pseudotime[colnames(expr)], design = design, cellanno = cellanno, expr = expr, test.type = test.type, test.method = test.method)))
   } else {
-    return(c(reslist, list(test.type = test.type, test.method = test.method)))
+    return(c(reslist, list(test.type = test.type, test.method = test.method, testvar = testvar)))
   } 
 }
 

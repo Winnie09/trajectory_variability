@@ -3,7 +3,7 @@
 # test.position = 'all'
 # maxknotallowed=10; EMmaxiter=1000; EMitercutoff=0.01; verbose=F; ncores=1; model = 3
 # test.pattern = 'overall'
-fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxiter=100, EMitercutoff=0.05, verbose=F, ncores=1, model = 3, knotnum = NULL) {
+fitpt <- function(expr, cellanno, pseudotime, design, testvar=testvar,maxknotallowed=10, EMmaxiter=100, EMitercutoff=0.05, verbose=F, ncores=1, model = 3, knotnum = NULL) {
   suppressMessages(library(Matrix))
   suppressMessages(library(parallel))
   suppressMessages(library(splines))
@@ -89,27 +89,17 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
     phicrossprod <- sapply(names(sname),function(ss) phicrossprod[,sname[[ss]]],simplify = F)
     phi <- sapply(names(sname),function(ss) phi[sname[[ss]],],simplify = F)
     
-    if (model == 0){
-      xs <- sapply(row.names(design), function(i){
-        as.matrix(1, nrow = 1, ncol = 1)
-      }, simplify = FALSE)
-      phi <- sapply(phi, function(i){
-        i[,1,drop=F]
-      }, simplify = FALSE)
+    if (model == -1){
+      xs <- sapply(row.names(design), function(i) {
+        kronecker(diag(num.knot + 4), 1)
+      }, simplify = F)
     } else if (model == 1) {
       xs <- sapply(row.names(design), function(i) {
-        kronecker(diag(num.knot + 4), design[i, 1, drop = F])
+        kronecker(diag(num.knot + 4), design[i,-testvar])
       }, simplify = F)
     } else if (model == 2) {
-      # xs <- sapply(row.names(design), function(i) {
-      #   tmp <- kronecker(diag(num.knot + 4), design[i, ])
-      #   tmp <- tmp[-seq(4, nrow(tmp), 2), ]
-      # }, simplify = F)
       xs <- sapply(row.names(design), function(i) {  ## change X
-        tmp <- kronecker(diag(num.knot + 4), c(1,1))
-        tmp <- tmp[-seq(4, nrow(tmp), 2), ]
-        tmp[1,] <- design[i,2]
-        tmp
+        rbind(design[i,testvar],kronecker(diag(num.knot + 4), design[i,-testvar]))
       }, simplify = F)
     } else if (model == 3) {
       xs <- sapply(row.names(design), function(i) {
@@ -160,7 +150,7 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
     for (g in 1:nrow(omega))
       #if (!is.positive.definite(matrix(omega[g,],nrow=nb)))
       omega[g,] <- as.vector(diag(pmax(1e-5,diag(matrix(omega[g,],nrow=nb)))))
-
+    
     
     iter <- 0
     gidr <- rownames(sexpr)
@@ -287,5 +277,6 @@ fitpt <- function(expr, cellanno, pseudotime, design, maxknotallowed=10, EMmaxit
   }
   list(parameter=para[rownames(expr)],knotnum=knotnum[rownames(expr)])
 }
+
 
 
