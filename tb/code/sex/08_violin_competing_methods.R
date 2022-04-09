@@ -63,7 +63,6 @@ genes <- list(Lamian=lamiangene)
 genes[['limma']] <- limmagene
 #genes[['condiments']] <- condiments_genes
 genes[['monocle2trajtest']] <- monocle2trajtest_genes
-genes[['monocle2trajtestcorr']] <- monocle2trajtestcorr_genes
 #genes[['phenopath']] <- phenopath_genes
 genes[['Lamian.chisq']] <- lamcgenes
 genes[['monocle2trajtest.corr']] <- monocle2trajtestcorr_genes
@@ -122,24 +121,34 @@ for (met in names(genes)) {
   permud <- rbind(permud,data.frame(per = c(v1_pm,v2_pm), type=rep(c('chrX','chrY'),each=1e4),method=met, stringsAsFactors = FALSE))
   reald <- rbind(reald,data.frame(per=c(v1,v2),type=c('chrX','chrY'),pvalue=c(mean(v1_pm >= v1),mean(v2_pm >= v2)),method=met,stringsAsFactors = F))
 }
+
+permud[permud[,3]=='Lamian',3] <- 'Lamian.pm'
+reald[reald[,4]=='Lamian', 4] <- 'Lamian.pm'
 saveRDS(list(permud = permud, reald = reald), paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/perf/pvalue_violin_plotdata.rds'))
 
 source('/home-4/whou10@jhu.edu/scratch/Wenpin/resource/ggplot_theme.R')
 theme_set(.new_theme)
 
-pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/perf/pvalue_violin_all.pdf',width=7.2,height=3.6)
-print(ggplot() + 
-          geom_violin(data=permud,aes(x=method,y=per,col=type), scale = 'width') + 
-          geom_point(data=reald,aes(x=method,y=per,col=type),size=1) + 
+tmp = reald[reald[,2] == 'chrX', ]
+tmp = tmp[order(-tmp[,3]), ]
+permud[,3] = factor(permud[,3], levels = tmp[,4])
+reald[,4] = factor(reald[,4], levels = tmp[,4])
+
+pdf('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/perf/pvalue_violin_all.pdf',width=5.8, height=2.6)
+ggplot() +
+          geom_violin(data=permud,aes(x=method,y=per,col=type), scale = 'width') +
+          geom_point(data=reald,aes(x=method,y=per,col=type),size=1) +
           geom_text(data=reald[reald[,2] == 'chrX', ],aes(x=method,y=max(reald$per)*1.3,label=pvalue), size = 10*5/14)+
           geom_text(data=reald[reald[,2] == 'chrY', ],aes(x=method,y=max(reald$per)*1.3 + 0.02,label=pvalue), size = 10*5/14)+
-          theme_compact() + #facet_wrap(~type) + 
-          coord_flip(ylim=c(0,max(reald$per)*1.5)) + 
-          xlab('') + 
-          ylab('Proportion') + 
+          #theme_basic() + #facet_wrap(~type) +
+          coord_flip(ylim=c(0,max(reald$per)*1.5)) +
+          xlab('') +
+          ylab('Proportion') +
           scale_color_manual(values=c('chrX'=brewer.pal(3,'Pastel1')[1],'chrY'=brewer.pal(3,'Pastel1')[2])) +
-          theme(legend.position = 'bottom',strip.background = element_blank(),strip.text = element_text(size=7),legend.title = element_blank(), text = element_text(size = 7)) + 
+          theme(legend.position = 'bottom',strip.background = element_blank(),strip.text = element_text(size=7),legend.title = element_blank(), text = element_text(size = 7), axis.text = element_text(size = 7), axis.title = element_text(size = 7)) +
           scale_y_continuous(breaks=c(0,round(max(reald$per)*0.6,2),round(max(reald$per)*1.2,2)), limits = c(0, max(reald$per) + 0.1))
-  )
 dev.off()
+
+
+
 
