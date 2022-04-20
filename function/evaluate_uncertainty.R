@@ -14,141 +14,144 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   ctcomplist <- reproduce.js <- reproduce.oc <- corr.score <- list()
   for (pmid in seq(1, n.permute)){
     print(pmid)
-    ## boostrap cells
-    set.seed(pmid)
-    bstid <- sample(1:nrow(pr), nrow(pr), replace = TRUE)
-    bstid <- unique(bstid)
-    pr.pm <- pr[bstid,]
-    
-    ## cluster cells
-    clu <- mykmeans(pr.pm, number.cluster = max(inferobj$clusterid))$cluster ###
-    
-    # --- check if these codes are necessary <<<<<<<<<<<<<<<<
-    # pd = data.frame(x = pr[names(clu),1], y = pr[names(clu),2], clu = as.factor(clu))
-    # pd.text.x = tapply(pd[,1], list(pd$clu), mean)
-    # pd.text.y = tapply(pd[,2], list(pd$clu), mean)
-    # pd.text = data.frame(x = pd.text.x, y = pd.text.y, clu = names(pd.text.x))
-    # pd.text[14,1:2] =  c(pd.text[14,1] + 2, pd.text[14,2] + 1)
-    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # ggplot() +
-    #   geom_scattermore(data = pd, aes(x = x, y = y, color = clu))+
-    #   scale_color_manual(values = mypalette(14))+
-    #   theme_classic() + xlab('UMAP1') + ylab('UMAP2') +
-    #   geom_text(data = pd.text, aes(x = x, y = y, label = clu))
-    
-    ## cell type composition in clusters
-    # pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
-    # tab <- table(pd[,3:4])
-    # tab <- tab/rowSums(tab)
-    # pd <- melt(tab)
-    # pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
-    # ggplot(data = pd) +
-    #   geom_bar(aes(x = clu, y = value, fill = celltype), stat = 'identity', position = 'dodge') +
-    #   theme_classic() +
-    #   ylab('Celltype Proportion') +
-    #   scale_fill_manual(values = mypalette(length(unique(pd$celltype))))
-    
-    ## build pseudotime
-    mcl.pm <- exprmclust(t(pr.pm), cluster = clu, reduce = FALSE) ###
-    # plotmclust(mcl.pm, cell_point_size = 0.1)
-    
-    ## select origin cluster
-    pt.pm.mean<- tapply(pt[names(mcl.pm[['clusterid']])], list(mcl.pm[['clusterid']]), mean)
-    start.cluster <- names(which.min(pt.pm.mean))
-    
-    ## construct pseudotime
-    ord.pm <- TSCANorder(mcl.pm, startcluster = start.cluster, listbranch = T,orderonly = T)
-    # str(ord.pm)
-    
-    pt.pm <- unlist(sapply(sapply(ord.pm, length), function(i) seq(1, i)))
-    names(pt.pm) <- unname(unlist(ord.pm))
-    # --- check if these codes are necessary <<<<<<<<<<<<<<<<
-    ## plot pseudotime
-    
-    pd = data.frame(pc1 = pr[,1], pc2 = pr[,2], time = as.numeric(pt.pm[rownames(pr)]))
-    # ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
-    #   geom_scattermore() + theme_classic()
-    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    
-    # get candidate branches
-    newbranch.pm <- findbranch(mst = mcl.pm$MSTtree, order = ord.pm, origin = start.cluster)
-    
-    ## compare two MST
-    js <- sapply(seq(1, length(newbranch)), function(i){
-      id <- which(sapply(paste0(names(ord),','), function(k) grepl(paste0(paste0(newbranch[[i]], collapse = ','),','), k)))[1]
-      cells <- ord[[id]]
-      b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
-      sapply(seq(1, length(newbranch.pm)), function(j){
+    rm('ctcomp.new')
+    tryCatch({
+      ## boostrap cells
+      set.seed(pmid)
+      bstid <- sample(1:nrow(pr), nrow(pr), replace = TRUE)
+      bstid <- unique(bstid)
+      pr.pm <- pr[bstid,]
+      
+      ## cluster cells
+      clu <- mykmeans(pr.pm, number.cluster = max(inferobj$clusterid))$cluster ###
+      
+      # --- check if these codes are necessary <<<<<<<<<<<<<<<<
+      # pd = data.frame(x = pr[names(clu),1], y = pr[names(clu),2], clu = as.factor(clu))
+      # pd.text.x = tapply(pd[,1], list(pd$clu), mean)
+      # pd.text.y = tapply(pd[,2], list(pd$clu), mean)
+      # pd.text = data.frame(x = pd.text.x, y = pd.text.y, clu = names(pd.text.x))
+      # pd.text[14,1:2] =  c(pd.text[14,1] + 2, pd.text[14,2] + 1)
+      # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      # ggplot() +
+      #   geom_scattermore(data = pd, aes(x = x, y = y, color = clu))+
+      #   scale_color_manual(values = mypalette(14))+
+      #   theme_classic() + xlab('UMAP1') + ylab('UMAP2') +
+      #   geom_text(data = pd.text, aes(x = x, y = y, label = clu))
+      
+      ## cell type composition in clusters
+      # pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
+      # tab <- table(pd[,3:4])
+      # tab <- tab/rowSums(tab)
+      # pd <- melt(tab)
+      # pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
+      # ggplot(data = pd) +
+      #   geom_bar(aes(x = clu, y = value, fill = celltype), stat = 'identity', position = 'dodge') +
+      #   theme_classic() +
+      #   ylab('Celltype Proportion') +
+      #   scale_fill_manual(values = mypalette(length(unique(pd$celltype))))
+      
+      ## build pseudotime
+      mcl.pm <- exprmclust(t(pr.pm), cluster = clu, reduce = FALSE) ###
+      # plotmclust(mcl.pm, cell_point_size = 0.1)
+      
+      ## select origin cluster
+      pt.pm.mean<- tapply(pt[names(mcl.pm[['clusterid']])], list(mcl.pm[['clusterid']]), mean)
+      start.cluster <- names(which.min(pt.pm.mean))
+      
+      ## construct pseudotime
+      ord.pm <- TSCANorder(mcl.pm, startcluster = start.cluster, listbranch = T,orderonly = T)
+      # str(ord.pm)
+      
+      pt.pm <- unlist(sapply(sapply(ord.pm, length), function(i) seq(1, i)))
+      names(pt.pm) <- unname(unlist(ord.pm))
+      # --- check if these codes are necessary <<<<<<<<<<<<<<<<
+      ## plot pseudotime
+      
+      pd = data.frame(pc1 = pr[,1], pc2 = pr[,2], time = as.numeric(pt.pm[rownames(pr)]))
+      # ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
+      #   geom_scattermore() + theme_classic()
+      # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+      
+      # get candidate branches
+      newbranch.pm <- findbranch(mst = mcl.pm$MSTtree, order = ord.pm, origin = start.cluster)
+      
+      ## compare two MST
+      js <- sapply(seq(1, length(newbranch)), function(i){
+        id <- which(sapply(paste0(names(ord),','), function(k) grepl(paste0(paste0(newbranch[[i]], collapse = ','),','), k)))[1]
+        cells <- ord[[id]]
+        b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
+        sapply(seq(1, length(newbranch.pm)), function(j){
+          
+          id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
+          cells <- ord.pm[[id]]
+          b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
+          js <- length(intersect(b.pm, b.ori))/length(union(b.pm, b.ori))
+        })
+      })
+      oc <- sapply(seq(1, length(newbranch)), function(i){
+        id <- which(sapply(paste0(names(ord),','), function(k) grepl(paste0(paste0(newbranch[[i]], collapse = ','),','), k)))[1]
+        cells <- ord[[id]]
+        b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
+        sapply(seq(1, length(newbranch.pm)), function(j){
+          id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
+          cells <- ord.pm[[id]]
+          b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
+          oc <- length(intersect(b.pm, b.ori))/min(length(b.pm), length(b.ori))
+        }) 
+      })
+      corr <- sapply(seq(1, length(newbranch)), function(i){
+        id <- which(sapply(paste0(names(ord),','), function(k) grepl(paste0(paste0(newbranch[[i]], collapse = ','),','), k)))[1]
+        cells <- ord[[id]]
+        b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
         
-        id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
-        cells <- ord.pm[[id]]
-        b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
-        js <- length(intersect(b.pm, b.ori))/length(union(b.pm, b.ori))
+        sapply(seq(1, length(newbranch.pm)), function(j){
+          id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
+          cells <- ord.pm[[id]]
+          b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
+          ov = intersect(b.ori, b.pm)
+          cor(pt[ov], pt.pm[ov])
+        }) 
       })
-    })
-    oc <- sapply(seq(1, length(newbranch)), function(i){
-      id <- which(sapply(paste0(names(ord),','), function(k) grepl(paste0(paste0(newbranch[[i]], collapse = ','),','), k)))[1]
-      cells <- ord[[id]]
-      b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
-      sapply(seq(1, length(newbranch.pm)), function(j){
-        id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
-        cells <- ord.pm[[id]]
-        b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
-        oc <- length(intersect(b.pm, b.ori))/min(length(b.pm), length(b.ori))
-      }) 
-    })
-    corr <- sapply(seq(1, length(newbranch)), function(i){
-      id <- which(sapply(paste0(names(ord),','), function(k) grepl(paste0(paste0(newbranch[[i]], collapse = ','),','), k)))[1]
-      cells <- ord[[id]]
-      b.ori <- intersect(unlist(sapply(newbranch[[i]], function(k) names(inferobj$clusterid)[inferobj$clusterid == k])), cells)
+      corr[is.na(corr)] <- 0
+      colnames(corr) <- colnames(oc) <- colnames(js) <- paste0('original', seq(1, length(newbranch)))
       
-      sapply(seq(1, length(newbranch.pm)), function(j){
-        id <- which(sapply(paste0(names(ord.pm),','), function(k) grepl(paste0(paste0(newbranch.pm[[j]], collapse = ','),','), k)))[1]
-        cells <- ord.pm[[id]]
-        b.pm <- intersect(unlist(sapply(newbranch.pm[[j]], function(k) names(mcl.pm$clusterid)[mcl.pm$clusterid == k])), cells)
-        ov = intersect(b.ori, b.pm)
-        cor(pt[ov], pt.pm[ov])
-      }) 
-    })
-    corr[is.na(corr)] <- 0
-    colnames(corr) <- colnames(oc) <- colnames(js) <- paste0('original', seq(1, length(newbranch)))
-    
-    ## get js binary to match branches 
-    js.binary <- get_binary(js, js.cut)
-    corr.score[[pmid]] <- corr * js.binary
-    js.melt <- melt(js.binary)
-    js.melt <- js.melt[js.melt[,3]!=0,]
-    colnames(js.melt) <- c('permutation.branch','original.branch','matched')
-    reproduce.js[[pmid]] <- as.character(js.melt[,2])
-    
-    ## get oc binary to match branches
-    oc.binary <- get_binary(oc, oc.cut)
-    oc.melt <- melt(oc.binary)
-    oc.melt <- oc.melt[oc.melt[,3]!=0,]
-    reproduce.oc[[pmid]] <- as.character(oc.melt[,2])
-    
-    ## samples cell compositions 
-    ctcomp.new <- matrix(0, nrow = length(unique(alls)), ncol = length(newbranch))
-    colnames(ctcomp.new) <- paste0('origin', seq(1, length(newbranch)))
-    rownames(ctcomp.new) <- unique(alls)
-    
-    if (nrow(js.melt) > 0){
-      ctcomp <- sapply(1:nrow(js.melt), function(i){   ## corrected  from 2 to 1. 2020/08/31
-        c <- names(clu)[clu %in% newbranch.pm[[js.melt[i,1]]]]
-        ctcomp <- rep(0, length(unique(alls)))
-        names(ctcomp) <- unique(alls)
-        ctcomp[names(table(alls[c]))] <- table(alls[c])
-        ctcomp
-      })
-      colnames(ctcomp) <- paste0('origin', js.melt[,2])
-      ctcomp <- ctcomp/rowSums(ctcomp)
+      ## get js binary to match branches 
+      js.binary <- get_binary(js, js.cut)
+      corr.score[[pmid]] <- corr * js.binary
+      js.melt <- melt(js.binary)
+      js.melt <- js.melt[js.melt[,3]!=0,]
+      colnames(js.melt) <- c('permutation.branch','original.branch','matched')
+      reproduce.js[[pmid]] <- as.character(js.melt[,2])
       
+      ## get oc binary to match branches
+      oc.binary <- get_binary(oc, oc.cut)
+      oc.melt <- melt(oc.binary)
+      oc.melt <- oc.melt[oc.melt[,3]!=0,]
+      reproduce.oc[[pmid]] <- as.character(oc.melt[,2])
       
-      ctcomp.new[rownames(ctcomp), colnames(ctcomp)] <- ctcomp  ## sample by #branch: rowSums = 1
+      ## samples cell compositions 
+      ctcomp.new <- matrix(0, nrow = length(unique(alls)), ncol = length(newbranch))
+      colnames(ctcomp.new) <- paste0('origin', seq(1, length(newbranch)))
+      rownames(ctcomp.new) <- unique(alls)
       
-    } 
-    ctcomplist[[pmid]] <- t(ctcomp.new)
-    
+      if (nrow(js.melt) > 0){
+        ctcomp <- sapply(1:nrow(js.melt), function(i){   ## corrected  from 2 to 1. 2020/08/31
+          c <- names(clu)[clu %in% newbranch.pm[[js.melt[i,1]]]]
+          ctcomp <- rep(0, length(unique(alls)))
+          names(ctcomp) <- unique(alls)
+          ctcomp[names(table(alls[c]))] <- table(alls[c])
+          ctcomp
+        })
+        colnames(ctcomp) <- paste0('origin', js.melt[,2])
+        ctcomp <- ctcomp/rowSums(ctcomp)
+        ctcomp.new[rownames(ctcomp), colnames(ctcomp)] <- ctcomp  ## sample by #branch: rowSums = 1
+      } 
+    },error=function(e){},warning=function(w){})
+    if (exists('ctcomp.new')) {
+      ctcomplist[[pmid]] <- t(ctcomp.new)
+    } else {
+      ctcomplist[[pmid]] <- NULL
+    }
   }
   
   reproduce.js <- unlist(reproduce.js)  
@@ -194,14 +197,14 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   }
   
   if (!is.null(design)) {
-  result <- list(detection.rate = detection.rate, 
-                 sample.cellcomp.mean = sample.cellcomp.mean, 
-                 sample.cellcomp.sd = sample.cellcomp.sd,
-                 sample.cellcomp.pvalue=sample.cellcomp.pvalue)
+    result <- list(detection.rate = detection.rate, 
+                   sample.cellcomp.mean = sample.cellcomp.mean, 
+                   sample.cellcomp.sd = sample.cellcomp.sd,
+                   sample.cellcomp.pvalue=sample.cellcomp.pvalue)
   } else {
     result <- list(detection.rate = detection.rate, 
-                 sample.cellcomp.mean = sample.cellcomp.mean, 
-                 sample.cellcomp.sd = sample.cellcomp.sd)
+                   sample.cellcomp.mean = sample.cellcomp.mean, 
+                   sample.cellcomp.sd = sample.cellcomp.sd)
   }
   return(result)
 }
