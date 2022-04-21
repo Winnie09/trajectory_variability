@@ -14,7 +14,7 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   ctcomplist <- reproduce.js <- reproduce.oc <- corr.score <- list()
   for (pmid in seq(1, n.permute)){
     print(pmid)
-    rm('ctcomp.new')
+    if (exists('ctcomp.new')) rm('ctcomp.new')
     tryCatch({
       ## boostrap cells
       set.seed(pmid)
@@ -23,36 +23,10 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
       pr.pm <- pr[bstid,]
       
       ## cluster cells
-      clu <- mykmeans(pr.pm, number.cluster = max(inferobj$clusterid))$cluster ###
-      
-      # --- check if these codes are necessary <<<<<<<<<<<<<<<<
-      # pd = data.frame(x = pr[names(clu),1], y = pr[names(clu),2], clu = as.factor(clu))
-      # pd.text.x = tapply(pd[,1], list(pd$clu), mean)
-      # pd.text.y = tapply(pd[,2], list(pd$clu), mean)
-      # pd.text = data.frame(x = pd.text.x, y = pd.text.y, clu = names(pd.text.x))
-      # pd.text[14,1:2] =  c(pd.text[14,1] + 2, pd.text[14,2] + 1)
-      # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      # ggplot() +
-      #   geom_scattermore(data = pd, aes(x = x, y = y, color = clu))+
-      #   scale_color_manual(values = mypalette(14))+
-      #   theme_classic() + xlab('UMAP1') + ylab('UMAP2') +
-      #   geom_text(data = pd.text, aes(x = x, y = y, label = clu))
-      
-      ## cell type composition in clusters
-      # pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
-      # tab <- table(pd[,3:4])
-      # tab <- tab/rowSums(tab)
-      # pd <- melt(tab)
-      # pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
-      # ggplot(data = pd) +
-      #   geom_bar(aes(x = clu, y = value, fill = celltype), stat = 'identity', position = 'dodge') +
-      #   theme_classic() +
-      #   ylab('Celltype Proportion') +
-      #   scale_fill_manual(values = mypalette(length(unique(pd$celltype))))
+      clu <- mykmeans(pr.pm, number.cluster = max(inferobj$clusterid))$cluster 
       
       ## build pseudotime
       mcl.pm <- exprmclust(t(pr.pm), cluster = clu, reduce = FALSE) ###
-      # plotmclust(mcl.pm, cell_point_size = 0.1)
       
       ## select origin cluster
       pt.pm.mean<- tapply(pt[names(mcl.pm[['clusterid']])], list(mcl.pm[['clusterid']]), mean)
@@ -60,17 +34,9 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
       
       ## construct pseudotime
       ord.pm <- TSCANorder(mcl.pm, startcluster = start.cluster, listbranch = T,orderonly = T)
-      # str(ord.pm)
-      
       pt.pm <- unlist(sapply(sapply(ord.pm, length), function(i) seq(1, i)))
       names(pt.pm) <- unname(unlist(ord.pm))
-      # --- check if these codes are necessary <<<<<<<<<<<<<<<<
-      ## plot pseudotime
-      
       pd = data.frame(pc1 = pr[,1], pc2 = pr[,2], time = as.numeric(pt.pm[rownames(pr)]))
-      # ggplot(data = pd, aes(x = pc1, y = pc2, color = time)) +
-      #   geom_scattermore() + theme_classic()
-      # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       
       # get candidate branches
       newbranch.pm <- findbranch(mst = mcl.pm$MSTtree, order = ord.pm, origin = start.cluster)
@@ -154,6 +120,7 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
     }
   }
   
+  ctcomplist = ctcomplist[!sapply(ctcomplist, is.null)]
   reproduce.js <- unlist(reproduce.js)  
   js.perc <- rep(0, length(newbranch))
   js.perc[as.numeric(names(table(reproduce.js)))] <-  table(reproduce.js)/n.permute
@@ -208,6 +175,4 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   }
   return(result)
 }
-
-
 
