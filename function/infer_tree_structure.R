@@ -1,59 +1,55 @@
-infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50, original = FALSE,pcadim=NULL){
+infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, plotdir = getwd(), xlab = 'PC1', ylab = 'PC2', max.clunum=50, original = FALSE,pcadim=NULL, exprmclust.output = NULL){
   ## ct: dataframe/matrix, first column is cell name, second column is cell type, third column is sample.
+  ## exprmclust.output: if users already have the ouptput from TSCAN::exprmclust(), 
   library(igraph)
   alls <- ct[,3]
   names(alls) <- ct$cell
   set.seed(12345)
   if (is.null(pcadim)) {
-  sdev <- apply(pca, 2, sd)
-  x <- 1:max.clunum
-  optpoint <- which.min(sapply(2:max.clunum, function(i) {
-    x2 <- pmax(0, x - i)
-    sum(lm(sdev[1:max.clunum] ~ x + x2)$residuals^2)
-  }))
-  pcadim = optpoint + 1
+    sdev <- apply(pca, 2, sd)
+    x <- 1:max.clunum
+    optpoint <- which.min(sapply(2:max.clunum, function(i) {
+      x2 <- pmax(0, x - i)
+      sum(lm(sdev[1:max.clunum] ~ x + x2)$residuals^2)
+    }))
+    pcadim = optpoint + 1
   }
-  pr <- pca[,1:pcadim]  # 7
-  
-  ## clustering
-  # clu <- mykmeans(pr, number.cluster = number.cluster, maxclunum = 50, seed = i)$cluster
-  clu <- mykmeans(pr, maxclunum = 50, number.cluster = number.cluster)$cluster
-  table(clu)
-  pd = data.frame(x = pr[,1], y = pr[,2], cluster = as.factor(clu[rownames(pr)]))
-  mypalette = colorRampPalette(brewer.pal(9,'Set1'))
-  pdf(paste0(plotdir, 'cluster.pdf'), width = 3, height = 2.1)
-  print(ggplot(data = pd, aes(x = x, y = y, color = cluster)) +
-          geom_scattermore()+
-          scale_color_manual(values = mypalette(max(clu)))+
-          theme_classic() + 
-          theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
-          xlab(xlab) + ylab(ylab))
-  dev.off()
-  ## cell type composition in clusters
-  pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
-  tab <- table(pd[,3:4])
-  tab <- tab/rowSums(tab)
-  pd <- melt(tab)
-  pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
-  colnames(pd)[3] <- 'proportion'
-  pdf(paste0(plotdir, 'celltype_composition_for_cluster.pdf'), width = 4, height = 2.8)
-  print(ggplot(data = pd) +
-          geom_tile(aes(x = clu, fill = proportion, y = celltype)) +
-          theme_classic() +
-          ylab('Celltype') +  xlab('Cluster')+
-          scale_fill_continuous(low = 'black', high = 'yellow'))
-  dev.off()
-  
-  ### mclust
-  mcl <- exprmclust(t(pr),cluster=clu,reduce=F)
-  ######## >>>>>>>>>>>>>>>>>
+  pr <- pca[,1:pcadim]  
+  if (!is.null(exprmclust.output)){
+    ## clustering
+    clu <- mykmeans(pr, maxclunum = 50, number.cluster = number.cluster)$cluster
+    table(clu)
+    pd = data.frame(x = pr[,1], y = pr[,2], cluster = as.factor(clu[rownames(pr)]))
+    mypalette = colorRampPalette(brewer.pal(9,'Set1'))
+    pdf(paste0(plotdir, 'cluster.pdf'), width = 3, height = 2.1)
+    print(ggplot(data = pd, aes(x = x, y = y, color = cluster)) +
+            geom_scattermore()+
+            scale_color_manual(values = mypalette(max(clu)))+
+            theme_classic() + 
+            theme(legend.spacing.y = unit(0.01, 'cm'), legend.spacing.x = unit(0.01, 'cm'), legend.key.size = unit(0.1, "cm"))+
+            xlab(xlab) + ylab(ylab))
+    dev.off()
+    ## cell type composition in clusters
+    pd = cbind(pd, celltype = ct[match(rownames(pd), ct[,1]),2])
+    tab <- table(pd[,3:4])
+    tab <- tab/rowSums(tab)
+    pd <- melt(tab)
+    pd$clu <- factor(as.character(pd$clu), levels = seq(1,max(pd$clu)))
+    colnames(pd)[3] <- 'proportion'
+    pdf(paste0(plotdir, 'celltype_composition_for_cluster.pdf'), width = 4, height = 2.8)
+    print(ggplot(data = pd) +
+            geom_tile(aes(x = clu, fill = proportion, y = celltype)) +
+            theme_classic() +
+            ylab('Celltype') +  xlab('Cluster')+
+            scale_fill_continuous(low = 'black', high = 'yellow'))
+    dev.off()
+    
+    mcl <- exprmclust(t(pr),cluster=clu,reduce=F)
+    
+  }
   if (original){
     mcl$MSTtree <- mcl$MSTtree + edges('3','4') - edges('5','4') + edges('5','6')
   }
-  ######## <<<<<<<<<<<<
-  # pdf(paste0(plotdir, 'mcl.pdf'), width=(0.8*max(clu)),height=(0.6*max(clu)))
-  # print(plotmclust(mcl, cell_point_size = 0.1, x.lab = xlab, y.lab = ylab))
-  # dev.off()
   # --------------------
   # construct pseudotime 
   # --------------------
@@ -69,9 +65,7 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   
   ## construct pseudotime
   ord <- TSCANorder(mcl, startcluster = origin.cluster, listbranch = T,orderonly = T)
-  str(ord)
-  length(ord)
-  pt <- unlist(sapply(sapply(ord, length), function(i) seq(1, i)))
+  pt <- unlist(sapply(sapply(ord, length), function(i) seq(1, i))) ## start
   names(pt) <- unname(unlist(ord))
   
   # ## plot pseudotime
@@ -88,7 +82,6 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
   # ------------------------------------------------------------
   # get candidate branches to test reproducibility, 20200726 >>
   # ------------------------------------------------------------
-  
   newbranch <- findbranch(mst = mcl$MSTtree, order = ord, origin = origin.cluster)  
   
   # -----------------------------------------------------
@@ -104,9 +97,6 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
     })
   })
   
-  # par(mfrow = c(2,ceiling(length(js.null)/2)))
-  # for (i in js.null) hist(i, xlab = 'js', main = '', breaks = 50)
-  
   js.cut <- sapply(js.null, quantile, 0.99)
   
   oc.null <- lapply(seq(1, length(newbranch)), function(i){
@@ -117,8 +107,6 @@ infer_tree_structure <- function(pca, ct, origin.celltype, number.cluster = NA, 
       length(intersect(b.pm, b.ori))/min(length(b.pm), length(b.ori))
     })
   })
-  # par(mfrow = c(2,ceiling(length(oc.null)/2)))
-  # for (i in oc.null) hist(i, xlab = 'oc', main = '', breaks = 50)
   oc.cut <- sapply(oc.null, quantile, 0.99)
   
   mcl$pseudotime <- pt
