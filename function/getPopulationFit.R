@@ -6,6 +6,7 @@ getPopulationFit <- function(testobj,
   ## if type = 'time', then return population fit (a vector for a gene; or a gene by num.cell matrix) for constant test (test on time)
   ## if type = 'variable', then return population fit for all levels of that character (a matrix, columns are population fit for each level in the variabel). 
   ## gene: a vector of gene names. 
+  if (!'testvar' %in% names(testobj)) testvar <- testobj$testvar <- 2
   design = testobj$design[, c(1, testobj$testvar)] ## design for multi
   knotnum = testobj$knotnum
   pseudotime = testobj$pseudotime
@@ -13,11 +14,13 @@ getPopulationFit <- function(testobj,
   pt <- round(seq(1, max(pseudotime), length.out = min(num.timepoint, max(pseudotime)))) ## downsample
   testvar = testobj$testvar
   type <- toupper(type)
+  
   if (sum(design[, 1]) != nrow(design)){
     print("The first column of design matrix should be all 1s (intercept)! Using the first column as the variable column ...")
     design = cbind(intercept = 1, design)
+    colnames(design)[1] <- 'intercept'
   }
-  colnames(design)[1] <- 'intercept'
+
   if (is.null(gene)) gene <- rownames(testobj$statistics)
   if (type == 'TIME') {
     design = design[, 1, drop = FALSE]
@@ -78,7 +81,7 @@ getPopulationFit <- function(testobj,
   } else if (type == 'TIME'){
     fitres <- t(do.call(cbind, fitlist))
     rownames(fitres) <- gene
-    if (ncol(Res$expr) == ncol(fitres)) colnames(fitres) <- colnames(Res$expr)
+    if (ncol(testobj$expr) == ncol(fitres)) colnames(fitres) <- colnames(testobj$expr)
   }
   return(fitres)
 }
