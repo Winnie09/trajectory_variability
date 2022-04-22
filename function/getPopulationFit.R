@@ -8,7 +8,7 @@ getPopulationFit <- function(testobj,
   ## gene: a vector of gene names. 
   type <- toupper(type)
   if (!'testvar' %in% names(testobj)) testvar <- testobj$testvar <- 2
-  if (type == 'Variable'){
+  if (type == 'VARIABLE'){
     design = testobj$design[, c(1, testobj$testvar)] ## design for multi
   }
   knotnum = testobj$knotnum
