@@ -7,7 +7,12 @@ getPopulationFit <- function(testobj,
   ## if type = 'variable', then return population fit for all levels of that character (a matrix, columns are population fit for each level in the variabel). 
   ## gene: a vector of gene names. 
   type <- toupper(type)
-  if (!'testvar' %in% names(testobj)) testvar <- testobj$testvar <- 2
+  if (!'testvar' %in% names(testobj)) {
+    testvar <- testobj$testvar <- 2
+  } else {
+    testvar = testobj$testvar
+  }
+    
   if (type == 'VARIABLE'){
     design = testobj$design[, c(1, testobj$testvar)] ## design for multi
   } else {
@@ -17,7 +22,7 @@ getPopulationFit <- function(testobj,
   pseudotime = testobj$pseudotime
   pseudotime = pseudotime[order(pseudotime)]
   pt <- round(seq(1, max(pseudotime), length.out = min(num.timepoint, max(pseudotime)))) ## downsample
-  testvar = testobj$testvar
+  
   
   
   if (sum(design[, 1]) != nrow(design)){
@@ -41,7 +46,12 @@ getPopulationFit <- function(testobj,
     # })
     # names(beta) <- g
     tmp = matrix(testobj$parameter[[g]]$beta, ncol = knotnum[g]+4)
-    beta = as.vector(tmp[c(1,testvar), ]) ### subset the beta values of the intercept and the test covariate for multi
+    if (type == 'VARIABLE'){
+      beta = as.vector(tmp[c(1,testvar), ]) ### subset the beta values of the intercept and the test covariate for multi
+    } else {
+      beta = as.vector(tmp[1, ]) ### subset the beta values of the intercept and the test covariate for multi
+    }
+      
     x <- sapply(row.names(design), function(i) {
       kronecker(diag(knotnum[g] + 4), design[i, , drop = FALSE]) ###
     }, simplify = FALSE)
