@@ -10,6 +10,8 @@ getPopulationFit <- function(testobj,
   if (!'testvar' %in% names(testobj)) testvar <- testobj$testvar <- 2
   if (type == 'VARIABLE'){
     design = testobj$design[, c(1, testobj$testvar)] ## design for multi
+  } else {
+    design = testobj$design
   }
   knotnum = testobj$knotnum
   pseudotime = testobj$pseudotime
