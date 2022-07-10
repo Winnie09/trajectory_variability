@@ -4,8 +4,8 @@ setwd(here())
 # setwd('/Users/wenpinhou/Dropbox/trajectory_variability')
 source('function/01_function.R')
 
-rdir <- paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/res/sex/pc2/')
-pdir <- paste0('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/plot/sex/')
+rdir <- paste0('tb/res/sex/pc2/')
+pdir <- paste0('tb/plot/sex/')
 
 dir.create(pdir, recursive = T, showWarnings = F)
 Res <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/res/sex/pc2/lamian_pm_allcores.rds')
@@ -101,4 +101,14 @@ dev.off()
 
 Res$expr <- NULL
 saveRDS(Res, paste0(rdir, paste0('numeric_res_with_clu.rds')))
+
+
+id = seq(from = 1, to = length(Res$pseudotime), length.out = ncol(Res$populationFit[[1]]))
+colnames(Res$populationFit[[1]]) <- colnames(Res$populationFit[[2]]) <- colnames(Res$expr)[id]
+
+pdf(paste0(pdir, 'cluster_mean.pdf'), width = 5, height = 3.5)
+plotClusterMean(testobj = Res, type = 'Variable', facet = TRUE)
+dev.off()
+
+
 
