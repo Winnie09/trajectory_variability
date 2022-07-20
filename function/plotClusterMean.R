@@ -45,7 +45,7 @@ plotClusterMean <- function(testobj,
     pd <- melt(tmp)
     colnames(pd) <- c('pseudotime', 'cluster', 'populationFitClusterMean')
     pd$pseudotime <- as.numeric(pd$pseudotime)
-    pd$cluster <- factor(pd$cluster)
+    pd$cluster <- factor(pd$cluster, levels = sort(unique(pd$cluster)))
     p <- ggplot(data = pd, aes(x = pseudotime, y = populationFitClusterMean, group = cluster, color = cluster))+
       geom_smooth(size = 1) +
       theme_classic() +
@@ -62,6 +62,7 @@ plotClusterMean <- function(testobj,
     
    print(p)
 }
+
 
 
 
