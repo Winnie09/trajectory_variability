@@ -1,4 +1,4 @@
-plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'time', subsampleCell = TRUE, numSubsampleCell=1e3){
+plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHeightTotal = 400, showCluster = FALSE, colann = NULL, rowann = NULL, annotation_colors = NULL, type = 'TIME', subsampleCell = TRUE, numSubsampleCell=1e3){
   ## cellHeightTotal: when showRowName = TRUE, cellHeightTotal is suggested to be ten times the number of genes (rows).
   ## showCluster: (no implemented yet). if TRUE, "cluster" should be a slot in testobj, and it will be label in the heatmap. If FALSE, no need to pass in "cluster". 
   library(pheatmap)
@@ -7,10 +7,10 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   library(ggplot2)
   fit <- testobj$populationFit
   if (subsampleCell){
-    if (type == 'time'){
+    if (toupper(type) == 'TIME'){
       id <- round(seq(1, ncol(fit), length.out = numSubsampleCell))
       fit <- fit[, id]
-    } else if (type == 'variable'){
+    } else if (toupper(type) == 'VARIABLE'){
       id <- round(seq(1, ncol(fit[[1]]), length.out = numSubsampleCell))
       for (i in 1:length(fit)){
         fit[[i]] <- fit[[i]][, id]
@@ -29,7 +29,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
 
   fit.bak = fit
   clu <- testobj$cluster
-  if (type == 'variable'){
+  if (toupper(type) == 'VARIABLE'){
     if ('DDGType' %in% names(testobj)) DDGType <- testobj$DDGType else DDGType <- getDDGType(testobj) 
     fit.scale <- do.call(cbind, fit)
     fit.scale <- fit.scale[names(testobj$cluster), ]
@@ -67,12 +67,12 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   
   expr <- expr[, names(testobj$pseudotime)]
   
-  if (type == 'variable'){
+  if (toupper(type) == 'VARIABLE'){
     tmp <- lapply(names(fit), function(i){
       expr[rownames(fit.scale), colnames(expr) %in% cellanno[cellanno[, 2] %in% rownames(testobj$design)[testobj$design[, 2] == sub('.*_','', i)], 1]]
     })
     expr.scale <- do.call(cbind, tmp)
-  } else if (type == 'time'){
+  } else if (toupper(type) == 'TIME'){
     expr.scale <- expr
   }
   expr.scale <- scalematrix(expr.scale)
@@ -130,9 +130,9 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
     if (length(unique(clu)) < 8){
       col.clu = brewer.pal(8, 'Set1')[1:length(unique(clu))]
     } else {
-      col.clu = colorRampPalette(brewer.pal(8, 'Set1'))[1:length(unique(clu))]
+      col.clu = colorRampPalette(brewer.pal(8, 'Set1'))(length(unique(clu)))
     }
-    names(col.clu) = unique(clu)
+    names(col.clu) = sort(unique(clu))
   }
   
   if (is.null(colann)| is.null(annotation_colors)){
@@ -209,6 +209,7 @@ plotFitHm <- function(testobj, showRowName = FALSE, cellWidthTotal = 250, cellHe
   print(grid.arrange(grobs = plist,layout_matrix=matrix(c(1,1,1,1,2,3,3,3,3),nrow=1)))
   # dev.off()
 }  
+
 
 
 
