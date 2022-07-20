@@ -5,13 +5,13 @@ library(here)
 setwd(here())
 compareid <- (1:50)*100
 scompareid <- (1:2)*100
-# setwd('/home/whou10/scratch16/whou10/trajectory_variability/')
-# source('/home/whou10/scratch16/whou10/resource/ggplot_theme.R')
-setwd("/Users/wenpinhou/Dropbox/trajectory_variability/")
-source('/Users/wenpinhou/Dropbox/resource/ggplot_theme.R')
+setwd('/home/whou10/scratch16/whou10/trajectory_variability/')
+source('/home/whou10/scratch16/whou10/resource/ggplot_theme.R')
+# setwd("/Users/wenpinhou/Dropbox/trajectory_variability/")
+# source('/Users/wenpinhou/Dropbox/resource/ggplot_theme.R')
 theme_set(.new_theme)
 
-rdir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/res/'
+rdir <- 'covid/Su_2020_Cell/testvar/useSaverImp/repro/res/'
 af <- list.files('/home-4/zji4@jhu.edu/scratch/diffpt/su/repro/res',full.names = T)
 d1 <- lapply(af,readRDS)
 expid <- expand.grid(1:length(d1),1:length(d1))
@@ -35,7 +35,7 @@ Lamian.pm.o <- sapply(compareid,function(i) {
 })
 saveRDS(list(s1, s2), paste0(rdir, 'Lamian.rds'))
 ############### Lamian.chisq
-af <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/Lamian.chisq/',full.names = T)
+af <- list.files('covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/Lamian.chisq/',full.names = T)
 d1 <- lapply(af,readRDS)
 expid <- expand.grid(1:length(d1),1:length(d1))
 expid <- expid[expid[,1] < expid[,2],]
@@ -62,7 +62,7 @@ Lamian.chisq.o <- sapply(compareid,function(i) {
 })
 saveRDS(list(s1, s2), paste0(rdir, 'Lamian.chisq.rds'))
 ############ Lamian_TDE.pm
-af <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/Lamian_TDE.pm/',full.names = T, pattern = '.rds$')
+af <- list.files('covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/Lamian_TDE.pm/',full.names = T, pattern = '.rds$')
 d1 <- lapply(af,readRDS)
 expid <- expand.grid(1:length(d1),1:length(d1))
 expid <- expid[expid[,1] < expid[,2],]
@@ -85,7 +85,7 @@ Lamian_tde.pm.o <- sapply(compareid,function(i) {
 })
 saveRDS(list(s1, s2), paste0(rdir, 'Lamian_TDE.pm.rds'))
 ############### Lamian_TDE.chisq
-af <- list.files('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/Lamian_TDE.chisq',full.names = T, pattern = '.rds$')
+af <- list.files('covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/Lamian_TDE.chisq',full.names = T, pattern = '.rds$')
 d1 <- lapply(af,readRDS)
 expid <- expand.grid(1:length(d1),1:length(d1))
 expid <- expid[expid[,1] < expid[,2],]
@@ -202,7 +202,7 @@ monocle2_trajTest.o <- sapply(compareid,function(i) {
 })
 saveRDS(list(s1, s2), paste0(rdir, 'monocle2_trajTest.rds'))
 ### monocle2 trajtest correction
-ddir <- '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/monocle2_trajtest.corr/'
+ddir <- 'covid/Su_2020_Cell/testvar/useSaverImp/repro/compres/monocle2_trajtest.corr/'
 af <- list.files(ddir, full.names = T)
 af <- af[1:min(30, length(af))]
 af = unique(sapply(af, function(i) sub('_.*', '',sub('.*/','', i))))
@@ -242,9 +242,9 @@ colnames(df) <- c('numgene','method','overlap')
 df[,1] <- compareid
 saveRDS(df,'/home/whou10/scratch16/whou10/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/plot/df.rds')
 
-df = readRDS('/home/whou10/scratch16/whou10/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/plot/df.rds')
+df = readRDS('covid/Su_2020_Cell/testvar/useSaverImp/repro/plot/df.rds')
 
-df = readRDS('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/plot/df.rds')
+# df = readRDS('/Users/wenpinhou/Dropbox/trajectory_variability/covid/Su_2020_Cell/testvar/useSaverImp/repro/plot/df.rds')
 mycol = brewer.pal(12, 'Paired')[1:length(unique(df[,2]))]
 names(mycol) = unique(as.character(df[,2]))
 table(df[,2])
