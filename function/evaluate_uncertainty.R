@@ -12,7 +12,8 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   ord <- inferobj$order
   alls <- inferobj$allsample
   ctcomplist <- reproduce.js <- reproduce.oc <- corr.score <- list()
-  for (pmid in seq(1, n.permute)){
+  # for (pmid in seq(1, n.permute)){
+  ctcomplist <- mclapply(seq(1, n.permute), function(pmid){
     print(pmid)
     if (exists('ctcomp.new')) rm('ctcomp.new')
     tryCatch({
@@ -113,19 +114,23 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
         ctcomp.new[rownames(ctcomp), colnames(ctcomp)] <- ctcomp  ## sample by #branch: rowSums = 1
       } 
     },error=function(e){},warning=function(w){})
+    # if (exists('ctcomp.new')) {
+    #   ctcomplist[[pmid]] <- t(ctcomp.new)
+    # } else {
+    #   ctcomplist[[pmid]] <- NULL
+    # }
     if (exists('ctcomp.new')) {
-      ctcomplist[[pmid]] <- t(ctcomp.new)
+      t(ctcomp.new)
     } else {
-      ctcomplist[[pmid]] <- NULL
+      NULL
     }
-  }
-  
+  })  
+  # }
   ctcomplist = ctcomplist[!sapply(ctcomplist, is.null)]
   reproduce.js <- unlist(reproduce.js)  
   js.perc <- rep(0, length(newbranch))
   js.perc[as.numeric(names(table(reproduce.js)))] <-  table(reproduce.js)/n.permute
   names(js.perc) <- newbranch
-  
   
   reproduce.oc <- unlist(reproduce.oc)  
   oc.perc <- rep(0, length(newbranch))
@@ -135,8 +140,6 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   corr.score.m <- do.call(rbind, corr.score)
   corr.score.v <- colSums(corr.score.m)/n.permute
   names(corr.score.v) <- newbranch
-  
-  sort((js.perc + oc.perc)/2)
   
   detection.rate <- data.frame(detection.rate = (js.perc + oc.perc[names(js.perc)])/2, stringsAsFactors = FALSE)
   sample.cellcomp.mean <- apply(simplify2array(ctcomplist), 1:2, mean)
@@ -175,4 +178,5 @@ evaluate_uncertainty <- function(inferobj, n.permute, subset.cell = NULL, design
   }
   return(result)
 }
+
 
