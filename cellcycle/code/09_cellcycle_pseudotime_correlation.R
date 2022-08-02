@@ -98,7 +98,6 @@ pd$data = 'HCA_monocyte'
 pd13 <- pd
 
 
-##### tmr starts here
 d  = readRDS('/home/whou10/scratch16/whou10/trajectory_variability/cellcycle/res/covid_Mod_Mi_cellcycle_score.rds')
 cellanno <- readRDS('covid/Su_2020_Cell/data/cellanno.rds')
 rownames(cellanno) <- cellanno[,1]
