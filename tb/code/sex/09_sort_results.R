@@ -6,9 +6,8 @@ source('function/01_function.R')
 
 rdir <- paste0('tb/res/sex/pc2/')
 pdir <- paste0('tb/plot/sex/')
-
 dir.create(pdir, recursive = T, showWarnings = F)
-Res <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/res/sex/pc2/lamian_pm_allcores.rds')
+Res <- readRDS('tb/res/sex/pc2/lamian_pm_allcores.rds')
 
 statistics = Res$statistics
 diffgene <- rownames(statistics[statistics[, grep('^fdr.*overall$', colnames(statistics))] < 0.05,])
@@ -17,11 +16,11 @@ str(diffgene)
 ## --------------
 ## population fit
 ## --------------
-Res$expr <- readRDS('/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/data/sex/expr.rds')
+Res$expr <- readRDS('tb/data/sex/expr.rds')
 Res$testvar = ncol(Res$design)
 # Res$design = Res$design[, c(1, 39, 2:38)]
 Res$populationFit <- getPopulationFit(Res, gene = diffgene, type = 'variable')
-saveRDS(Res$populationFit, '/home-4/whou10@jhu.edu/scratch/Wenpin/trajectory_variability/tb/res/sex/pc2/lamian_pm_populationFit.rds')
+saveRDS(Res$populationFit, 'tb/res/sex/pc2/lamian_pm_populationFit.rds')
 
 ## -----------
 ## clustering
@@ -102,7 +101,6 @@ dev.off()
 Res$expr <- NULL
 saveRDS(Res, paste0(rdir, paste0('numeric_res_with_clu.rds')))
 
-
 id = seq(from = 1, to = length(Res$pseudotime), length.out = ncol(Res$populationFit[[1]]))
 colnames(Res$populationFit[[1]]) <- colnames(Res$populationFit[[2]]) <- colnames(Res$expr)[id]
 
@@ -110,5 +108,36 @@ pdf(paste0(pdir, 'cluster_mean.pdf'), width = 5, height = 3.5)
 plotClusterMean(testobj = Res, type = 'Variable', facet = TRUE)
 dev.off()
 
+######################################################################
+## plot cluster mean
+## split up cluster to cluster a and b (e.g. cluster 1 to 1a, and 1b)
+######################################################################
+abtype = unlist(sapply(Res$XDEType[names(Res$cluster)], function(i){
+  if (i == 'trendSig') {
+    'a'
+  } else if (i == 'bothSig'){
+    'b'
+  } else {
+    ''
+  }
+}))
+clutype = paste0(Res$cluster, abtype)
+names(clutype) <- names(Res$cluster)
+clutype = clutype[!clutype %in% seq(1,6)]
 
+pdf(paste0(pdir, 'cluster_mean_abtype.pdf'), width = 3.8, height = 6.8)
+plotClusterMean(testobj = Res, cluster = clutype, type = 'Variable', facet = TRUE, facet_scales = 'free', facet_nrow = 7)
+dev.off()
+
+pdf(paste0(pdir, 'cluster_group_difference.pdf'), width = 2.2, height = 7.5)
+plotClusterDiff(testobj = Res, 
+                            gene = names(Res$cluster),
+                            cluster = Res$cluster,
+                            each = T,
+                            facet_scales = 'fixed',
+                            facet_variable = 'cluster',
+                            facet_nrow = 8,
+                            sep = '',
+                            reverse = F)
+dev.off()
 
