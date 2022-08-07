@@ -30,12 +30,19 @@ for (celltype in setdiff(list.files('trajectory_variability/hca/real/testvar/res
   permud[,3] = factor(permud[,3], levels = c(m1, m2, m3))
   reald[,4] = factor(reald[,4], levels = c(m1, m2, m3))
   
-  
+  ## -->
+  genes <- readRDS(paste0('trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_violin_plotdata_genes.rds'))
+  len = sapply(genes, length)
+  permud2 = permud
+  levels(permud2[,3]) = paste0(levels(permud2[,3]), '(', len[levels(permud2[,3])], ')')
+  reald2 = reald
+  levels(reald2[,4]) = paste0(levels(reald2[,4]), '(', len[levels(reald2[,4])], ')')
+  ## --<
   pdf(paste0('trajectory_variability/hca/real/testvar/plot/perf/',celltype,'_pvalue_violin_all.pdf'),width=11,height=3)
   print(ggplot() + 
-          geom_violin(data=permud,aes(x=method,y=per,col=type)) + 
-          geom_point(data=reald,aes(x=method,y=per,col=type),size=1) + 
-          geom_text(data=reald,aes(x=method,y=max(reald$per)*1.3,label=pvalue), size = 10*5/14)+
+          geom_violin(data=permud2,aes(x=method,y=per,col=type)) + 
+          geom_point(data=reald2,aes(x=method,y=per,col=type),size=1) + 
+          geom_text(data=reald2,aes(x=method,y=max(reald$per)*1.3,label=pvalue), size = 10*5/14)+
           #theme_compact() + 
           facet_wrap(~type) + 
           coord_flip(ylim=c(0,max(reald$per)*1.5)) + 
@@ -63,3 +70,4 @@ for (celltype in setdiff(list.files('trajectory_variability/hca/real/testvar/res
   )
   dev.off()
 }
+
