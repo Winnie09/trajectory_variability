@@ -8,7 +8,7 @@ library(RColorBrewer)
 suppressMessages(library(igraph))
 n.permute <- 1e3
 setwd("/Users/wenpinhou/Dropbox/trajectory_variability/hca/data/HCA/proc/integrate")
-umap = readRDS('umap.rds')
+umap = readRDS('ser/umap.rds')
 pca <- as.matrix(umap@reductions$pca@cell.embeddings)
 ctlevel <- data.frame(ct=c('HSC','MPP','LMPP','CMP','CLP','GMP','MEP',"Bcell","CD4Tcell","CD8Tcell",'NKcell','Mono','Ery'),level=c(1,2,3,3,4,4,4,5,5,5,5,5,5),immunepath=c(1,1,1,0,1,0,0,1,1,1,1,0,0),monopath=c(1,1,1,1,0,1,0,0,0,0,0,1,0),erypath=c(1,1,0,1,0,0,1,0,0,0,0,0,1),stringsAsFactors = F)
 str(pca)
@@ -66,7 +66,9 @@ tmp <- pd[pd$celltype == 'HSC', ]
 origin.cluster <- as.numeric(tmp[which.max(tmp[,3]), 1])
 
 ## construct pseudotime
-ord <- TSCANorder(mcl, startcluster = origin.cluster, listbranch = T,orderonly = T)
+system.time({
+  ord <- TSCANorder(mcl, startcluster = origin.cluster, listbranch = T,orderonly = T)
+})
 str(ord)
 length(ord)
 pt <- unlist(sapply(sapply(ord, length), function(i) seq(1, i)))
