@@ -14,6 +14,10 @@ colnames(t2) <- colnames(m2) <- c('COVID', 'HCA', 'HCA.Simu', 'TB')
 write.csv(t2, 'efficiency/plot/time_matrix.csv')
 write.csv(m2, 'efficiency/plot/memory_matrix.csv')
 
+write.csv(t(t2), 'efficiency/plot/time_matrix_transpose.csv')
+write.csv(t(m2), 'efficiency/plot/memory_matrix_transpose.csv')
+
+
 library(reshape2)
 t2[is.na(t2)] <- 80
 t2 <- round(t2,3)
@@ -59,7 +63,6 @@ p2 <- ggplot(m2, aes(x = Var2, y = value, color = Var1, group = Var1)) +
 pdf('efficiency/plot/eff.pdf', width = 6.5, height = 1.5)
 gridExtra::grid.arrange(p1,p2, nrow = 1)
 dev.off()
-
 
 
 
