@@ -23,23 +23,36 @@ pca <- as.matrix(umap@reductions$pca@cell.embeddings)
 a = readRDS('/Users/wenpinhou/Dropbox/trajectory_variability/hca/data/HCA/proc/ct/sc.rds')
 ct = data.frame(cell = names(a), celltype = a, sample = sapply(names(a), function(i) sub(':.*', '', i)), stringsAsFactors = FALSE)
 
-# permutation 
+# load HCA-BM tree
 res <- readRDS(paste0(rdir, 'infer_tree_structure_res.rds'))
 
-
-## subsample cells, and then redo infer tree structure
-# ----------------------------
-# for some samples: BM1,2,5,6
-# ----------------------------
+## ======================
+## branch proportion test
+## ======================
+## setting
 source('/Users/wenpinhou/Dropbox/trajectory_variability/function/evaluate_uncertainty.R')
 source('/Users/wenpinhou/Dropbox/trajectory_variability/package/Lamian/R/branchPropTest.R')  
-cellprop.d = list()
 design = data.frame(intercetp = rep(1,8), reduce = rep(c(1,1,0,0),2))
 rownames(design) <- paste0('BM', seq(1,8))
 
-## ===============================================================
+
+## perform branch proportion test on HCA-BM data (original values)
+tmp.tb <- sapply(res[['order']], function(o){
+  table(sapply(o, function(i) sub(':.*','',i)))
+})
+invisible(capture.output(res.bp <- branchPropTest(data = tmp.tb, design, method = 'multinom')))
+# > res.bp
+#               (Intercept) covariate
+# branch: 5,1     0.7396051 0.2021713
+# branch: 5,3,4   0.4952636 0.3861338
+
+
+## ----------------------------
+## for some samples: BM1,2,5,6
+## subsample cells, and then redo infer tree structure
 ## calculate branch composition and save the object (ctcomplist)
-## ===============================================================
+## ----------------------------
+cellprop.d = list()
 
 for (rm.perc in seq(0.2, 0.8, 0.1)){
   print(rm.perc)
@@ -228,43 +241,47 @@ for (rm.perc in seq(0.2, 0.8, 0.1)){
 ## test
 ###############
 for (rm.perc in seq(0.1, 0.8, 0.1)){
+  print(rm.perc)
   plotdir <- paste0('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/rmBM1256_multinomCellComp/', rm.perc, '/plot/')
   rdir <- paste0('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/rmBM1256_multinomCellComp/', rm.perc, '/result/')
+  
   ctcomplist <- readRDS(paste0(rdir, 'rm1256_all_simulations_cell_composition.rds'))
   
   ## multinome test
   pval <- NULL
   for (ctcomp.new in ctcomplist){
     tryCatch({
-      df <- NULL  
+      df <- NULL
       for (s in 1:nrow(ctcomp.new)){
         for (b in 1:ncol(ctcomp.new)){
           df <- rbind(df, data.frame(cell = paste0(rownames(ctcomp.new)[s], ';', colnames(ctcomp.new)[b],';', 1:ctcomp.new[s,b]),
                                      branch = rep(colnames(ctcomp.new)[b], ctcomp.new[s,b]),
-                                     sample = rep(rownames(ctcomp.new)[s], ctcomp.new[s,b]) 
-          ))    
+                                     sample = rep(rownames(ctcomp.new)[s], ctcomp.new[s,b])
+          ))
         }
       }
-      invisible(capture.output(res.bp <- branchPropTest(data = df, design, method = 'multinom')))
-      pval = c(pval, res.bp[1,1]) ## first branch
+      
+      invisible(capture.output(res.bp <- branchPropTest(data = ctcomp.new, design, method = 'multinom')))
+      pval = c(pval, res.bp[1,2]) ## first branch
     },error=function(e) {})
   }
-  summary(pval)
-  saveRDS(pval, paste0(rdir, 'rm1256_all_simulations_branch1base_multinom_pvalues.rds'))
+  print(summary(pval))
+  print(mean(pval < 0.05))
+  saveRDS(pval, paste0(rdir, 'rm1256_all_simulations_branch1base_multinom_pvalues2.rds'))
   
   
   ### logit values T test
-  pval <- NULL
-  for (ctcomp in ctcomplist){
-    ctcomp.logit.tmp <- (ctcomp+1) / (rowSums(ctcomp)+1)
-    ctcomp <- t(log(ctcomp.logit.tmp/(1-ctcomp.logit.tmp)))
-    tryCatch({
-      invisible(capture.output(res.bp <- branchPropTest(data = ctcomp, design, method = 't.test')))
-      pval = c(pval, res.bp[1]) ## first branch
-    },error=function(e) {})
-  }
-  summary(pval)
-  saveRDS(pval, paste0(rdir, 'rm1256_all_simulations_logitTtest_pvalues.rds'))
+  # pval <- NULL
+  # for (ctcomp in ctcomplist){
+  #   ctcomp.logit.tmp <- (ctcomp+1) / (rowSums(ctcomp)+1)
+  #   ctcomp <- t(log(ctcomp.logit.tmp/(1-ctcomp.logit.tmp)))
+  #   tryCatch({
+  #     invisible(capture.output(res.bp <- branchPropTest(data = ctcomp, design, method = 't.test')))
+  #     pval = c(pval, res.bp[1]) ## first branch
+  #   },error=function(e) {})
+  # }
+  # summary(pval)
+  # saveRDS(pval, paste0(rdir, 'rm1256_all_simulations_logitTtest_pvalues.rds'))
 }
 
 
@@ -276,7 +293,7 @@ pval <- NULL
 for (rm.perc in seq(0.1, 0.8, 0.1)){
   plotdir <- paste0('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/rmBM1256_multinomCellComp/', rm.perc, '/plot/')
   rdir <- paste0('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/rmBM1256_multinomCellComp/', rm.perc, '/result/')
-  multinom.pval <- readRDS(paste0(rdir, 'rm1256_all_simulations_branch1base_multinom_pvalues.rds'))
+  multinom.pval <- readRDS(paste0(rdir, 'rm1256_all_simulations_branch1base_multinom_pvalues2.rds'))
   logitT.pval <- readRDS(paste0(rdir, 'rm1256_all_simulations_logitTtest_pvalues.rds'))
   res <- readRDS(paste0('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/rmBM1256/', rm.perc, '/result/result.rds'))
   names(res)
@@ -303,7 +320,7 @@ pd <- rbind(data.frame(rm.perc = pval[,1], pval = pval[,2], type = 'multinom'),
 saveRDS(pd, '/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/perf/rmBM1256_simulation_branchProp_pvalue_pd.rds')
 
 str(pd)
-pdf('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/perf/rmBM1256_simulation_branchProp_pvalue.pdf', width = 4, height = 1.9)
+pdf('/Users/wenpinhou/Dropbox/trajectory_variability/tree_variability/perf/rmBM1256_simulation_branchProp_pvalue2.pdf', width = 4, height = 1.9)
 ggplot(data = pd, aes(x = rm.perc, y = pval, color = type)) +
   geom_point() + 
   geom_smooth(se=F)+
