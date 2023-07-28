@@ -83,4 +83,6 @@ ggarrange(p1, p2, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
 dev.off()
 
 
+saveRDS(pd[pd[,2]!='monocle2_trajTest',], paste0(pdir, 'compare_fdr_diff_auc_trenddiff_meandiff_2row_20220717_4E.rds'))
+write.csv(pd[pd[,2]!='monocle2_trajTest',], 'sourcedata/4E.csv', row.names = F)
 
